@@ -95,6 +95,8 @@ if ( CALYPSO_ENV === 'desktop' || CALYPSO_ENV === 'desktop-mac-app-store' ) {
 	// no chunks or dll here, just one big file for the desktop app
 	webpackConfig.output.filename = '[name].js';
 } else {
+	webpackConfig.entry.polyfill = [ path.join( __dirname, 'client', 'lib', 'polyfill' ) ];
+
 	webpackConfig.plugins.push(
 		new webpack.DllReferencePlugin( {
 			context: path.join( __dirname, 'client' ),

@@ -3,10 +3,6 @@
  */
 import localStoragePolyfill from 'lib/local-storage';
 
-export default ( () => {
-	if ( 'undefined' === typeof window ) {
-		return;
-	}
-
+if ( 'undefined' !== typeof window ) {
 	localStoragePolyfill( window );
-} )();
+}

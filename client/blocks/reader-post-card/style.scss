@@ -21,10 +21,14 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 	&.has-thumbnail {
 
 		.reader-post-card__featured-image {
+			display: flex;
+			align-items: center;
+			justify-content: center;
 			flex-basis: auto;
 			flex-grow: 1;
 			margin-right: 20px;
 			max-width: 190px;
+			cursor: pointer;
 
 			@include breakpoint( ">960px" ) {
 				max-width: 250px;
@@ -43,6 +47,15 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 				width: 100%;
 				margin-bottom: 10px;
 			}
+
+			&:hover .reader-post-card__play-icon {
+				opacity: 1;
+			}
+		}
+
+		.reader-post-card__play-icon {
+			opacity: .8;
+			transition: opacity .25s;
 		}
 
 		&.is-photo {
@@ -99,7 +112,19 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 				font-size: 12px;
 				letter-spacing: 0.01em;
 			}
+
+			.reader-post-actions {
+				margin: 8px 0 0;
+			}
+
+			.reader-post-actions .reader-post-actions__visit {
+				margin-left: -3px;
+			}
 		}
+	}
+
+	&.is-gallery .reader-post-card__post {
+		flex-direction: column;
 	}
 }
 
@@ -254,6 +279,7 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 	line-height: 1.6;
 	font-weight: 100;
 	margin-top: 5px;
+	word-break: break-word;
 }
 
 // Action buttons in post card
@@ -261,11 +287,15 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 	font-size: 14px;
 	height: 22px;
 
-	&.reader-post-actions__visit .gridicon {
-		fill: lighten( $gray, 10% );
-		position: relative;
-			left: -8px;
-			top: -1px;
+	&.reader-post-actions__visit {
+		margin-left: -2px;
+
+		.gridicon {
+			fill: lighten( $gray, 10% );
+			position: relative;
+				left: -8px;
+				top: -1px;
+		}
 	}
 
 	.gridicons-external {
@@ -364,29 +394,44 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 	}
 }
 
-.reader-post-card__play-icon-container {
-	position: relative;
-	margin: 0;
+// Gallery cards
+.reader-post-card__gallery {
+	display: flex;
+	margin: 0 0 20px;
 	padding: 0;
-	height: 100%;
-	width: 100%;
-	cursor: pointer;
+}
 
-	&:hover .reader-post-card__play-icon {
-		opacity: 1;
+.reader-post-card__gallery-item {
+	cursor: pointer;
+	flex: 1;
+	list-style-type: none;
+	margin-right: 1px;
+
+	&:last-child {
+
+		@media #{$reader-post-card-breakpoint-medium}  {
+			display: none;
+		}
+	}
+
+	&:nth-last-of-type(-n+2) {
+
+		@include breakpoint( "<480px" ) {
+			display: none;
+		}
 	}
 }
 
-.reader-post-card__play-icon {
-	margin: auto;
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	opacity: .8;
-	transition: opacity .25s;
+.reader-post-card__video {
+	padding-bottom: 20px;
+}
 
+.reader-post-card__video iframe {
+	display: flex;
+}
+
+.reader-post-card__gallery-image {
+	height: 130px;
 }
 
 // For these borderless cards to look more presentable on Devdocs

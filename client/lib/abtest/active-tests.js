@@ -15,16 +15,6 @@ module.exports = {
 		defaultVariation: 'disabled',
 		allowExistingUsers: true,
 	},
-	coldStartReader: {
-		datestamp: '20160901',
-		variations: {
-			noEmailColdStart: 33,
-			noEmailColdStartWithAutofollows: 33,
-			noChanges: 34
-		},
-		defaultVariation: 'noChanges',
-		allowExistingUsers: false,
-	},
 	domainSuggestionClickableRow: {
 		datestamp: '20160802',
 		variations: {
@@ -71,15 +61,6 @@ module.exports = {
 		defaultVariation: 'hideThemeUpload',
 		allowExistingUsers: false,
 	},
-	readerSearchSuggestions: {
-		datestamp: '20160804',
-		variations: {
-			staffSuggestions: 50,
-			popularSuggestions: 50
-		},
-		defaultVariation: 'staffSuggestions',
-		allowExistingUsers: true
-	},
 	domainSuggestionPopover: {
 		datestamp: '20160809',
 		variations: {
@@ -89,14 +70,13 @@ module.exports = {
 		defaultVariation: 'showPopover',
 		allowExistingUsers: false,
 	},
-	paidNuxStreamlined: {
-		datestamp: '20161020',
+	paidNuxThankYouPage: {
+		datestamp: '20161114',
 		variations: {
 			original: 50,
-			streamlined: 50,
+			emailNudgeOnTop: 50,
 		},
 		defaultVariation: 'original',
-		allowAnyLocale: true,
 	},
 	siteTitleStep: {
 		datestamp: '20160928',
@@ -107,8 +87,8 @@ module.exports = {
 		defaultVariation: 'hideSiteTitleStep',
 		allowExistingUsers: false
 	},
-	domainToPersonalPlanNudge2: {
-		datestamp: '20161018',
+	domainToPersonalPlanNudge3: {
+		datestamp: '20161109',
 		variations: {
 			original: 50,
 			nudge: 50
@@ -116,6 +96,7 @@ module.exports = {
 		defaultVariation: 'original',
 		allowExistingUsers: true
 	},
+
 	gSuiteOnSignup: {
 		datestamp: '20161025',
 		variations: {
@@ -124,5 +105,16 @@ module.exports = {
 		},
 		defaultVariation: 'original',
 		allowExistingUsers: true
-	}
+	},
+
+	jetpackConnectPlansFirst: {
+		datestamp: '20161024',
+		variations: {
+			showPlansBeforeAuth: 50,
+			showPlansAfterAuth: 50
+		},
+		defaultVariation: 'showPlansAfterAuth',
+		allowExistingUsers: true
+	},
 };
+

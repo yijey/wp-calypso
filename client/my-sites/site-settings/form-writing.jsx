@@ -21,7 +21,8 @@ import SectionHeader from 'components/section-header';
 import Card from 'components/card';
 import Button from 'components/button';
 import QueryTerms from 'components/data/query-terms';
-import TaxonomyManager from 'blocks/taxonomy-manager';
+import QueryTaxonomies from 'components/data/query-taxonomies';
+import TaxonomyCard from './taxonomies/taxonomy-card';
 import { isJetpackModuleActive, isJetpackMinimumVersion } from 'state/sites/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { requestPostTypes } from 'state/post-types/actions';
@@ -121,6 +122,13 @@ const SiteSettingsFormWriting = React.createClass( {
 		const markdownSupported = this.state.markdown_supported;
 		return (
 			<form id="site-settings" onSubmit={ this.submitFormAndActivateCustomContentModule } onChange={ this.markChanged }>
+				{ config.isEnabled( 'manage/site-settings/categories' ) &&
+					<div className="site-settings__taxonomies">
+						<QueryTaxonomies siteId={ this.props.siteId } postType="post" />
+						<TaxonomyCard taxonomy="category" postType="post" />
+						<TaxonomyCard taxonomy="post_tag" postType="post" />
+					</div>
+				}
 				<SectionHeader label={ this.translate( 'Writing Settings' ) }>
 					<Button
 						compact
@@ -216,7 +224,6 @@ const SiteSettingsFormWriting = React.createClass( {
 						</FormFieldset>
 					}
 				</Card>
-				{ config.isEnabled( 'manage/site-settings/categories' ) && <TaxonomyManager taxonomy="category" /> }
 			</form>
 		);
 	}

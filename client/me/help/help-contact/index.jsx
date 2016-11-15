@@ -389,16 +389,22 @@ const HelpContact = React.createClass( {
 	},
 
 	shouldUseHappychat: function() {
+		const { olark } = this.state;
 		const { isHappychatAvailable } = this.props;
-		const { olark: { isUserEligible } } = this.state;
+		let isEn = i18n.getLocaleSlug() === 'en';
+		isEn = olark.locale ? olark.locale === 'en' : isEn;
 
 		// if happychat is disabled in the config, do not use it
 		if ( ! config.isEnabled( 'happychat' ) ) {
 			return false;
 		}
 
+		if ( !isEn ) {
+			return false;
+		}
+
 		// if the happychat connection is able to accept chats, use it
-		return isHappychatAvailable && isUserEligible;
+		return isHappychatAvailable && olark.isUserEligible;
 	},
 
 	canShowChatbox: function() {
@@ -481,7 +487,7 @@ const HelpContact = React.createClass( {
 			},
 			showHappychatVariation && {
 				onSubmit: this.startHappychat,
-				buttonLabel: ( ( config( 'env' ) === 'development' ) || ( config( 'env' ) === 'staging' ) ) ? 'Happychat' : this.translate( 'Chat with us' )
+				buttonLabel: ( ( config( 'env' ) === 'development' ) || ( config( 'env_id' ) === 'stage' ) ) ? 'Happychat' : this.translate( 'Chat with us' )
 			}
 		);
 

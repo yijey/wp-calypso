@@ -26,9 +26,9 @@ import ReaderFullPostHeader from './header';
 import AuthorCompactProfile from 'blocks/author-compact-profile';
 import LikeButton from 'reader/like-button';
 import { isDiscoverPost, isDiscoverSitePick, getSourceFollowUrl, getSiteUrl } from 'reader/discover/helper';
-import { isDailyPostChallengeOrPrompt } from 'reader/daily-post/helper';
 import DiscoverSiteAttribution from 'reader/discover/site-attribution';
-import DailyPostButton from 'reader/daily-post';
+import DailyPostButton from 'blocks/daily-post-button';
+import { isDailyPostChallengeOrPrompt } from 'blocks/daily-post-button/helper';
 import { shouldShowLikes } from 'reader/like-helper';
 import { shouldShowComments } from 'blocks/comments/helper';
 import CommentButton from 'blocks/comment-button';
@@ -120,7 +120,8 @@ export class FullPostView extends React.Component {
 		KeyboardShortcuts.off( 'like-selection', this.handleLike );
 	}
 
-	handleBack() {
+	handleBack( event ) {
+		event.preventDefault();
 		recordAction( 'full_post_close' );
 		recordGaEvent( 'Closed Full Post Dialog' );
 		recordTrackForPost( 'calypso_reader_article_closed', this.props.post );

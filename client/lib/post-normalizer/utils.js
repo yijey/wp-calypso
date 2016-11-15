@@ -31,7 +31,7 @@ export function imageSizeFromAttachments( post, imageUrl ) {
 }
 
 export function maxWidthPhotonishURL( imageURL, width ) {
-	if ( ! imageURL || ! width ) {
+	if ( ! imageURL ) {
 		return imageURL;
 	}
 
@@ -58,6 +58,12 @@ export function maxWidthPhotonishURL( imageURL, width ) {
 		parsedURL.query.strip = 'info'; // strip all exif data, leave ICC intact
 	}
 
+	// make a new query object with keys in a known order
+	parsedURL.query = Object.keys( parsedURL.query ).sort().reduce( ( memo, key ) => {
+		memo[ key ] = parsedURL.query[ key ];
+		return memo;
+	}, {} );
+
 	return url.format( parsedURL );
 }
 
@@ -74,29 +80,25 @@ export function makeImageURLSafe( object, propName, maxWidth, baseURL ) {
 	}
 }
 
-let _useDomParser = false;
-// Firefox/Opera/IE throw errors on unsupported types
-try {
-	// WebKit returns null on unsupported types
-	if ( ( new DOMParser() ).parseFromString( '', 'text/html' ) ) {
-		// text/html parsing is natively supported
-		_useDomParser = true;
-	}
-} catch ( ex ) {}
-
 export function domForHtml( html ) {
 	let dom;
-	if ( _useDomParser ) {
+	if ( typeof DOMParser !== 'undefined' && DOMParser.prototype.parseFromString ) {
 		const parser = new DOMParser();
-		const doc = parser.parseFromString( html, 'text/html' );
-		if ( doc && doc.body ) {
-			dom = doc.body;
-		}
+		dom = parser.parseFromString( html, 'text/html' ).body;
 	} else {
 		dom = document.createElement( 'div' );
 		dom.innerHTML = html;
 	}
 	return dom;
+}
+
+/** Determine if url is likely pointed to an image
+ * @param {string} uri - a url
+ * @returns {boolean} - true or false depending on if it is probably an image (has the right extension)
+ */
+export function isUrlLikelyAnImage( uri ) {
+	const withoutQuery = url.parse( uri ).pathname;
+	return some( [ '.jpg', '.jpeg', '.png', '.gif' ], ext => endsWith( withoutQuery, ext ) );
 }
 
 /**
@@ -113,11 +115,7 @@ export function thumbIsLikelyImage( thumb ) {
 	//if ( startsWith( thumb.mime_type, 'image/' ) ) {
 	//	return true;
 	// }
-
-	const { pathname } = url.parse( thumb.URL, true, true );
-	return some( [ '.jpg', '.jpeg', '.png', '.gif' ], function( ext ) {
-		return endsWith( pathname, ext );
-	} );
+	return isUrlLikelyAnImage( thumb.URL );
 }
 
 /**
@@ -147,3 +145,17 @@ export function iframeIsWhitelisted( iframe ) {
 	} );
 }
 
+export function isCandidateForCanonicalImage( image ) {
+	if ( ! image ) {
+		return false;
+	}
+
+	if ( image.width < 350 ) {
+		return false;
+	}
+
+	if ( ( image.width * image.height ) < 30000 ) {
+		return false;
+	}
+	return true;
+}

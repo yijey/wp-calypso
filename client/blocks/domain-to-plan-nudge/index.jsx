@@ -31,13 +31,9 @@ import formatCurrency from 'lib/format-currency';
 import { canCurrentUser } from 'state/current-user/selectors';
 import TrackComponentView from 'lib/analytics/track-component-view';
 import { abtest } from 'lib/abtest';
+import UpgradeNudge from 'my-sites/upgrade-nudge';
 
 class DomainToPlanNudge extends Component {
-
-	constructor() {
-		super( ...arguments );
-		this.personalCheckout = this.personalCheckout.bind( this );
-	}
 
 	static propTypes = {
 		discountedRawPrice: PropTypes.number,
@@ -51,7 +47,8 @@ class DomainToPlanNudge extends Component {
 		siteId: PropTypes.number,
 		sitePlans: PropTypes.object,
 		translate: PropTypes.func,
-		userCurrency: PropTypes.string
+		userCurrency: PropTypes.string,
+		size: PropTypes.string
 	};
 
 	isSiteEligible() {
@@ -69,10 +66,10 @@ class DomainToPlanNudge extends Component {
 			site &&           //site exists
 			site.wpcom_url && //has a mapped domain
 			hasFreePlan &&    //has a free wpcom plan
-			abtest( 'domainToPersonalPlanNudge2' ) === 'nudge';
+			abtest( 'domainToPersonalPlanNudge3' ) === 'nudge';
 	}
 
-	personalCheckout() {
+	personalCheckout = () => {
 		const { siteId } = this.props;
 
 		this.props.recordTracksEvent( 'calypso_upgrade_nudge_cta_click', {
@@ -82,9 +79,22 @@ class DomainToPlanNudge extends Component {
 		} );
 
 		page( `/checkout/${ siteId }/personal` );
+	};
+
+	renderRegular() {
+		const { siteId, translate } = this.props;
+		return (
+			<UpgradeNudge
+				title={ translate( 'Upgrade to a Personal Plan and save!' ) }
+				message={ translate( 'Buy our Personal Plan and remove WordPress.com Ads from your site.' ) }
+				feature={ 'no-adverts' }
+				event="domain_to_personal_nudge" //actually cta_name
+				href={ `/checkout/${ siteId }/personal` }
+			/>
+		);
 	}
 
-	renderCard() {
+	renderBanner() {
 		const {
 			discountedRawPrice,
 			productSlug,
@@ -194,13 +204,20 @@ class DomainToPlanNudge extends Component {
 		);
 	}
 
+	renderDomainToPlanNudge() {
+		const { size } = this.props;
+		if ( size === 'banner' ) {
+			this.renderBanner();
+		}
+		return this.renderRegular();
+	}
+
 	render() {
 		const { siteId } = this.props;
-
 		return (
 			<div className="domain-to-plan-nudge">
 				<QuerySitePlans siteId={ siteId } />
-				{ this.isSiteEligible() && this.renderCard() }
+				{ this.isSiteEligible() && this.renderDomainToPlanNudge() }
 			</div>
 		);
 	}

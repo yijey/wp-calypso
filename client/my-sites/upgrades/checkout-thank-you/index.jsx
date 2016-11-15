@@ -10,7 +10,7 @@ import moment from 'moment';
 /**
  * Internal dependencies
  */
-import { activated } from 'state/themes/actions';
+import { themeActivated } from 'state/themes/actions';
 import analytics from 'lib/analytics';
 import Card from 'components/card';
 import ChargebackDetails from './chargeback-details';
@@ -116,8 +116,14 @@ const CheckoutThankYou = React.createClass( {
 			return null;
 		}
 
+		const emailNudgeOnTop = abtest( 'paidNuxThankYouPage' ) === 'emailNudgeOnTop';
+
 		return (
-			<Notice className="checkout-thank-you__verification-notice" showDismiss={ false }>
+			<Notice
+				className="checkout-thank-you__verification-notice"
+				showDismiss={ false }
+				status={ emailNudgeOnTop ? 'is-warning' : '' }
+				>
 				{ this.translate( 'We’ve sent a message to {{strong}}%(email)s{{/strong}}. ' +
 					'Please check your email to confirm your address.', {
 						args: { email: this.props.user.email },
@@ -141,7 +147,7 @@ const CheckoutThankYou = React.createClass( {
 
 	redirectIfThemePurchased() {
 		if ( this.props.receipt.hasLoadedFromServer && getPurchases( this.props ).every( isTheme ) ) {
-			this.props.activatedTheme( getPurchases( this.props )[ 0 ].meta, this.props.selectedSite );
+			this.props.activatedTheme( getPurchases( this.props )[ 0 ].meta, this.props.selectedSite.ID );
 
 			page.redirect( '/design/' + this.props.selectedSite.slug );
 		}
@@ -181,7 +187,7 @@ const CheckoutThankYou = React.createClass( {
 
 		const userCreatedMoment = moment( this.props.userDate );
 		const isNewUser = userCreatedMoment.isAfter( moment().subtract( 2, 'hours' ) );
-		const isPaidNuxStreamlinedAbTest = abtest( 'paidNuxStreamlined' ) === 'streamlined';
+		const emailNudgeOnTop = abtest( 'paidNuxThankYouPage' ) === 'emailNudgeOnTop';
 
 		// this placeholder is using just wp logo here because two possible states do not share a common layout
 		if ( ! purchases && ! this.isGenericReceipt() ) {
@@ -194,11 +200,12 @@ const CheckoutThankYou = React.createClass( {
 		}
 
 		// streamlined paid NUX thanks page
-		if ( isPaidNuxStreamlinedAbTest && isNewUser && wasOnlyDotcomPlanPurchased ) {
+		if ( isNewUser && wasOnlyDotcomPlanPurchased ) {
 			return (
 				<Main className="checkout-thank-you">
+					{ emailNudgeOnTop ? this.renderConfirmationNotice() : null }
 					<PlanThankYouCard siteId={ this.props.selectedSite.ID } />
-					{ this.renderConfirmationNotice() }
+					{ ! emailNudgeOnTop ? this.renderConfirmationNotice() : null }
 				</Main>
 			);
 		}
@@ -328,7 +335,7 @@ export default connect(
 	( dispatch ) => {
 		return {
 			activatedTheme( meta, site ) {
-				dispatch( activated( meta, site, 'calypstore', true ) );
+				dispatch( themeActivated( meta, site, 'calypstore', true ) );
 			},
 			fetchReceipt( receiptId ) {
 				dispatch( fetchReceipt( receiptId ) );

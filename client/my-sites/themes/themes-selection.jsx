@@ -2,6 +2,7 @@
  * External dependencies
  */
 import React, { PropTypes } from 'react';
+import { connect } from 'react-redux';
 import page from 'page';
 import compact from 'lodash/compact';
 
@@ -14,6 +15,9 @@ import ThemesList from 'components/themes-list';
 import StickyPanel from 'components/sticky-panel';
 import analytics from 'lib/analytics';
 import buildUrl from 'lib/mixins/url-search/build-url';
+import { getSiteSlug } from 'state/sites/selectors';
+import { isActiveTheme } from 'state/themes/current-theme/selectors';
+import { isThemePurchased } from 'state/themes/selectors';
 import {
 	getFilter,
 	getSortedFilterTerms,
@@ -31,7 +35,7 @@ const ThemesSelection = React.createClass( {
 			PropTypes.object,
 			PropTypes.bool
 		] ).isRequired,
-		siteId: PropTypes.string,
+		siteId: PropTypes.number,
 		search: PropTypes.string,
 		onScreenshotClick: PropTypes.func,
 		getOptions: React.PropTypes.func,
@@ -41,6 +45,10 @@ const ThemesSelection = React.createClass( {
 		tier: React.PropTypes.string,
 		filter: React.PropTypes.string,
 		vertical: React.PropTypes.string,
+		// connected props
+		siteSlug: React.PropTypes.string,
+		isActiveTheme: React.PropTypes.func,
+		isThemePurchased: React.PropTypes.func,
 	},
 
 	getDefaultProps() {
@@ -92,9 +100,9 @@ const ThemesSelection = React.createClass( {
 	},
 
 	updateUrl( tier, filter, searchString = this.props.search ) {
-		const { siteId, vertical } = this.props;
+		const { siteSlug, vertical } = this.props;
 
-		const siteIdSection = siteId ? `/${ siteId }` : '';
+		const siteIdSection = siteSlug ? `/${ siteSlug }` : '';
 		const verticalSection = vertical ? `/${ vertical }` : '';
 		const tierSection = tier === 'all' ? '' : `/${ tier }`;
 		const filterSection = filter ? `/filter/${ filter }` : '';
@@ -105,7 +113,7 @@ const ThemesSelection = React.createClass( {
 
 	onScreenshotClick( theme, resultsRank ) {
 		trackClick( 'theme', 'screenshot' );
-		if ( ! theme.active ) {
+		if ( ! this.props.isActiveTheme( theme.id ) ) {
 			this.recordSearchResultsClick( theme, resultsRank );
 		}
 		this.props.onScreenshotClick && this.props.onScreenshotClick( theme );
@@ -117,31 +125,33 @@ const ThemesSelection = React.createClass( {
 	},
 
 	render() {
-		const site = this.props.selectedSite;
+		const { selectedSite: site } = this.props;
 
 		return (
 			<div className="themes__selection">
 				<StickyPanel>
 					<ThemesSearchCard
-							site={ site }
-							onSearch={ this.doSearch }
-							search={ this.prependFilterKeys() + this.props.search }
-							tier={ this.props.tier }
-							select={ this.onTierSelect } />
+						site={ site }
+						onSearch={ this.doSearch }
+						search={ this.prependFilterKeys() + this.props.search }
+						tier={ this.props.tier }
+						select={ this.onTierSelect } />
 				</StickyPanel>
 				<ThemesData
-						site={ site }
-						isMultisite={ ! this.props.siteId } // Not the same as `! site` !
-						search={ this.props.search }
-						tier={ this.props.tier }
-						filter={ this.addVerticalToFilters() }
-						onRealScroll={ this.trackScrollPage }
-						onLastPage={ this.trackLastPage } >
+					site={ site }
+					isMultisite={ ! this.props.siteId } // Not the same as `! site` !
+					search={ this.props.search }
+					tier={ this.props.tier }
+					filter={ this.addVerticalToFilters() }
+					onRealScroll={ this.trackScrollPage }
+					onLastPage={ this.trackLastPage } >
 					<ThemesList getButtonOptions={ this.props.getOptions }
 						onMoreButtonClick={ this.onMoreButtonClick }
 						onScreenshotClick={ this.onScreenshotClick }
 						getScreenshotUrl={ this.props.getScreenshotUrl }
-						getActionLabel={ this.props.getActionLabel } />
+						getActionLabel={ this.props.getActionLabel }
+						isActive={ this.props.isActiveTheme }
+						isPurchased={ this.props.isThemePurchased } />
 				</ThemesData>
 			</div>
 		);
@@ -149,4 +159,14 @@ const ThemesSelection = React.createClass( {
 
 } );
 
-export default ThemesSelection;
+export default connect(
+	( state, { siteId } ) => ( {
+		siteSlug: getSiteSlug( state, siteId ),
+		isActiveTheme: themeId => isActiveTheme( state, themeId, siteId ),
+		// Note: This component assumes that purchase data is already present in the state tree
+		// (used by the isThemePurchased selector). At the time of implementation there's no caching
+		// in <QuerySitePurchases /> and a parent component is already rendering it. So to avoid
+		// redundant AJAX requests, we're not rendering the query component locally.
+		isThemePurchased: themeId => isThemePurchased( state, themeId, siteId )
+	} )
+)( ThemesSelection );

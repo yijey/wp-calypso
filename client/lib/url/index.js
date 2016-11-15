@@ -10,6 +10,7 @@ import startsWith from 'lodash/startsWith';
  * Internal dependencies
  */
 import config from 'config';
+import addQueryArgs from 'lib/route/add-query-args';
 
 /**
  * Check if a URL is located outside of Calypso.
@@ -91,6 +92,14 @@ function urlToSlug( url ) {
 	return withoutHttp( url ).replace( /\//g, '::' );
 }
 
+function slugToUrl( slug ) {
+	if ( ! slug ) {
+		return null;
+	}
+
+	return slug.replace( /::/g, '/' );
+}
+
 export default {
 	isOutsideCalypso,
 	isExternal,
@@ -99,4 +108,7 @@ export default {
 	addSchemeIfMissing,
 	setUrlScheme,
 	urlToSlug,
+	slugToUrl,
+	// [TODO]: Move lib/route/add-query-args contents here
+	addQueryArgs
 };

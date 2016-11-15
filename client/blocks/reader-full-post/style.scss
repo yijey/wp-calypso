@@ -160,6 +160,10 @@
 	}
 }
 
+.reader-full-post__story-content {
+	color: $gray-dark;
+}
+
 .reader-full-post .author-compact-profile {
 	display: inline-flex;
 	flex-direction: column;
@@ -290,6 +294,7 @@
 // Action buttons in full-post
 .reader-full-post .reader-post-actions {
 	margin-bottom: 20px;
+	clear: both;
 
 	.post-edit-button__label,
 	.comment-button__label,
@@ -515,4 +520,3 @@
 .reader-full-post .embed-vimeo {
 	margin-bottom: 33px;
 }
-

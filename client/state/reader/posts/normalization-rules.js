@@ -1,11 +1,8 @@
 /**
  * External Dependencies
  */
-import find from 'lodash/find';
-import flow from 'lodash/flow';
-import forEach from 'lodash/forEach';
+import { filter, find, flow, forEach, matches } from 'lodash';
 import url from 'url';
-import matches from 'lodash/matches';
 
 /**
  * Internal Dependencies
@@ -18,13 +15,13 @@ import DISPLAY_TYPES from './display-types';
  * Rules
  */
 import createBetterExcerpt from 'lib/post-normalizer/rule-create-better-excerpt';
+import createBetterExcerptRefresh from 'lib/post-normalizer/rule-create-better-excerpt-refresh';
 import detectEmbeds from 'lib/post-normalizer/rule-content-detect-embeds';
 import detectMedia from 'lib/post-normalizer/rule-content-detect-media';
 import detectPolls from 'lib/post-normalizer/rule-content-detect-polls';
 import makeEmbedsSafe from 'lib/post-normalizer/rule-content-make-embeds-safe';
 import removeStyles from 'lib/post-normalizer/rule-content-remove-styles';
 import makeImagesSafe from 'lib/post-normalizer/rule-content-make-images-safe';
-import wordCount from 'lib/post-normalizer/rule-content-word-count';
 import { disableAutoPlayOnMedia, disableAutoPlayOnEmbeds } from 'lib/post-normalizer/rule-content-disable-autoplay';
 import decodeEntities from 'lib/post-normalizer/rule-decode-entities';
 import firstPassCanonicalImage from 'lib/post-normalizer/rule-first-pass-canonical-image';
@@ -37,15 +34,20 @@ import withContentDom from 'lib/post-normalizer/rule-with-content-dom';
 import keepValidImages from 'lib/post-normalizer/rule-keep-valid-images';
 import pickCanonicalImage from 'lib/post-normalizer/rule-pick-canonical-image';
 import waitForImagesToLoad from 'lib/post-normalizer/rule-wait-for-images-to-load';
+import pickCanonicalMedia from 'lib/post-normalizer/rule-pick-canonical-media';
+import removeElementsBySelector from 'lib/post-normalizer/rule-content-remove-elements-by-selector';
 
 /**
  * Module vars
  */
-const READER_CONTENT_WIDTH = 720,
+const
+	isRefreshedStream = config.isEnabled( 'reader/refresh/stream' ),
+	READER_CONTENT_WIDTH = 720,
 	DISCOVER_FULL_BLEED_WIDTH = 1082,
-	PHOTO_ONLY_MIN_WIDTH = READER_CONTENT_WIDTH * 0.8,
+	PHOTO_ONLY_MIN_WIDTH = isRefreshedStream ? 480 : 570,
 	DISCOVER_BLOG_ID = 53424024,
-	GALLERY_MIN_IMAGES = 4;
+	GALLERY_MIN_IMAGES = 4,
+	GALLERY_MIN_IMAGE_WIDTH = 350;
 
 function discoverFullBleedImages( post, dom ) {
 	if ( post.site_ID === DISCOVER_BLOG_ID ) {
@@ -60,9 +62,29 @@ function discoverFullBleedImages( post, dom ) {
 	return post;
 }
 
-const hasShortContent = config.isEnabled( 'reader/refresh/stream' )
-	? post => post.character_count <= 100
-	: post => post.word_count < 100;
+function getWordCount( post ) {
+	if ( ! post || ! post.better_excerpt_no_html ) {
+		return 0;
+	}
+
+	return ( post.better_excerpt_no_html.replace( /['";:,.?¿\-!¡]+/g, '' ).match( /\S+/g ) || [] ).length;
+}
+
+function getCharacterCount( post ) {
+	if ( ! post || ! post.better_excerpt_no_html ) {
+		return 0;
+	}
+
+	return post.better_excerpt_no_html.length;
+}
+
+export function imageIsBigEnoughForGallery( image ) {
+	return image.width >= GALLERY_MIN_IMAGE_WIDTH;
+}
+
+const hasShortContent = isRefreshedStream
+	? post => getCharacterCount( post ) <= 100
+	: post => getWordCount( post ) < 100;
 
 /**
  * Attempt to classify the post into a display type
@@ -74,15 +96,16 @@ function classifyPost( post ) {
 	let displayType = DISPLAY_TYPES.UNCLASSIFIED,
 		canonicalAspect;
 
-	if ( post.images &&
-			post.images.length >= 1 &&
-			post.content_images.length < GALLERY_MIN_IMAGES &&
-			canonicalImage && canonicalImage.width >= PHOTO_ONLY_MIN_WIDTH &&
+	if ( post.canonical_media &&
+			post.canonical_media.mediaType === 'image' &&
+			( ! post.content_images || post.content_images.length < GALLERY_MIN_IMAGES ) &&
+			post.canonical_media.width >= PHOTO_ONLY_MIN_WIDTH &&
 			hasShortContent( post ) ) {
 		displayType ^= DISPLAY_TYPES.PHOTO_ONLY;
 	}
 
 	if ( canonicalImage ) {
+		// TODO do we still need aspect logic here and any of these?
 		if ( canonicalImage.width >= 600 ) {
 			displayType ^= DISPLAY_TYPES.LARGE_BANNER;
 		}
@@ -114,13 +137,11 @@ function classifyPost( post ) {
 		}
 	}
 
-	if ( post.content_embeds && post.content_embeds.length >= 1 ) {
-		if ( ! canonicalImage || post.content_embeds.length === 1 ) {
-			displayType ^= DISPLAY_TYPES.FEATURED_VIDEO;
-		}
+	if ( post.canonical_media && post.canonical_media.mediaType === 'video' ) {
+		displayType ^= DISPLAY_TYPES.FEATURED_VIDEO;
 	}
 
-	if ( post.content_images && post.content_images.length >= GALLERY_MIN_IMAGES ) {
+	if ( post.content_images && filter( post.content_images, imageIsBigEnoughForGallery ).length >= GALLERY_MIN_IMAGES ) {
 		displayType ^= DISPLAY_TYPES.GALLERY;
 	}
 
@@ -140,9 +161,9 @@ const fastPostNormalizationRules = flow( [
 	makeSiteIdSafeForApi,
 	pickPrimaryTag,
 	safeImageProperties( READER_CONTENT_WIDTH ),
-	firstPassCanonicalImage,
 	withContentDom( [
 		removeStyles,
+		removeElementsBySelector,
 		makeImagesSafe( READER_CONTENT_WIDTH ),
 		discoverFullBleedImages,
 		makeEmbedsSafe,
@@ -151,10 +172,11 @@ const fastPostNormalizationRules = flow( [
 		detectEmbeds,
 		detectMedia,
 		detectPolls,
-		wordCount
 	] ),
-	createBetterExcerpt,
-	classifyPost
+	firstPassCanonicalImage,
+	config.isEnabled( 'reader/refresh/stream' ) ? createBetterExcerptRefresh : createBetterExcerpt,
+	pickCanonicalMedia,
+	classifyPost,
 ] );
 
 export function runFastRules( post ) {
@@ -169,6 +191,7 @@ export function runFastRules( post ) {
 const slowSyncRules = flow( [
 	keepValidImages( 144, 72 ),
 	pickCanonicalImage,
+	pickCanonicalMedia,
 	classifyPost
 ] );
 

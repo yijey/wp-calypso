@@ -15,15 +15,19 @@ import DisplayTypes from 'state/reader/posts/display-types';
 import ReaderPostActions from 'blocks/reader-post-actions';
 import * as stats from 'reader/stats';
 import PostByline from './byline';
-import FeaturedAsset from './featured-asset';
+import FeaturedVideo from './featured-video';
+import FeaturedImage from './featured-image';
 import FollowButton from 'reader/follow-button';
 import PostGallery from './gallery';
+import DailyPostButton from 'blocks/daily-post-button';
+import { isDailyPostChallengeOrPrompt } from 'blocks/daily-post-button/helper';
 
 export default class RefreshPostCard extends React.Component {
 	static propTypes = {
 		post: PropTypes.object.isRequired,
 		site: PropTypes.object,
 		feed: PropTypes.object,
+		isSelected: PropTypes.bool,
 		onClick: PropTypes.func,
 		onCommentClick: PropTypes.func,
 		showPrimaryFollowButton: PropTypes.bool,
@@ -32,7 +36,8 @@ export default class RefreshPostCard extends React.Component {
 
 	static defaultProps = {
 		onClick: noop,
-		onCommentClick: noop
+		onCommentClick: noop,
+		isSelected: false
 	};
 
 	propagateCardClick = () => {
@@ -83,24 +88,37 @@ export default class RefreshPostCard extends React.Component {
 	}
 
 	render() {
-		const { post, originalPost, site, feed, onCommentClick, showPrimaryFollowButton } = this.props;
+		const { post, originalPost, site, feed, onCommentClick, showPrimaryFollowButton, isSelected } = this.props;
 		const isPhotoOnly = !! ( post.display_type & DisplayTypes.PHOTO_ONLY );
 		const isGallery = !! ( post.display_type & DisplayTypes.GALLERY );
-		const title = truncate( post.title, {
+		const classes = classnames( 'reader-post-card', {
+			'has-thumbnail': !! post.canonical_media,
+			'is-photo': isPhotoOnly,
+			'is-gallery': isGallery,
+			'is-selected': isSelected
+		} );
+		const showExcerpt = ! isPhotoOnly;
+		let title = truncate( post.title, {
 			length: 140,
 			separator: /,? +/
 		} );
-		const featuredAsset = ( <FeaturedAsset post={ post } /> );
-		const classes = classnames( 'reader-post-card', {
-			'has-thumbnail': !! featuredAsset,
-			'is-photo': isPhotoOnly,
-			'is-gallery': isGallery
-		} );
-		const showExcerpt = ! isPhotoOnly;
+
+		if ( ! title && isPhotoOnly ) {
+			title = '\xa0'; // force to non-breaking space if empty so that the title h1 doesn't collapse and complicate things
+		}
 
 		let followUrl;
 		if ( showPrimaryFollowButton ) {
 			followUrl = feed ? feed.feed_URL : post.site_URL;
+		}
+
+		let featuredAsset;
+		if ( ! post.canonical_media ) {
+			featuredAsset = null;
+		} else if ( post.canonical_media.mediaType === 'video' ) {
+			featuredAsset = <FeaturedVideo { ...post.canonical_media } videoEmbed={ post.canonical_media } />;
+		} else {
+			featuredAsset = <FeaturedImage imageUri={ post.canonical_media.src } href={ post.URL } />;
 		}
 
 		return (
@@ -114,7 +132,8 @@ export default class RefreshPostCard extends React.Component {
 						<h1 className="reader-post-card__title">
 							<a className="reader-post-card__title-link" href={ post.URL }>{ title }</a>
 						</h1>
-						{ showExcerpt && <div className="reader-post-card__excerpt">{ post.short_excerpt }</div> }
+						{ showExcerpt && <div className="reader-post-card__excerpt">{ post.better_excerpt_no_html }</div> }
+						{ isDailyPostChallengeOrPrompt( post ) && <DailyPostButton post={ post } tagName="span" /> }
 						{ post &&
 							<ReaderPostActions
 								post={ originalPost ? originalPost : post }

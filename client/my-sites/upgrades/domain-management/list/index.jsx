@@ -96,7 +96,6 @@ export const List = React.createClass( {
 		return (
 			<Main wideLayout={ isPlanFeaturesEnabled() }>
 				<SidebarNavigation />
-				<DomainToPlanNudge />
 				<UpgradesNavigation
 					path={ this.props.context.path }
 					cart={ this.props.cart }
@@ -114,6 +113,8 @@ export const List = React.createClass( {
 					{ this.notice() }
 					{ this.listItems() }
 				</div>
+
+				<DomainToPlanNudge />
 			</Main>
 		);
 	},

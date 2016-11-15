@@ -62,6 +62,11 @@ const isCalypsoStartedConnection = function( state, siteSlug ) {
 	return false;
 };
 
+const isRedirectingToWpAdmin = function( state ) {
+	const authorizationData = getAuthorizationData( state );
+	return !! authorizationData.isRedirectingToWpAdmin;
+};
+
 const getFlowType = function( state, siteSlug ) {
 	const sessions = getSessions( state );
 	siteSlug = urlToSlug( siteSlug );
@@ -99,6 +104,27 @@ const hasXmlrpcError = function( state ) {
 	);
 };
 
+const getJetpackPlanSelected = function( state ) {
+	const selectedPlans = state.jetpackConnect.jetpackConnectSelectedPlans;
+	const siteUrl = getAuthorizationRemoteQueryData( state ).site;
+
+	if ( siteUrl ) {
+		const siteSlug = urlToSlug( siteUrl );
+		if ( selectedPlans && selectedPlans[ siteSlug ] ) {
+			return selectedPlans[ siteSlug ];
+		}
+	}
+	return false;
+};
+
+const getSiteSelectedPlan = function( state, siteSlug ) {
+	return state.jetpackConnect.jetpackConnectSelectedPlans && state.jetpackConnect.jetpackConnectSelectedPlans[ siteSlug ];
+};
+
+const getGlobalSelectedPlan = function( state ) {
+	return state.jetpackConnect.jetpackConnectSelectedPlans && state.jetpackConnect.jetpackConnectSelectedPlans[ '*' ];
+};
+
 export default {
 	getConnectingSite,
 	getAuthorizationData,
@@ -108,8 +134,12 @@ export default {
 	getSSOSessions,
 	getSSO,
 	isCalypsoStartedConnection,
+	isRedirectingToWpAdmin,
 	isRemoteSiteOnSitesList,
 	getFlowType,
 	getJetpackSiteByUrl,
-	hasXmlrpcError
+	hasXmlrpcError,
+	getJetpackPlanSelected,
+	getSiteSelectedPlan,
+	getGlobalSelectedPlan
 };

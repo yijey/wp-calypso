@@ -3,11 +3,11 @@
  */
 import ReactDom from 'react-dom';
 import React from 'react';
+import { Provider as ReduxProvider } from 'react-redux';
 import page from 'page';
 import some from 'lodash/some';
 import includes from 'lodash/includes';
 import capitalize from 'lodash/capitalize';
-import i18n from 'i18n-calypso';
 
 /**
  * Internal Dependencies
@@ -20,9 +20,9 @@ import PlanSetup from './jetpack-plugins-setup';
 import PluginListComponent from './main';
 import PluginComponent from './plugin';
 import PluginBrowser from './plugins-browser';
-import { setDocumentHeadTitle as setTitle } from 'state/document-head/actions';
 import { renderWithReduxStore } from 'lib/react-helpers';
 import { setSection } from 'state/ui/actions';
+import { getSelectedSite, getSection } from 'state/ui/selectors';
 
 /**
  * Module variables
@@ -35,7 +35,7 @@ let lastPluginsListVisited,
 
 function renderSinglePlugin( context, siteUrl ) {
 	const pluginSlug = decodeURIComponent( context.params.plugin );
-	const site = sites.getSelectedSite();
+	const site = getSelectedSite( context.store.getState() );
 	const analyticsPageTitle = 'Plugins';
 
 	let baseAnalyticsPath = 'plugins/:plugin';
@@ -67,8 +67,6 @@ function renderSinglePlugin( context, siteUrl ) {
 			sites,
 			pluginSlug,
 			siteUrl,
-			// FIXME: Auto-converted from the Flux setTitle action. Please use <DocumentHead> instead.
-			onPluginRefresh: title => context.store.dispatch( setTitle( title ) )
 		} ),
 		document.getElementById( 'primary' ),
 		context.store
@@ -85,22 +83,22 @@ function getPathWithoutSiteSlug( context, site ) {
 
 function renderPluginList( context, basePath ) {
 	const search = context.query.s;
-	const site = sites.getSelectedSite();
+	const site = getSelectedSite( context.store.getState() );
 
 	lastPluginsListVisited = getPathWithoutSiteSlug( context, site );
 	lastPluginsQuerystring = context.querystring;
-	context.store.dispatch( setTitle( i18n.translate( 'Plugins', { textOnly: true } ) ) ); // FIXME: Auto-converted from the Flux setTitle action. Please use <DocumentHead> instead.
 
-	renderWithReduxStore(
-		React.createElement( PluginListComponent, {
-			path: basePath,
-			context,
-			filter: context.params.pluginFilter,
-			sites,
-			search
-		} ),
-		document.getElementById( 'primary' ),
-		context.store
+	ReactDom.render(
+		React.createElement( ReduxProvider, { store: context.store },
+			React.createElement( PluginListComponent, {
+				path: basePath,
+				context,
+				filter: context.params.pluginFilter,
+				sites,
+				search
+			} )
+		),
+		document.getElementById( 'primary' )
 	);
 
 	if ( search ) {
@@ -120,7 +118,7 @@ function renderPluginList( context, basePath ) {
 
 function renderPluginsBrowser( context ) {
 	const searchTerm = context.query.s;
-	let site = sites.getSelectedSite();
+	let site = getSelectedSite( context.store.getState() );
 	let { category } = context.params;
 
 	lastPluginsListVisited = getPathWithoutSiteSlug( context, site );
@@ -135,8 +133,6 @@ function renderPluginsBrowser( context ) {
 	if ( ! site && allowedCategoryNames.indexOf( context.params.siteOrCategory ) < 0 ) {
 		site = { slug: context.params.siteOrCategory };
 	}
-
-	context.store.dispatch( setTitle( i18n.translate( 'Plugin Browser', { textOnly: true } ) ) ); // FIXME: Auto-converted from the Flux setTitle action. Please use <DocumentHead> instead.
 
 	const analyticsPageTitle = 'Plugin Browser' + ( category ? ': ' + category : '' );
 	analytics
@@ -157,8 +153,9 @@ function renderPluginsBrowser( context ) {
 }
 
 function renderProvisionPlugins( context ) {
-	const section = context.store.getState().ui.section;
-	const site = sites.getSelectedSite();
+	const state = context.store.getState();
+	const section = getSection( state );
+	const site = getSelectedSite( state );
 	context.store.dispatch( setSection( Object.assign( {}, section, { secondary: false } ) ) );
 	ReactDom.unmountComponentAtNode( document.getElementById( 'secondary' ) );
 
@@ -177,7 +174,7 @@ const controller = {
 	validateFilters( filter, context, next ) {
 		const wpcomFilter = 'standard';
 		const siteUrl = route.getSiteFragment( context.path );
-		const site = sites.getSelectedSite();
+		const site = getSelectedSite( context.store.getState() );
 		const appliedFilter = ( filter ? filter : context.params.plugin ).toLowerCase();
 
 		// bail if /plugins/:site_id?

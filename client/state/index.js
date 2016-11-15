@@ -9,8 +9,10 @@ import { createStore, applyMiddleware, combineReducers, compose } from 'redux';
  */
 import noticesMiddleware from './notices/middleware';
 import application from './application/reducer';
+import accountRecovery from './account-recovery/reducer';
 import comments from './comments/reducer';
 import componentsUsageStats from './components-usage-stats/reducer';
+import consoleDispatcher from './console-dispatch';
 import countryStates from './country-states/reducer';
 import currentUser from './current-user/reducer';
 import documentHead from './document-head/reducer';
@@ -40,6 +42,7 @@ import sharing from './sharing/reducer';
 import shortcodes from './shortcodes/reducer';
 import signup from './signup/reducer';
 import sites from './sites/reducer';
+import siteRoles from './site-roles/reducer';
 import siteSettings from './site-settings/reducer';
 import stats from './stats/reducer';
 import storedCards from './stored-cards/reducer';
@@ -55,6 +58,7 @@ import wordads from './wordads/reducer';
  */
 export const reducer = combineReducers( {
 	application,
+	accountRecovery,
 	comments,
 	componentsUsageStats,
 	countryStates,
@@ -86,6 +90,7 @@ export const reducer = combineReducers( {
 	shortcodes,
 	signup,
 	sites,
+	siteRoles,
 	siteSettings,
 	stats,
 	storedCards,
@@ -94,7 +99,7 @@ export const reducer = combineReducers( {
 	themes,
 	ui,
 	users,
-	wordads
+	wordads,
 } );
 
 const middleware = [ thunkMiddleware, noticesMiddleware ];
@@ -115,7 +120,11 @@ export function createReduxStore( initialState = {} ) {
 		window.app.isDebug &&
 		window.devToolsExtension
 	) {
-		createStoreWithMiddleware = compose( createStoreWithMiddleware, window.devToolsExtension() );
+		createStoreWithMiddleware = compose(
+			createStoreWithMiddleware,
+			consoleDispatcher,
+			window.devToolsExtension(),
+		);
 	}
 	return createStoreWithMiddleware( createStore )( reducer, initialState );
 }

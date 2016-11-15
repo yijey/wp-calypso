@@ -2,7 +2,8 @@
  * External dependencies
  */
 const assert = require( 'chai' ).assert,
-	Spy = require( 'sinon' ).spy;
+	Spy = require( 'sinon' ).spy,
+	trim = require( 'lodash/trim' );
 
 /**
  * Internal dependencies
@@ -42,10 +43,10 @@ describe( 'index', function() {
 			normalizer.withContentDOM(),
 			normalizer.withContentDOM( [
 				normalizer.content.removeStyles,
+				normalizer.content.sanitizeContent,
 				normalizer.content.makeImagesSafe( 300 ),
 				normalizer.content.makeEmbedsSafe,
 				normalizer.content.detectEmbeds,
-				normalizer.content.wordCountAndReadingTime
 			] ),
 			normalizer.createBetterExcerpt,
 			normalizer.waitForImagesToLoad,
@@ -235,11 +236,11 @@ describe( 'index', function() {
 				}
 			};
 			normalizer( post, [ normalizer.safeImageProperties( 200 ) ], function( err, normalized ) {
-				assert.strictEqual( normalized.author.avatar_URL, 'http://example.com/me.jpg-SAFE?w=200&quality=80&strip=info' );
-				assert.strictEqual( normalized.featured_image, 'http://foo.bar/-SAFE?w=200&quality=80&strip=info' );
-				assert.strictEqual( normalized.post_thumbnail.URL, 'http://example.com/thumb.jpg-SAFE?w=200&quality=80&strip=info' );
-				assert.strictEqual( normalized.featured_media.uri, 'http://example.com/media.jpg-SAFE?w=200&quality=80&strip=info' );
-				assert.strictEqual( normalized.attachments[ '1234' ].URL, 'http://example.com/media.jpg-SAFE?w=200&quality=80&strip=info' );
+				assert.strictEqual( normalized.author.avatar_URL, 'http://example.com/me.jpg-SAFE?quality=80&strip=info&w=200' );
+				assert.strictEqual( normalized.featured_image, 'http://foo.bar/-SAFE?quality=80&strip=info&w=200' );
+				assert.strictEqual( normalized.post_thumbnail.URL, 'http://example.com/thumb.jpg-SAFE?quality=80&strip=info&w=200' );
+				assert.strictEqual( normalized.featured_media.uri, 'http://example.com/media.jpg-SAFE?quality=80&strip=info&w=200' );
+				assert.strictEqual( normalized.attachments[ '1234' ].URL, 'http://example.com/media.jpg-SAFE?quality=80&strip=info&w=200' );
 				assert.strictEqual( normalized.attachments[ '3456' ].URL, 'http://example.com/media.jpg' );
 				done( err );
 			} );
@@ -432,7 +433,7 @@ describe( 'index', function() {
 					content: '<img src="http://example.com/example.jpg"><img src="http://example.com/example2.jpg">'
 				},
 				[ normalizer.withContentDOM( [ normalizer.content.makeImagesSafe( 400 ) ] ) ], function( err, normalized ) {
-					assert.equal( normalized.content, '<img src="http://example.com/example.jpg-SAFE?w=400&amp;quality=80&amp;strip=info"><img src="http://example.com/example2.jpg-SAFE?w=400&amp;quality=80&amp;strip=info">' );
+					assert.equal( normalized.content, '<img src="http://example.com/example.jpg-SAFE?quality=80&amp;strip=info&amp;w=400"><img src="http://example.com/example2.jpg-SAFE?quality=80&amp;strip=info&amp;w=400">' );
 					done( err );
 				}
 			);
@@ -464,13 +465,13 @@ describe( 'index', function() {
 			);
 		} );
 
-		it( 'fixes up srcsets', function( done ) {
+		it( 'removes srcsets', function( done ) {
 			normalizer(
 				{
 					content: '<img src="http://example.com/example.jpg" srcset="http://example.com/example-100.jpg 100w, http://example.com/example-600.jpg 600w">'
 				},
 				[ normalizer.withContentDOM( [ normalizer.content.makeImagesSafe() ] ) ], function( err, normalized ) {
-					assert.equal( normalized.content, '<img src="http://example.com/example.jpg-SAFE" srcset="http://example.com/example-100.jpg-SAFE 100w, http://example.com/example-600.jpg-SAFE 600w">' );
+					assert.equal( normalized.content, '<img src="http://example.com/example.jpg-SAFE">' );
 					done( err );
 				}
 			);
@@ -486,58 +487,6 @@ describe( 'index', function() {
 					done( err );
 				}
 			);
-		} );
-	} );
-
-	describe( 'content.wordCountAndReadingTime', function() {
-		function assertCountAndTime( content, count, time, done ) {
-			normalizer(
-				{
-					content: content
-				},
-				[ normalizer.withContentDOM( [ normalizer.content.wordCountAndReadingTime ] ) ], function( err, normalized ) {
-					assert.strictEqual( normalized.word_count, count );
-					assert.strictEqual( normalized.reading_time, time );
-					done( err );
-				}
-			);
-		}
-
-		function assertTimeForCount( count, time, done ) {
-			assertCountAndTime( ( new Array( count + 1 ) ).join( ' word ' ), count, time, done );
-		}
-
-		it( 'is undefined for empty content', function( done ) {
-			assertCountAndTime( '', undefined, undefined, done );
-		} );
-
-		it( 'has zero words, no time, with only punctuation', function( done ) {
-			assertCountAndTime( ';:,.?¿\-!¡', 0, undefined, done );
-		} );
-
-		it( 'can deal with html in the content', function( done ) {
-			assertCountAndTime( '<p>This is a sentence , made ,. up of words!</p>', 8, 2, done );
-		} );
-
-		it( 'can deal with urls', function( done ) {
-			assertCountAndTime( 'welcome to http://example.com?foo=bar, another college website', 6, 2, done );
-		} );
-
-		it( 'reading time matches the expected breakpoints', function( done ) {
-			function doneIfError( err ) {
-				if ( err ) {
-					done( err );
-				}
-			}
-			assertTimeForCount( 1, 1, doneIfError );
-			assertTimeForCount( 4, 1, doneIfError );
-			assertTimeForCount( 5, 2, doneIfError );
-			assertTimeForCount( 8, 2, doneIfError );
-			assertTimeForCount( 9, 3, doneIfError );
-			assertTimeForCount( 12, 3, doneIfError );
-			assertTimeForCount( 13, 4, doneIfError );
-
-			done();
 		} );
 	} );
 
@@ -613,25 +562,25 @@ describe( 'index', function() {
 				images: [
 					null, // null reference
 					{
-						naturalHeight: 1,
-						naturalWidth: 1
+						height: 1,
+						width: 1
 					}, // too small
 					{
-						naturalHeight: 351,
-						naturalWidth: 5
+						height: 351,
+						width: 5
 					}, // too narrow
 					{
-						naturalHeight: 5,
-						naturalWidth: 351
+						height: 5,
+						width: 351
 					}, // too short
 					{
-						naturalHeight: 351,
-						naturalWidth: 351,
+						height: 351,
+						width: 351,
 						src: 'http://example.com/image.jpg'
 					}, // YES
 					{
-						naturalHeight: 3500,
-						naturalWidth: 3500
+						height: 3500,
+						width: 3500
 					} // prefer first that passes
 				]
 			};
@@ -684,8 +633,8 @@ describe( 'index', function() {
 		it( 'should filter post.images based on size', function() {
 			function fakeImage( width, height ) {
 				return {
-					naturalWidth: width,
-					naturalHeight: height
+					width: width,
+					height: height
 				};
 			}
 			let post = {
@@ -948,7 +897,36 @@ describe( 'index', function() {
 				}
 			);
 		} );
+
+		it( 'removes elements by selector', function( done ) {
+			normalizer(
+				{
+					content: `
+					<div class="sharedaddy">sharedaddy</div>
+					<script>/*hi*/</script>
+					<div class="jp-relatedposts">jetpack</div>
+					<div class="jp-relatedposts-headline">jetpack</div>
+					<div class="mc4wp-form">a form</div>
+					<div class="wpcnt">wordads</div>
+					<div class="OUTBRAIN">outbrain content ads</div>
+					<div class="adsbygoogle">google ads</div>
+					<form><input type="text"></form>
+					<input type="password">
+					<select><option>nope</option></select>
+					<button>hi</button>
+					<textarea>noooope</textarea>
+					`,
+				},
+				[
+					normalizer.withContentDOM( [ normalizer.content.removeElementsBySelector ] )
+				], function( err, normalized ) {
+					assert.equal( trim( normalized.content ), '' );
+					done( err );
+				}
+			);
+		} );
 	} );
+
 	describe( 'The fancy excerpt creator', function() {
 		function assertExcerptBecomes( source, expected, done ) {
 			normalizer( { content: source }, [ normalizer.createBetterExcerpt ], function( err, normalized ) {
@@ -971,7 +949,11 @@ describe( 'index', function() {
 		} );
 
 		it( 'limits the excerpt to 3 elements after trimming', function( done ) {
-			assertExcerptBecomes( '<br /><p></p><p>one</p><p>two</p><p></p><br><p>three</p><p>four</p><br><p></p>', '<p>one</p><p>two</p><br>', done );
+			assertExcerptBecomes(
+				'<br /><p></p><p>one</p><p>two</p><p></p><br><p>three</p><p>four</p><br><p></p>',
+				'<p>one</p><p>two</p><br>',
+				done
+			);
 		} );
 
 		it( 'only trims top-level breaks', function( done ) {
@@ -984,6 +966,23 @@ describe( 'index', function() {
 				'<p>hi there</p>',
 				done
 			);
+		} );
+	} );
+
+	describe( 'The refreshed fancy excerpt creator', () => {
+		function assertExcerptBecomes( source, expected, done ) {
+			normalizer( { content: source }, [ normalizer.createBetterExcerptRefresh ], function( err, normalized ) {
+				assert.strictEqual( normalized.better_excerpt, expected );
+				done( err );
+			} );
+		}
+
+		it( 'removes tags but inserts spaces between p tags', function( done ) {
+			assertExcerptBecomes( '<p>one</p><p>two</p><p>three</p><p>four</p>', 'one two three four ', done );
+		} );
+
+		it( 'turns br tags into spaces', function( done ) {
+			assertExcerptBecomes( '<p>one<br>two<br/>three</p>', 'one two three ', done );
 		} );
 	} );
 } );

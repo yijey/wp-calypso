@@ -1,5 +1,3 @@
-/** @ssr-ready **/
-
 /**
  * External dependencies
  */
@@ -20,14 +18,17 @@ export const PLAN_FREE = 'free_plan';
 export const PLAN_JETPACK_FREE = 'jetpack_free';
 export const PLAN_JETPACK_PREMIUM = 'jetpack_premium';
 export const PLAN_JETPACK_BUSINESS = 'jetpack_business';
+export const PLAN_JETPACK_PERSONAL = 'jetpack_personal';
 export const PLAN_JETPACK_PREMIUM_MONTHLY = 'jetpack_premium_monthly';
 export const PLAN_JETPACK_BUSINESS_MONTHLY = 'jetpack_business_monthly';
+export const PLAN_JETPACK_PERSONAL_MONTHLY = 'jetpack_personal_monthly';
 export const PLAN_HOST_BUNDLE = 'host-bundle';
 export const PLAN_WPCOM_ENTERPRISE = 'wpcom-enterprise';
 export const PLAN_CHARGEBACK = 'chargeback';
 
-export const POPULAR_PLANS = [ PLAN_PREMIUM, PLAN_JETPACK_PREMIUM, PLAN_JETPACK_PREMIUM_MONTHLY ];
-export const JETPACK_MONTHLY_PLANS = [ PLAN_JETPACK_PREMIUM_MONTHLY, PLAN_JETPACK_BUSINESS_MONTHLY ];
+export const POPULAR_PLANS = [ PLAN_PREMIUM ];
+export const NEW_PLANS = [ PLAN_JETPACK_PERSONAL, PLAN_JETPACK_PERSONAL_MONTHLY ];
+export const JETPACK_MONTHLY_PLANS = [ PLAN_JETPACK_PREMIUM_MONTHLY, PLAN_JETPACK_BUSINESS_MONTHLY, PLAN_JETPACK_PERSONAL_MONTHLY ];
 
 export const PLAN_MONTHLY_PERIOD = 31;
 export const PLAN_ANNUAL_PERIOD = 365;
@@ -43,6 +44,7 @@ export const FEATURE_13GB_STORAGE = '13gb-storage';
 export const FEATURE_UNLIMITED_STORAGE = 'unlimited-storage';
 export const FEATURE_COMMUNITY_SUPPORT = 'community-support';
 export const FEATURE_EMAIL_LIVE_CHAT_SUPPORT = 'email-live-chat-support';
+export const FEATURE_PREMIUM_SUPPORT = 'priority-support';
 export const FEATURE_BASIC_DESIGN = 'basic-design';
 export const FEATURE_ADVANCED_DESIGN = 'advanced-design';
 export const FEATURE_GOOGLE_ANALYTICS = 'google-analytics';
@@ -54,6 +56,7 @@ export const FEATURE_WORDADS_INSTANT = 'wordads-instant';
 export const FEATURE_NO_BRANDING = 'no-wp-branding';
 export const FEATURE_ADVANCED_SEO = 'advanced-seo';
 export const FEATURE_LIVE_COURSES = 'live-courses';
+export const FEATURE_UPLOAD_PLUGINS = 'upload-plugins';
 
 // jetpack features constants
 export const FEATURE_STANDARD_SECURITY_TOOLS = 'standard-security-tools';
@@ -64,6 +67,7 @@ export const FEATURE_SPAM_AKISMET_PLUS = 'spam-akismet-plus';
 export const FEATURE_OFFSITE_BACKUP_VAULTPRESS_DAILY = 'offsite-backup-vaultpress-daily';
 export const FEATURE_OFFSITE_BACKUP_VAULTPRESS_REALTIME = 'offsite-backup-vaultpress-realtime';
 export const FEATURE_BACKUP_ARCHIVE_30 = 'backup-archive-30';
+export const FEATURE_BACKUP_ARCHIVE_15 = 'backup-archive-15';
 export const FEATURE_BACKUP_ARCHIVE_UNLIMITED = 'backup-archive-unlimited';
 export const FEATURE_BACKUP_STORAGE_SPACE_UNLIMITED = 'backup-storage-space-unlimited';
 export const FEATURE_AUTOMATED_RESTORES = 'automated-restores';
@@ -179,6 +183,7 @@ export const PLANS_LIST = {
 			FEATURE_VIDEO_UPLOADS,
 			FEATURE_LIVE_COURSES,
 			isEnabled( 'manage/advanced-seo' ) && FEATURE_ADVANCED_SEO,
+			isEnabled( 'automated-transfer' ) && FEATURE_UPLOAD_PLUGINS,
 			FEATURE_GOOGLE_ANALYTICS,
 			FEATURE_NO_BRANDING
 		] ),
@@ -212,61 +217,100 @@ export const PLANS_LIST = {
 	[ PLAN_JETPACK_PREMIUM ]: {
 		getTitle: () => i18n.translate( 'Premium' ),
 		getProductId: () => 2000,
-		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE ], plan ),
+		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE, PLAN_JETPACK_PERSONAL, PLAN_JETPACK_PERSONAL_MONTHLY ], plan ),
 		getPathSlug: () => 'premium',
 		getDescription: () => i18n.translate(
 			'Advanced security features to keep your site safe and sound.' +
 			' With daily backups, malware scanning, and spam defense.'
 		),
 		getFeatures: () => [
-			FEATURE_MALWARE_SCANNING_DAILY,
 			FEATURE_OFFSITE_BACKUP_VAULTPRESS_DAILY,
 			FEATURE_BACKUP_ARCHIVE_30,
 			FEATURE_BACKUP_STORAGE_SPACE_UNLIMITED,
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
+			FEATURE_MALWARE_SCANNING_DAILY,
 			FEATURE_EASY_SITE_MIGRATION,
-			FEATURE_EMAIL_LIVE_CHAT_SUPPORT
+			FEATURE_PREMIUM_SUPPORT
 		],
 		getBillingTimeFrame: () => i18n.translate( 'per month, billed yearly' )
 	},
+	[ PLAN_JETPACK_PERSONAL ]: {
+		getTitle: () => i18n.translate( 'Personal' ),
+		getProductId: () => 2005,
+		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE ], plan ),
+		getPathSlug: () => 'jetpack-personal',
+		getDescription: () => i18n.translate(
+			'Essentials for every site. The most affordable solution to keep your' +
+			' personal or small business site backed up and spam-free.'
+		),
+		getFeatures: () => [
+			FEATURE_OFFSITE_BACKUP_VAULTPRESS_DAILY,
+			FEATURE_BACKUP_ARCHIVE_30,
+			FEATURE_BACKUP_STORAGE_SPACE_UNLIMITED,
+			FEATURE_AUTOMATED_RESTORES,
+			FEATURE_SPAM_AKISMET_PLUS,
+		],
+		getBillingTimeFrame: () => i18n.translate( 'per month, billed yearly' )
+	},
+
 	[ PLAN_JETPACK_PREMIUM_MONTHLY ]: {
 		getTitle: () => i18n.translate( 'Premium' ),
 		getProductId: () => 2003,
 		getPathSlug: () => 'premium-monthly',
-		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE ], plan ),
+		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE, PLAN_JETPACK_PERSONAL, PLAN_JETPACK_PERSONAL_MONTHLY ], plan ),
 		getDescription: () => i18n.translate(
 			'Advanced security features to keep your site safe and sound.' +
 			' With daily backups, malware scanning, and spam defense.'		),
 		getFeatures: () => [
-			FEATURE_MALWARE_SCANNING_DAILY,
 			FEATURE_OFFSITE_BACKUP_VAULTPRESS_DAILY,
 			FEATURE_BACKUP_ARCHIVE_30,
 			FEATURE_BACKUP_STORAGE_SPACE_UNLIMITED,
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
+			FEATURE_MALWARE_SCANNING_DAILY,
 			FEATURE_EASY_SITE_MIGRATION,
-			FEATURE_EMAIL_LIVE_CHAT_SUPPORT
+			FEATURE_PREMIUM_SUPPORT
 		],
 		getBillingTimeFrame: () => i18n.translate( 'per month, billed monthly' )
 	},
+
+	[ PLAN_JETPACK_PERSONAL_MONTHLY ]: {
+		getTitle: () => i18n.translate( 'Personal' ),
+		getProductId: () => 2006,
+		getPathSlug: () => 'jetpack-personal-monthly',
+		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE ], plan ),
+		getDescription: () => i18n.translate(
+			'Essentials for every site. The most affordable solution to keep your personal' +
+			' or small business site backed up and spam-free.'
+		),
+		getFeatures: () => [
+			FEATURE_OFFSITE_BACKUP_VAULTPRESS_DAILY,
+			FEATURE_BACKUP_ARCHIVE_30,
+			FEATURE_BACKUP_STORAGE_SPACE_UNLIMITED,
+			FEATURE_AUTOMATED_RESTORES,
+			FEATURE_SPAM_AKISMET_PLUS
+		],
+		getBillingTimeFrame: () => i18n.translate( 'per month, billed monthly' )
+	},
+
 	[ PLAN_JETPACK_BUSINESS ]: {
 		getTitle: () => i18n.translate( 'Professional' ),
 		getProductId: () => 2001,
-		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE, PLAN_JETPACK_PREMIUM, PLAN_JETPACK_PREMIUM_MONTHLY ], plan ),
+		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE, PLAN_JETPACK_PREMIUM, PLAN_JETPACK_PREMIUM_MONTHLY, PLAN_JETPACK_PERSONAL, PLAN_JETPACK_PERSONAL_MONTHLY ], plan ),
 		getPathSlug: () => 'professional',
 		getDescription: () => i18n.translate(
 			'More powerful security tools, including malware removal and realtime content backup, for the ultimate peace of mind.'
 		),
 		getFeatures: () => [
-			FEATURE_MALWARE_SCANNING_DAILY_AND_ON_DEMAND,
 			FEATURE_OFFSITE_BACKUP_VAULTPRESS_REALTIME,
 			FEATURE_BACKUP_ARCHIVE_UNLIMITED,
 			FEATURE_BACKUP_STORAGE_SPACE_UNLIMITED,
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
+			FEATURE_MALWARE_SCANNING_DAILY_AND_ON_DEMAND,
 			FEATURE_EASY_SITE_MIGRATION,
-			FEATURE_EMAIL_LIVE_CHAT_SUPPORT,
+			FEATURE_PREMIUM_SUPPORT,
 			FEATURE_ONE_CLICK_THREAT_RESOLUTION,
 			FEATURE_POLLS_PRO,
 			FEATURE_ADVANCED_SEO
@@ -278,19 +322,19 @@ export const PLANS_LIST = {
 		getTitle: () => i18n.translate( 'Professional' ),
 		getProductId: () => 2004,
 		getPathSlug: () => 'professional-monthly',
-		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE, PLAN_JETPACK_PREMIUM, PLAN_JETPACK_PREMIUM_MONTHLY ], plan ),
+		availableFor: ( plan ) => includes( [ PLAN_JETPACK_FREE, PLAN_JETPACK_PREMIUM, PLAN_JETPACK_PREMIUM_MONTHLY, PLAN_JETPACK_PERSONAL, PLAN_JETPACK_PERSONAL_MONTHLY ], plan ),
 		getDescription: () => i18n.translate(
 			'More powerful security tools, including malware removal and realtime content backup, for the ultimate peace of mind.'
 		),
 		getFeatures: () => [
-			FEATURE_MALWARE_SCANNING_DAILY_AND_ON_DEMAND,
 			FEATURE_OFFSITE_BACKUP_VAULTPRESS_REALTIME,
 			FEATURE_BACKUP_ARCHIVE_UNLIMITED,
 			FEATURE_BACKUP_STORAGE_SPACE_UNLIMITED,
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
+			FEATURE_MALWARE_SCANNING_DAILY_AND_ON_DEMAND,
 			FEATURE_EASY_SITE_MIGRATION,
-			FEATURE_EMAIL_LIVE_CHAT_SUPPORT,
+			FEATURE_PREMIUM_SUPPORT,
 			FEATURE_ONE_CLICK_THREAT_RESOLUTION,
 			FEATURE_POLLS_PRO,
 			FEATURE_ADVANCED_SEO
@@ -433,6 +477,12 @@ export const FEATURES_LIST = {
 		)
 	},
 
+	[ FEATURE_UPLOAD_PLUGINS ]: {
+		getSlug: () => FEATURE_UPLOAD_PLUGINS,
+		getTitle: () => i18n.translate( 'Install plugins' ),
+		getDescription: () => i18n.translate( 'Install custom plugins on your site.' )
+	},
+
 	[ FEATURE_WORDADS_INSTANT ]: {
 		getSlug: () => FEATURE_WORDADS_INSTANT,
 		getTitle: () => i18n.translate( 'Monetize Your Site' ),
@@ -462,7 +512,7 @@ export const FEATURES_LIST = {
 		getSlug: () => FEATURE_3GB_STORAGE,
 		getTitle: () => i18n.translate( '3GB Storage Space' ),
 		getDescription: () => i18n.translate(
-			"Storage space for adding images and documents to your website."
+			'Storage space for adding images and documents to your website.'
 		)
 	},
 
@@ -496,6 +546,16 @@ export const FEATURES_LIST = {
 			'and running and working how you want it.'
 		)
 	},
+
+	[ FEATURE_PREMIUM_SUPPORT ]: {
+		getSlug: () => FEATURE_PREMIUM_SUPPORT,
+		getTitle: () => i18n.translate( 'Priority Support' ),
+		getDescription: () => i18n.translate(
+			'High quality support to help you get your website up ' +
+			'and running and working how you want it.'
+		)
+	},
+
 	[ FEATURE_STANDARD_SECURITY_TOOLS ]: {
 		getSlug: () => FEATURE_STANDARD_SECURITY_TOOLS,
 		getTitle: () => i18n.translate( 'Standard Security Tools' ),
@@ -534,7 +594,7 @@ export const FEATURES_LIST = {
 	},
 	[ FEATURE_OFFSITE_BACKUP_VAULTPRESS_REALTIME ]: {
 		getSlug: () => FEATURE_OFFSITE_BACKUP_VAULTPRESS_REALTIME,
-		getTitle: () => i18n.translate( 'Realtime Offsite Backups' ),
+		getTitle: () => i18n.translate( 'Real-time Offsite Backups' ),
 		getDescription: () => i18n.translate(
 			'Automatic realtime backups of every single aspect of your site. ' +
 			'Stored safely and optimized for WordPress.'
@@ -544,6 +604,11 @@ export const FEATURES_LIST = {
 		getSlug: () => FEATURE_BACKUP_ARCHIVE_30,
 		getTitle: () => i18n.translate( '30-day Backup Archive' ),
 		getDescription: () => i18n.translate( 'Browse or restore any backup made within the past 30 days.' )
+	},
+	[ FEATURE_BACKUP_ARCHIVE_15 ]: {
+		getSlug: () => FEATURE_BACKUP_ARCHIVE_15,
+		getTitle: () => i18n.translate( '15-day Backup Archive' ),
+		getDescription: () => i18n.translate( 'Browse or restore any backup made within the past 15 days.' )
 	},
 	[ FEATURE_BACKUP_ARCHIVE_UNLIMITED ]: {
 		getSlug: () => FEATURE_BACKUP_ARCHIVE_UNLIMITED,
@@ -622,12 +687,18 @@ export function isPopular( plan ) {
 	return includes( POPULAR_PLANS, plan );
 }
 
+export function isNew( plan ) {
+	return includes( NEW_PLANS, plan );
+}
+
 export function getPlanClass( plan ) {
 	switch ( plan ) {
 		case PLAN_JETPACK_FREE:
 		case PLAN_FREE:
 			return 'is-free-plan';
 		case PLAN_PERSONAL:
+		case PLAN_JETPACK_PERSONAL:
+		case PLAN_JETPACK_PERSONAL_MONTHLY:
 			return 'is-personal-plan';
 		case PLAN_PREMIUM:
 		case PLAN_JETPACK_PREMIUM:
@@ -648,6 +719,8 @@ export function getMonthlyPlanByYearly( plan ) {
 			return PLAN_JETPACK_PREMIUM_MONTHLY;
 		case PLAN_JETPACK_BUSINESS:
 			return PLAN_JETPACK_BUSINESS_MONTHLY;
+		case PLAN_JETPACK_PERSONAL:
+			return PLAN_JETPACK_PERSONAL_MONTHLY;
 		default:
 			return '';
 	}

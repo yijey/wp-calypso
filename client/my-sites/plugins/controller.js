@@ -6,7 +6,6 @@ import React from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import page from 'page';
 import some from 'lodash/some';
-import includes from 'lodash/includes';
 import capitalize from 'lodash/capitalize';
 
 /**
@@ -94,6 +93,7 @@ function renderPluginList( context, basePath ) {
 				path: basePath,
 				context,
 				filter: context.params.pluginFilter,
+				category: context.params.category,
 				sites,
 				search
 			} )
@@ -111,14 +111,18 @@ function renderPluginList( context, basePath ) {
 			: ''
 		);
 
+	let baseAnalyticsPath = 'plugins';
+	if ( site ) {
+		baseAnalyticsPath += '/:site';
+	}
 	analytics
-	.pageView
-	.record( context.pathname.replace( site.domain, ':site' ), analyticsPageTitle );
+		.pageView
+		.record( baseAnalyticsPath, analyticsPageTitle );
 }
 
 function renderPluginsBrowser( context ) {
 	const searchTerm = context.query.s;
-	let site = getSelectedSite( context.store.getState() );
+	const site = getSelectedSite( context.store.getState() );
 	let { category } = context.params;
 
 	lastPluginsListVisited = getPathWithoutSiteSlug( context, site );
@@ -130,14 +134,16 @@ function renderPluginsBrowser( context ) {
 	) {
 		category = context.params.siteOrCategory;
 	}
-	if ( ! site && allowedCategoryNames.indexOf( context.params.siteOrCategory ) < 0 ) {
-		site = { slug: context.params.siteOrCategory };
-	}
 
 	const analyticsPageTitle = 'Plugin Browser' + ( category ? ': ' + category : '' );
+	let baseAnalyticsPath = 'plugins/browse' + ( category ? '/' + category : '' );
+	if ( site ) {
+		baseAnalyticsPath += '/:site';
+	}
+
 	analytics
 	.pageView
-	.record( context.pathname.replace( site.domain, ':site' ), analyticsPageTitle );
+	.record( baseAnalyticsPath, analyticsPageTitle );
 
 	renderWithReduxStore(
 		React.createElement( PluginBrowser, {
@@ -158,8 +164,12 @@ function renderProvisionPlugins( context ) {
 	const site = getSelectedSite( state );
 	context.store.dispatch( setSection( Object.assign( {}, section, { secondary: false } ) ) );
 	ReactDom.unmountComponentAtNode( document.getElementById( 'secondary' ) );
+	let baseAnalyticsPath = 'plugins/setup';
+	if ( site ) {
+		baseAnalyticsPath += '/:site';
+	}
 
-	analytics.pageView.record( context.pathname.replace( site.domain, ':site' ), 'Jetpack Plugins Setup' );
+	analytics.pageView.record( baseAnalyticsPath, 'Jetpack Plugins Setup' );
 
 	renderWithReduxStore(
 		React.createElement( PlanSetup, {
@@ -171,39 +181,6 @@ function renderProvisionPlugins( context ) {
 }
 
 const controller = {
-	validateFilters( filter, context, next ) {
-		const wpcomFilter = 'standard';
-		const siteUrl = route.getSiteFragment( context.path );
-		const site = getSelectedSite( context.store.getState() );
-		const appliedFilter = ( filter ? filter : context.params.plugin ).toLowerCase();
-
-		// bail if /plugins/:site_id?
-		if ( siteUrl && appliedFilter === siteUrl.toString().toLowerCase() ) {
-			next();
-			return;
-		}
-
-		// When site URL is present, bail if ...
-		//
-		// ... the plugin parameter is not on the WordPress.com list for a WordPress.com site.
-		const pluginIsNotInList = ! site.jetpack && ! includes( [ 'all', wpcomFilter ], appliedFilter );
-
-		// ... or the plugin parameter is on the WordPress.com list for a Jetpack site.
-		// if no site URL is provided, bail if a WordPress.com filter was provided.
-		//  Only Jetpack plugins should work when no URL is provided.
-		const onlyJetPack = site.jetpack && appliedFilter === wpcomFilter;
-
-		if ( siteUrl && ( pluginIsNotInList || onlyJetPack ) ) {
-			page.redirect( '/plugins/' + siteUrl );
-			return;
-		} else if ( ! siteUrl && appliedFilter === wpcomFilter ) {
-			page.redirect( '/plugins' );
-			return;
-		}
-
-		next();
-	},
-
 	plugins( filter, context, next ) {
 		const siteUrl = route.getSiteFragment( context.path );
 		const basePath = route.sectionify( context.path ).replace( '/' + filter, '' );

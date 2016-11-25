@@ -25,7 +25,7 @@ import MetaTitleEditor from 'components/seo/meta-title-editor';
 import Notice from 'components/notice';
 import NoticeAction from 'components/notice/notice-action';
 import notices from 'notices';
-import protectForm from 'lib/mixins/protect-form';
+import { protectForm } from 'lib/protect-form';
 import FormInput from 'components/forms/form-text-input-with-affixes';
 import FormInputValidation from 'components/forms/form-input-validation';
 import FormFieldset from 'components/forms/form-fieldset';
@@ -105,8 +105,6 @@ function isValidCode( serviceName = '', content = '' ) {
 
 export const SeoForm = React.createClass( {
 	displayName: 'SiteSettingsFormSEO',
-
-	mixins: [ protectForm.mixin ],
 
 	getInitialState() {
 		return {
@@ -305,7 +303,7 @@ export const SeoForm = React.createClass( {
 				this.setState( { isSubmittingForm: false } );
 			} else {
 				notices.success( this.translate( 'Settings saved!' ) );
-				this.markSaved();
+				this.props.markSaved();
 				this.setState( { isSubmittingForm: false } );
 
 				site.fetchSettings();
@@ -374,6 +372,7 @@ export const SeoForm = React.createClass( {
 			jetpackVersionSupportsSeo,
 		} = this.props;
 		const {
+			domain = '',
 			slug = '',
 			settings: {
 				blog_public = 1
@@ -399,7 +398,7 @@ export const SeoForm = React.createClass( {
 		const isDisabled = isSitePrivate || isJetpackUnsupported || isSubmittingForm || isFetchingSettings;
 		const isSaveDisabled = isDisabled || isSubmittingForm || ( ! showPasteError && invalidCodes.length > 0 );
 
-		const siteUrl = `https://${ slug }/`;
+		const siteUrl = `https://${ domain }/`;
 		const sitemapUrl = `${ siteUrl }sitemap.xml`;
 		const generalTabUrl = getGeneralTabUrl( slug );
 		const jetpackUpdateUrl = getJetpackPluginUrl( slug );
@@ -470,6 +469,20 @@ export const SeoForm = React.createClass( {
 					</Notice>
 				}
 
+				{ jetpack && ! this.props.site.isModuleActive( 'seo-tools' ) &&
+					<Notice
+						status="is-warning"
+						showDismiss={ false }
+						text={ this.translate(
+							'SEO Tools module is disabled in Jetpack.'
+						) }
+					>
+						<NoticeAction href={ '//' + domain + '/wp-admin/admin.php?page=jetpack#/engagement' }>
+							{ this.translate( 'Enable' ) }
+						</NoticeAction>
+					</Notice>
+				}
+
 				{ showUpgradeNudge &&
 					<UpgradeNudge
 						feature={ FEATURE_ADVANCED_SEO }
@@ -500,7 +513,7 @@ export const SeoForm = React.createClass( {
 					</div>
 				}
 
-				<form onChange={ this.markChanged } className="seo-settings__seo-form">
+				<form onChange={ this.props.markChanged } className="seo-settings__seo-form">
 					{ showAdvancedSeo && config.isEnabled( 'manage/advanced-seo/custom-title' ) &&
 						<div>
 							<SectionHeader label={ this.translate( 'Page Title Structure' ) }>
@@ -573,6 +586,20 @@ export const SeoForm = React.createClass( {
 								</FormSettingExplanation>
 							</Card>
 						</div>
+					}
+
+					{ jetpack && ! this.props.site.isModuleActive( 'verification-tools' ) &&
+						<Notice
+							status="is-warning"
+							showDismiss={ false }
+							text={ this.translate(
+								'Site Verification Services are disabled in Jetpack.'
+							) }
+						>
+							<NoticeAction href={ '//' + domain + '/wp-admin/admin.php?page=jetpack#/engagement' }>
+								{ this.translate( 'Enable' ) }
+							</NoticeAction>
+						</Notice>
 					}
 
 					<SectionHeader label={ this.translate( 'Site Verification Services' ) }>
@@ -718,7 +745,7 @@ const mapStateToProps = ( state, ownProps ) => {
 
 	const seoFeatureEnabled = site &&
 		( ! site.jetpack && config.isEnabled( 'manage/advanced-seo' ) ||
-			site.jetpack && config.isEnabled( 'jetpack/seo-tools' ) && jetpackVersionSupportsSeo && site.isModuleActive( 'seo-tools' ) );
+			site.jetpack && config.isEnabled( 'jetpack/seo-tools' ) && jetpackVersionSupportsSeo );
 
 	return {
 		selectedSite: getSelectedSite( state ),
@@ -742,4 +769,4 @@ export default connect(
 	mapDispatchToProps,
 	undefined,
 	{ pure: false } // defaults to true, but this component has internal state
-)( SeoForm );
+)( protectForm( SeoForm ) );

@@ -13,6 +13,7 @@ import {
 	reduce,
 	union,
 } from 'lodash';
+import WindowScroller from 'react-virtualized/WindowScroller';
 
 /**
  * Internal dependencies
@@ -20,14 +21,14 @@ import {
 import VirtualList from 'components/virtual-list';
 import ListItem from './list-item';
 import CompactCard from 'components/card/compact';
-import { decodeEntities } from 'lib/formatting';
 import QueryTerms from 'components/data/query-terms';
-import { getSelectedSiteId } from 'state/ui/selectors';
+import QuerySiteSettings from 'components/data/query-site-settings';
 import {
 	isRequestingTermsForQueryIgnoringPage,
 	getTermsLastPageForQuery,
 	getTermsForQueryIgnoringPage,
 } from 'state/terms/selectors';
+import { getSelectedSiteId } from 'state/ui/selectors';
 
 /**
  * Constants
@@ -55,7 +56,7 @@ export class TaxonomyManagerList extends Component {
 	};
 
 	state = {
-		requestedPages: [ 1 ]
+		requestedPages: [ 1 ],
 	};
 
 	componentWillMount() {
@@ -64,7 +65,7 @@ export class TaxonomyManagerList extends Component {
 
 	componentWillReceiveProps( newProps ) {
 		if ( newProps.terms !== this.props.terms ) {
-			this.termIds = map( this.props.terms, 'ID' );
+			this.termIds = map( newProps.terms, 'ID' );
 		}
 	}
 
@@ -86,11 +87,11 @@ export class TaxonomyManagerList extends Component {
 		return reduce( this.getTermChildren( item.ID ), ( memo, childItem ) => {
 			return memo + this.getItemHeight( childItem, true );
 		}, ITEM_HEIGHT );
-	}
+	};
 
 	getRowHeight = ( { index } ) => {
 		return this.getItemHeight( this.getItem( index ) );
-	}
+	};
 
 	getItem( index ) {
 		if ( this.props.terms ) {
@@ -103,15 +104,10 @@ export class TaxonomyManagerList extends Component {
 		if ( item.parent && ! _recurse && includes( this.termIds, item.parent ) ) {
 			return;
 		}
-
 		const children = this.getTermChildren( item.ID );
-
-		const { translate, onTermClick } = this.props;
+		const { onTermClick, taxonomy } = this.props;
 		const itemId = item.ID;
-		const name = decodeEntities( item.name ) || translate( 'Untitled' );
-		const onClick = () => {
-			onTermClick( item );
-		};
+		const onClick = () => onTermClick( item );
 
 		return (
 			<div key={ 'term-wrapper-' + itemId } className="taxonomy-manager__list-item">
@@ -119,7 +115,7 @@ export class TaxonomyManagerList extends Component {
 					onClick={ onClick }
 					key={ itemId }
 					className="taxonomy-manager__list-item-card">
-					<ListItem name={ name } onClick={ onClick } />
+					<ListItem onClick={ onClick } taxonomy={ taxonomy } term={ item } />
 				</CompactCard>
 				{ children.length > 0 && (
 					<div className="taxonomy-manager__nested-list">
@@ -156,6 +152,7 @@ export class TaxonomyManagerList extends Component {
 		const classes = classNames( 'taxonomy-manager', {
 			'is-loading': loading
 		} );
+		const hasDefaultSetting = taxonomy === 'category';
 
 		return (
 			<div className={ classes }>
@@ -166,27 +163,34 @@ export class TaxonomyManagerList extends Component {
 						taxonomy={ taxonomy }
 						query={ { ...query, page } } />
 				) ) }
+				{ hasDefaultSetting && <QuerySiteSettings siteId={ siteId } /> }
 
-				<VirtualList
-					items={ terms }
-					lastPage={ lastPage }
-					loading={ loading }
-					getRowHeight={ this.getRowHeight }
-					renderRow={ this.renderRow }
-					onRequestPages={ this.requestPages }
-					perPage={ DEFAULT_TERMS_PER_PAGE }
-					loadOffset={ LOAD_OFFSET }
-					searching={ query.search && query.search.length }
-					defaultRowHeight={ ITEM_HEIGHT }
-				/>
+				<WindowScroller>
+					{ ( { height, scrollTop } ) => (
+						<VirtualList
+							items={ terms }
+							lastPage={ lastPage }
+							loading={ loading }
+							getRowHeight={ this.getRowHeight }
+							renderRow={ this.renderRow }
+							onRequestPages={ this.requestPages }
+							perPage={ DEFAULT_TERMS_PER_PAGE }
+							loadOffset={ LOAD_OFFSET }
+							searching={ query.search && query.search.length }
+							defaultRowHeight={ ITEM_HEIGHT }
+							height={ height }
+							scrollTop={ scrollTop }
+						/>
+				) }
+				</WindowScroller>
 			</div>
 		);
 	}
 }
 
 export default connect( ( state, ownProps ) => {
-	const siteId = getSelectedSiteId( state );
 	const { taxonomy, query } = ownProps;
+	const siteId = getSelectedSiteId( state );
 
 	return {
 		loading: isRequestingTermsForQueryIgnoringPage( state, siteId, taxonomy, query ),

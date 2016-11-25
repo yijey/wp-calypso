@@ -125,6 +125,8 @@ const DomainsStep = React.createClass( {
 				} )
 				: undefined;
 
+		registerDomainAnalytics.recordEvent( 'submitDomainStepSelection', suggestion, 'signup' );
+
 		SignupActions.submitSignupStep( Object.assign( {
 			processingMessage: this.translate( 'Adding your domain' ),
 			stepName: this.props.stepName,
@@ -198,6 +200,8 @@ const DomainsStep = React.createClass( {
 				analyticsSection="signup"
 				domainsWithPlansOnly={ this.props.domainsWithPlansOnly }
 				includeWordPressDotCom
+				includeDotBlogSubdomain={ ( this.props.flowName === 'subdomain' ) ||
+					( abtest( 'domainDotBlogSubdomain' ) === 'includeDotBlogSubdomain' ) }
 				isSignupStep
 				showExampleSuggestions
 				surveyVertical={ this.props.surveyVertical }

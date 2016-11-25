@@ -13,6 +13,8 @@ import PlansGrid from './plans-grid';
 import { PLAN_JETPACK_FREE,
 	PLAN_JETPACK_PREMIUM,
 	PLAN_JETPACK_PREMIUM_MONTHLY,
+	PLAN_JETPACK_PERSONAL,
+	PLAN_JETPACK_PERSONAL_MONTHLY,
 	PLAN_JETPACK_BUSINESS,
 	PLAN_JETPACK_BUSINESS_MONTHLY } from 'lib/plans/constants';
 import { getPlansBySite } from 'state/sites/plans/selectors';
@@ -99,6 +101,7 @@ class Plans extends Component {
 		} else if ( this.props.selectedSite ) {
 			this.props.goBackToWpAdmin( this.props.selectedSite.URL + JETPACK_ADMIN_PATH );
 		}
+		this.props.completeFlow();
 	}
 
 	redirect( path ) {
@@ -121,11 +124,27 @@ class Plans extends Component {
 			( site.plan.product_slug === PLAN_JETPACK_BUSINESS ||
 				site.plan.product_slug === PLAN_JETPACK_BUSINESS_MONTHLY ||
 				site.plan.product_slug === PLAN_JETPACK_PREMIUM ||
-				site.plan.product_slug === PLAN_JETPACK_PREMIUM_MONTHLY );
+				site.plan.product_slug === PLAN_JETPACK_PREMIUM_MONTHLY ||
+				site.plan.product_slug === PLAN_JETPACK_PERSONAL ||
+				site.plan.product_slug === PLAN_JETPACK_PERSONAL_MONTHLY );
 	}
 
 	autoselectPlan() {
 		if ( ! this.props.showFirst ) {
+			if ( this.props.flowType === 'personal' || this.props.selectedPlan === PLAN_JETPACK_PERSONAL ) {
+				const plan = this.props.getPlanBySlug( PLAN_JETPACK_PERSONAL );
+				if ( plan ) {
+					this.selectPlan( plan );
+					return;
+				}
+			}
+			if ( this.props.selectedPlan === PLAN_JETPACK_PERSONAL_MONTHLY ) {
+				const plan = this.props.getPlanBySlug( PLAN_JETPACK_PERSONAL_MONTHLY );
+				if ( plan ) {
+					this.selectPlan( plan );
+					return;
+				}
+			}
 			if ( this.props.flowType === 'pro' || this.props.selectedPlan === PLAN_JETPACK_BUSINESS ) {
 				const plan = this.props.getPlanBySlug( PLAN_JETPACK_BUSINESS );
 				if ( plan ) {
@@ -181,6 +200,16 @@ class Plans extends Component {
 
 		if ( cartItem.product_slug === PLAN_JETPACK_FREE ) {
 			return this.selectFreeJetpackPlan();
+		}
+		if ( cartItem.product_slug === PLAN_JETPACK_PERSONAL ) {
+			this.props.recordTracksEvent( 'calypso_jpc_plans_submit_39', {
+				user: this.props.userId
+			} );
+		}
+		if ( cartItem.product_slug === PLAN_JETPACK_PERSONAL_MONTHLY ) {
+			this.props.recordTracksEvent( 'calypso_jpc_plans_submit_3', {
+				user: this.props.userId
+			} );
 		}
 		if ( cartItem.product_slug === PLAN_JETPACK_PREMIUM ) {
 			this.props.recordTracksEvent( 'calypso_jpc_plans_submit_99', {

@@ -6,6 +6,30 @@ $reader-post-card-breakpoint-large: "( min-width: 961px ) and ( max-width: 1040p
 $reader-post-card-breakpoint-medium: "( min-width: 661px ) and ( max-width: 940px )";
 $reader-post-card-breakpoint-small: "( max-width: 550px )";
 
+// Overrides 30px top margin, moves first card closer to top of stream
+.is-reader-page .following.main .card.reader-post-card:nth-child(2) {
+
+	@include breakpoint( ">480px" ) {
+		margin-top: -18px;
+	}
+}
+
+// Adds a top border to first card in the Site Stream
+.is-reader-page .is-site-stream .reader-post-card.card {
+
+	&:nth-child(2) {
+		border-top: 1px solid lighten( $gray, 30% );
+	}
+}
+
+// Removes top border from first card in Discover Stream
+.is-reader-page .is-discover-stream.is-site-stream .reader-post-card.card {
+
+	&:nth-child(2) {
+		border-top: 0;
+	}
+}
+
 .reader-post-card.card {
 	border-bottom: 1px solid lighten( $gray, 30% );
 	box-shadow: none;
@@ -230,10 +254,10 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 }
 
 .reader-post-card__tag {
-    overflow: hidden;
-    position: relative;
-    height: 20px;
-    width: 100%;
+	overflow: hidden;
+	position: relative;
+	height: 20px;
+	width: 100%;
 
 	&::after {
 		@include long-content-fade( $size: 10% );
@@ -241,10 +265,10 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 }
 
 .reader-post-card__tag .gridicons-tag {
-    height: 18px;
-    margin: -4px 5px 0 0;
-    position: relative;
-    	top: 5px;
+	height: 18px;
+	margin: -4px 5px 0 0;
+	position: relative;
+		top: 5px;
 	width: 15px;
 	fill: lighten( $gray, 10% );
 }
@@ -324,11 +348,15 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 .reader-post-card__title-link:visited {
 	color: $gray-dark;
 	cursor: pointer;
-	font-size: 21px;
+	font-size: 18px;
 	font-weight: 700;
 
 	&:hover {
 		color: $gray-dark;
+	}
+
+	@include breakpoint( ">480px" ) {
+		font-size: 21px;
 	}
 }
 
@@ -338,14 +366,20 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 	font-weight: 100;
 	margin-top: 9px;
 	word-break: break-word;
-	overflow: hidden;
-	max-height: 15px * 1.6 * 3;
 	position: relative;
+}
 
-	&::before {
-		@include long-content-fade( $size: 15px * 1.6 * 5 );
-		top: inherit;
-		height: 15px * 1.6;
+// If we're not showing the entire excerpt, clamp to 3 lines
+.reader-post-card.card:not(.is-showing-entire-excerpt) {
+	.reader-post-card__excerpt {
+		overflow: hidden;
+		max-height: 15px * 1.6 * 3;
+
+		&::before {
+			@include long-content-fade( $size: 15px * 1.6 * 5 );
+			top: inherit;
+			height: 15px * 1.6;
+		}
 	}
 }
 
@@ -464,7 +498,6 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 
 // Gallery cards
 .reader-post-card__gallery {
-	border: 1px solid lighten( $gray, 30% );
 	display: flex;
 	margin: 0 0 17px;
 	padding: 0;
@@ -479,19 +512,19 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 }
 
 .reader-post-card__gallery-item {
+	border: 1px solid lighten( $gray, 30% );
 	cursor: pointer;
 	flex: 1;
 	list-style-type: none;
-	border-right: 1px solid lighten( $gray, 30% );
+	margin-right: 1px;
 
 	&:last-child {
-		border-right: 0;
+		margin-right: 0;
 	}
 
 	&:last-child {
 
 		@media #{$reader-post-card-breakpoint-medium} {
-			border-right: 0;
 			display: none;
 		}
 	}
@@ -500,20 +533,6 @@ $reader-post-card-breakpoint-small: "( max-width: 550px )";
 
 		@include breakpoint( "<480px" ) {
 			display: none;
-		}
-	}
-
-	&:nth-child(3) {
-
-		@media #{$reader-post-card-breakpoint-medium} {
-			border-right: 0;
-		}
-	}
-
-	&:nth-child(2) {
-
-		@include breakpoint( "<480px" ) {
-			border-right: 0;
 		}
 	}
 }

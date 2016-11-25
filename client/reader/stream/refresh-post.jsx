@@ -16,6 +16,7 @@ import QueryReaderFeed from 'components/data/query-reader-feed';
 import * as DiscoverHelper from 'reader/discover/helper';
 import FeedPostStore from 'lib/feed-post-store';
 import smartSetState from 'lib/react-smart-set-state';
+import { recordAction, recordGaEvent, recordTrackForPost } from 'reader/stats';
 
 class ReaderPostCardAdapter extends React.Component {
 
@@ -24,6 +25,10 @@ class ReaderPostCardAdapter extends React.Component {
 	}
 
 	onCommentClick = () => {
+		recordAction( 'click_comments' );
+		recordGaEvent( 'Clicked Post Comment Button' );
+		recordTrackForPost( 'calypso_reader_post_comments_button_clicked', this.props.post );
+
 		this.props.handleClick && this.props.handleClick( this.props.post, { comments: true } );
 	}
 
@@ -35,6 +40,7 @@ class ReaderPostCardAdapter extends React.Component {
 			site_ID: siteId,
 			is_external: isExternal
 		} = this.props.post;
+		const isDiscoverPost = this.props.post && DiscoverHelper.isDiscoverPost( this.props.post );
 
 		// only query the site if the feed id is missing. feed queries end up fetching site info
 		// via a meta query, so we don't need both.
@@ -47,7 +53,10 @@ class ReaderPostCardAdapter extends React.Component {
 				onClick={ this.onClick }
 				onCommentClick={ this.onCommentClick }
 				isSelected={ this.props.isSelected }
-				showPrimaryFollowButton={ this.props.showPrimaryFollowButtonOnCards }>
+				showPrimaryFollowButton={ this.props.showPrimaryFollowButton }
+				showEntireExcerpt={ isDiscoverPost }
+				useBetterExcerpt={ ! isDiscoverPost }
+				showSiteName={ this.props.showSiteName }>
 				{ feedId && <QueryReaderFeed feedId={ feedId } includeMeta={ false } /> }
 				{ ! isExternal && siteId && <QueryReaderSite siteId={ +siteId } includeMeta={ false } /> }
 			</ReaderPostCard>

@@ -1,5 +1,3 @@
-/** @ssr-ready **/
-
 /**
  * External dependencies
  */
@@ -135,7 +133,7 @@ export class Step extends Component {
 
 	/*
 	 * A step belongs to a specific section. This datum is used by the "blank
-	 * exit" feature (cf. quitIfInvalidRoute in Step and Continue).
+	 * exit" feature (cf. Step.quitIfInvalidRoute).
 	 *
 	 * `setStepSection` has specific logic to deal with the fact that `step` and
 	 * `section` transitions are not synchronized. Notably, navigating to a
@@ -193,12 +191,22 @@ export class Step extends Component {
 		if ( ! hasContinue && hasJustNavigated &&
 				this.isDifferentSection( lastAction.path ) ) {
 			defer( () => {
-				debug( 'Step.quitIfInvalidRoute: quitting' );
+				debug( 'Step.quitIfInvalidRoute: quitting (different section)' );
 				this.context.quit( this.context );
 			} );
-		} else {
-			debug( 'Step.quitIfInvalidRoute: not quitting' );
 		}
+
+		// quit if we have a target but cant find it
+		defer( () => {
+			const { quit } = this.context;
+			const target = targetForSlug( this.props.target );
+			if ( this.props.target && ! target ) {
+				debug( 'Step.quitIfInvalidRoute: quitting (cannot find target)' );
+				quit( this.context );
+			} else {
+				debug( 'Step.quitIfInvalidRoute: not quitting' );
+			}
+		} );
 	}
 
 	isDifferentSection( path ) {
@@ -244,6 +252,7 @@ export class Step extends Component {
 
 	render() {
 		const { when, children } = this.props;
+		const { isLastStep } = this.context;
 
 		debug( 'Step#render' );
 		if ( this.context.shouldPause ) {
@@ -262,6 +271,8 @@ export class Step extends Component {
 			this.props.className,
 			'guided-tours__step',
 			'guided-tours__step-glow',
+			this.context.step === 'init' && 'guided-tours__step-first',
+			isLastStep && 'guided-tours__step-finish',
 			targetSlug && 'guided-tours__step-pointing',
 			targetSlug && 'guided-tours__step-pointing-' + getValidatedArrowPosition( {
 				targetSlug,
@@ -353,7 +364,6 @@ export class Continue extends Component {
 
 	componentDidMount() {
 		! this.props.hidden && this.addTargetListener();
-		this.quitIfInvalidRoute( this.props, this.context );
 	}
 
 	componentWillUnmount() {
@@ -369,23 +379,7 @@ export class Continue extends Component {
 	}
 
 	componentDidUpdate() {
-		this.quitIfInvalidRoute( this.props, this.context );
 		this.addTargetListener();
-	}
-
-	quitIfInvalidRoute( props ) {
-		debug( 'Continue.quitIfInvalidRoute' );
-		defer( () => {
-			const { quit } = this.context;
-			const target = targetForSlug( props.target );
-			// quit if we have a target but cant find it
-			if ( props.target && ! target ) {
-				debug( 'Continue.quitIfInvalidRoute: quitting' );
-				quit( this.context );
-			} else {
-				debug( 'Continue.quitIfInvalidRoute: not quitting' );
-			}
-		} );
 	}
 
 	onContinue = () => {
@@ -419,9 +413,21 @@ export class Continue extends Component {
 			return null;
 		}
 
-		return <i>{ this.props.children || translate( 'Click to continue.' ) }</i>;
+		return (
+			<p className="guided-tours__actionstep-instructions">
+				<em>{ this.props.children || translate( 'Click to continue.' ) }</em>
+			</p>
+		);
 	}
 }
+
+export const ButtonRow = ( { children } ) => {
+	const className = React.Children.count( children ) === 1
+		? 'guided-tours__single-button-row'
+		: 'guided-tours__choice-button-row';
+
+	return <div className={ className }>{ children }</div>;
+};
 
 export class Link extends Component {
 	constructor( props ) {

@@ -22,7 +22,11 @@ import purchasePaths from '../paths';
 import { removePurchase } from 'state/purchases/actions';
 import FormSectionHeading from 'components/forms/form-section-heading';
 import userFactory from 'lib/user';
-import { slugToUrl } from 'lib/url';
+import { isOperatorsAvailable, isChatAvailable } from 'state/ui/olark/selectors';
+import olarkApi from 'lib/olark-api';
+import olarkActions from 'lib/olark-store/actions';
+import olarkEvents from 'lib/olark-events';
+import analytics from 'lib/analytics';
 
 const user = userFactory();
 
@@ -55,6 +59,32 @@ const RemovePurchase = React.createClass( {
 		};
 	},
 
+	componentWillMount() {
+		olarkEvents.on( 'api.chat.onBeginConversation', this.chatStarted );
+	},
+
+	componentWillUnmount() {
+		olarkEvents.off( 'api.chat.onBeginConversation', this.chatStarted );
+	},
+
+	chatStarted: () => {
+		this.recordChatEvent( 'calypso_precancellation_chat_begin' );
+		olarkApi( 'api.chat.sendNotificationToOperator', {
+			body: 'Context: Precancellation'
+		} );
+	},
+
+	recordChatEvent( eventAction ) {
+		const purchase = getPurchase( this.props );
+		analytics.tracks.recordEvent( eventAction, {
+			survey_step: this.state.surveyStep,
+			purchase: purchase.productSlug,
+			is_plan: isPlan( purchase ),
+			is_domain_registration: isDomainRegistration( purchase ),
+			has_included_domain: hasIncludedDomain( purchase ),
+		} );
+	},
+
 	closeDialog() {
 		this.setState( {
 			isDialogVisible: false,
@@ -70,6 +100,13 @@ const RemovePurchase = React.createClass( {
 		event.preventDefault();
 
 		this.setState( { isDialogVisible: true } );
+	},
+
+	openChat() {
+		olarkActions.expandBox();
+		olarkActions.focusBox();
+		this.recordChatEvent( 'calypso_precancellation_chat_click' );
+		this.setState( { isDialogVisible: false } );
 	},
 
 	changeSurveyStep() {
@@ -131,7 +168,7 @@ const RemovePurchase = React.createClass( {
 				notices.success(
 					this.translate( '%(productName)s was removed from {{siteName/}}.', {
 						args: { productName },
-						components: { siteName: <em>{ slugToUrl( selectedSite.slug ) }</em> }
+						components: { siteName: <em>{ selectedSite.domain }</em> }
 					} ),
 					{ persistent: true }
 				);
@@ -160,6 +197,15 @@ const RemovePurchase = React.createClass( {
 		);
 	},
 
+	getChatButton() {
+		return {
+			action: 'chat',
+			additionalClassNames: 'remove-purchase__chat-button is-borderless',
+			onClick: this.openChat,
+			label: this.translate( 'Need help? Chat with us' ),
+		};
+	},
+
 	renderDomainDialog() {
 		const buttons = [ {
 				action: 'cancel',
@@ -174,6 +220,10 @@ const RemovePurchase = React.createClass( {
 				onClick: this.removePurchase
 			} ],
 			productName = getName( getPurchase( this.props ) );
+
+		if ( this.props.showChatLink && config.isEnabled( 'upgrades/precancellation-chat' ) ) {
+			buttons.unshift( this.getChatButton() );
+		}
 
 		return (
 			<Dialog
@@ -246,6 +296,10 @@ const RemovePurchase = React.createClass( {
 			buttonsArr = inStepOne ? [ buttons.cancel, buttons.next ] : [ buttons.cancel, buttons.prev, buttons.remove ];
 		}
 
+		if ( this.props.showChatLink && config.isEnabled( 'upgrades/precancellation-chat' ) ) {
+			buttonsArr.unshift( this.getChatButton() );
+		}
+
 		return (
 			<div>
 				<Dialog
@@ -288,7 +342,7 @@ const RemovePurchase = React.createClass( {
 							'Are you sure you want to remove %(productName)s from {{siteName/}}?',
 							{
 								args: { productName },
-								components: { siteName: <em>{ slugToUrl( this.props.selectedSite.slug ) }</em> }
+								components: { siteName: <em>{ this.props.selectedSite.domain }</em> }
 							}
 						)
 					}
@@ -331,6 +385,8 @@ const RemovePurchase = React.createClass( {
 } );
 
 export default connect(
-	null,
+	( state ) => ( {
+		showChatLink: isOperatorsAvailable( state ) && isChatAvailable( state, 'precancellation' ),
+	} ),
 	{ removePurchase }
 )( RemovePurchase );

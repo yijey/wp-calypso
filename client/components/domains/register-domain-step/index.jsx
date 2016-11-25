@@ -13,8 +13,8 @@ import noop from 'lodash/noop';
 import startsWith from 'lodash/startsWith';
 import page from 'page';
 import qs from 'qs';
-import endsWith from 'lodash/endsWith';
 import { connect } from 'react-redux';
+import { localize } from 'i18n-calypso';
 
 /**
  * Internal dependencies
@@ -112,6 +112,8 @@ const RegisterDomainStep = React.createClass( {
 		domainsWithPlansOnly: React.PropTypes.bool,
 		isSignupStep: React.PropTypes.bool,
 		surveyVertical: React.PropTypes.string,
+		includeWordPressDotCom: React.PropTypes.bool,
+		includeDotBlogSubdomain: React.PropTypes.bool,
 	},
 
 	getDefaultProps: function() {
@@ -126,12 +128,13 @@ const RegisterDomainStep = React.createClass( {
 
 		return {
 			clickedExampleSuggestion: false,
+			dotBlogNotice: true,
 			lastQuery: suggestion,
-			searchResults: null,
 			lastDomainSearched: null,
 			lastDomainError: null,
 			loadingResults: Boolean( suggestion ),
-			notice: null
+			notice: null,
+			searchResults: null
 		};
 	},
 
@@ -194,10 +197,28 @@ const RegisterDomainStep = React.createClass( {
 		return ! this.props.defaultSuggestions && ! this.props.defaultSuggestionsError;
 	},
 
+	dismissDotBlogNotice() {
+		this.setState( { dotBlogNotice: false } );
+	},
+
+	dotBlogNotice() {
+		return this.state.dotBlogNotice && ! this.props.isSignupStep &&
+			<Notice
+				text={ this.props.translate(
+					'New! {{strong}}.blog{{/strong}} domains are now available for registration.',
+					{ components: { strong: <strong /> } }
+				) }
+				status={ 'is-info' }
+				showDismiss={ true }
+				onDismissClick={ this.dismissDotBlogNotice }
+			/>;
+	},
+
 	render: function() {
 		return (
 			<div className="register-domain-step">
 				{ this.searchForm() }
+				{ this.dotBlogNotice() }
 				{ this.notices() }
 				{ this.content() }
 				{ this.queryDomainsSuggestions() }
@@ -262,7 +283,7 @@ const RegisterDomainStep = React.createClass( {
 					onSearch={ this.onSearch }
 					onSearchChange={ this.onSearchChange }
 					onBlur={ this.save }
-					placeholder={ this.translate( 'Enter a domain or keyword', { textOnly: true } ) }
+					placeholder={ this.props.translate( 'Enter a domain or keyword', { textOnly: true } ) }
 					autoFocus={ true }
 					delaySearch={ true }
 					delayTimeout={ 1000 }
@@ -310,12 +331,6 @@ const RegisterDomainStep = React.createClass( {
 		async.parallel(
 			[
 				callback => {
-					if ( endsWith( domain, '.blog' ) ) {
-						const error = { code: 'dotblog_domain' };
-						this.showValidationErrorMessage( domain, error );
-						return callback();
-					}
-
 					if ( ! domain.match( /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)*[a-z0-9]([a-z0-9-]*[a-z0-9])?\.[a-z]{2,63}$/i ) ) {
 						return callback();
 					}
@@ -348,6 +363,7 @@ const RegisterDomainStep = React.createClass( {
 							query: domain,
 							quantity: SUGGESTION_QUANTITY,
 							include_wordpressdotcom: this.props.includeWordPressDotCom,
+							include_dotblogsubdomain: this.props.includeDotBlogSubdomain,
 							vendor: searchVendor,
 							vertical: this.props.surveyVertical,
 						},
@@ -525,35 +541,35 @@ const RegisterDomainStep = React.createClass( {
 	showValidationErrorMessage: function( domain, error ) {
 		let message,
 			severity = 'error';
+		const lastIndexOfDot = domain.lastIndexOf( '.' ),
+			tld = lastIndexOfDot !== -1 && domain.substring( lastIndexOfDot ),
+			translate = this.props.translate;
 
 		switch ( error.code ) {
-			case 'dotblog_domain':
-				message = this.translate(
-					'.blog domains are not available yet. {{a}}Sign up{{/a}} to get updates on the launch.', {
-						components: {
-							a: <a
-								target="_blank"
-								rel="noopener noreferrer"
-								href={ `https://dotblog.wordpress.com/
-									?email=${ this.props.currentUser && encodeURIComponent( this.props.currentUser.email ) || '' }
-									&domain=${ domain }`
-									} />
-						}
-					}
-				);
-				severity = 'info';
-				break;
 			case 'available_but_not_registrable':
-				const tldIndex = domain.lastIndexOf( '.' );
-				if ( tldIndex !== -1 ) {
-					message = this.translate(
+				if ( tld ) {
+					message = translate(
 						'To use a domain ending with {{strong}}%(tld)s{{/strong}} on your site, ' +
 						'you can register it elsewhere first and then add it here. {{a}}Learn more{{/a}}.',
 						{
-							args: { tld: domain.substring( tldIndex ) },
+							args: { tld },
 							components: {
 								strong: <strong />,
 								a: <a target="_blank" rel="noopener noreferrer" href={ support.MAP_EXISTING_DOMAIN } />
+							}
+						}
+					);
+					severity = 'info';
+				}
+				break;
+			case 'tld_in_maintenance':
+				if ( tld ) {
+					message = translate(
+						'Domains ending with {{strong}}%(tld)s{{/strong}} are undergoing maintenance. Please check back shortly.',
+						{
+							args: { tld },
+							components: {
+								strong: <strong />
 							}
 						}
 					);
@@ -569,7 +585,7 @@ const RegisterDomainStep = React.createClass( {
 
 			case 'not_mappable_blacklisted_domain':
 				if ( domain.toLowerCase().indexOf( 'wordpress' ) > -1 ) {
-					message = this.translate(
+					message = translate(
 						'Due to {{a1}}trademark policy{{/a1}}, ' +
 						'we are not able to allow domains containing {{strong}}WordPress{{/strong}} to be registered or mapped here. ' +
 						'Please {{a2}}contact support{{/a2}} if you have any questions.',
@@ -582,53 +598,53 @@ const RegisterDomainStep = React.createClass( {
 						}
 					);
 				} else {
-					message = this.translate( 'Domain cannot be mapped to a WordPress.com blog because of blacklisted term.' );
+					message = translate( 'Domain cannot be mapped to a WordPress.com blog because of blacklisted term.' );
 				}
 				break;
 
 			case 'not_mappable_forbidden_subdomain':
-				message = this.translate( 'Subdomains starting with \'www.\' cannot be mapped to a WordPress.com blog' );
+				message = translate( 'Subdomains starting with \'www.\' cannot be mapped to a WordPress.com blog' );
 				break;
 
 			case 'not_mappable_invalid_tld':
 			case 'invalid_query':
-				message = this.translate( 'Sorry, %(domain)s does not appear to be a valid domain name.', {
+				message = translate( 'Sorry, %(domain)s does not appear to be a valid domain name.', {
 					args: { domain: domain }
 				} );
 				break;
 
 			case 'not_mappable_mapped_domain':
-				message = this.translate( 'This domain is already mapped to a WordPress.com site.' );
+				message = translate( 'This domain is already mapped to a WordPress.com site.' );
 				break;
 
 			case 'not_mappable_restricted_domain':
-				message = this.translate(
+				message = translate(
 					'You cannot map another WordPress.com subdomain - try creating a new site or one of the custom domains below.'
 				);
 				break;
 
 			case 'not_mappable_recently_mapped':
-				message = this.translate( 'This domain was recently in use by someone else and is not available to map yet. ' +
+				message = translate( 'This domain was recently in use by someone else and is not available to map yet. ' +
 					'Please try again later or contact support.' );
 				break;
 
 			// Generic error message when domain is not mappable without an explicit unmappability reason
 			case 'not_mappable':
-				message = this.translate( 'Sorry, this domain cannot be mapped.' );
+				message = translate( 'Sorry, this domain cannot be mapped.' );
 				break;
 
 			case 'empty_query':
-				message = this.translate( 'Please enter a domain name or keyword.' );
+				message = translate( 'Please enter a domain name or keyword.' );
 				break;
 
 			case 'empty_results':
-				message = this.translate( "We couldn't find any available domains for: %(domain)s", {
+				message = translate( "We couldn't find any available domains for: %(domain)s", {
 					args: { domain }
 				} );
 				break;
 
 			case 'server_error':
-				message = this.translate( 'Sorry, there was a problem processing your request. Please try again in a few minutes.' );
+				message = translate( 'Sorry, there was a problem processing your request. Please try again in a few minutes.' );
 				break;
 
 			default:
@@ -648,4 +664,4 @@ module.exports = connect( ( state, props ) => {
 		defaultSuggestions: getDomainsSuggestions( state, queryObject ),
 		defaultSuggestionsError: getDomainsSuggestionsError( state, queryObject )
 	};
-} )( RegisterDomainStep );
+} )( localize( RegisterDomainStep ) );

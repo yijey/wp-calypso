@@ -1,5 +1,3 @@
-/** @ssr-ready **/
-
 /**
  * External dependencies
  */
@@ -65,6 +63,7 @@ export const getSite = createSelector(
 		return {
 			...site,
 			...getComputedAttributes( site ),
+			...getJetpackComputedAttributes( state, siteId ),
 			hasConflict: isSiteConflicting( state, siteId ),
 			title: getSiteTitle( state, siteId ),
 			slug: getSiteSlug( state, siteId ),
@@ -74,6 +73,16 @@ export const getSite = createSelector(
 	},
 	( state ) => state.sites.items
 );
+
+export function getJetpackComputedAttributes( state, siteId ) {
+	if ( ! isJetpackSite( state, siteId ) ) {
+		return {};
+	}
+	return {
+		hasMinimumJetpackVersion: siteHasMinimumJetpackVersion( state, siteId ),
+		canAutoupdateFiles: canJetpackSiteAutoUpdateFiles( state, siteId ),
+	};
+}
 
 /**
  * Returns a filtered array of WordPress.com site IDs where a Jetpack site

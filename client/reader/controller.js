@@ -212,7 +212,7 @@ module.exports = {
 			React.createElement( FeedStream, {
 				key: 'feed-' + context.params.feed_id,
 				store: feedStore,
-				feedId: context.params.feed_id,
+				feedId: +context.params.feed_id,
 				trackScrollPage: trackScrollPage.bind(
 					null,
 					basePath,
@@ -248,7 +248,7 @@ module.exports = {
 			React.createElement( SiteStream, {
 				key: 'site-' + context.params.blog_id,
 				store: feedStore,
-				siteId: context.params.blog_id,
+				siteId: +context.params.blog_id,
 				trackScrollPage: trackScrollPage.bind(
 					null,
 					basePath,

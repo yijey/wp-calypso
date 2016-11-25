@@ -23,6 +23,7 @@
 		"help": true,
 		"help/courses": true,
 		"jetpack/connect": true,
+		"jetpack/personalPlan": true,
 		"jetpack/seo-tools": true,
 		"jetpack/sso": true,
 		"jetpack/sync-panel": true,
@@ -42,6 +43,7 @@
 		"manage/menus-jetpack": true,
 		"manage/option_sync_non_public_post_stati": false,
 		"manage/pages": true,
+		"manage/pages/set-homepage": true,
 		"manage/payment-methods": true,
 		"manage/people": true,
 		"manage/people/readers": true,
@@ -98,7 +100,8 @@
 		"upgrades/in-app-purchase": false,
 		"upgrades/paypal": true,
 		"upgrades/premium-themes": true,
-		"upgrades/removal-survey": true
+		"upgrades/removal-survey": true,
+		"upgrades/precancellation-chat": true
 	},
 	"rtl": false,
 	"jetpack_min_version": "3.3",

@@ -12,6 +12,7 @@
 	"logout_url": "https://wordpress.com/wp-login.php?action=logout&redirect_to=https%3A%2F%2F|subdomain|wordpress.com",
 	"facebook_api_key": "249643311490",
 	"discover_logged_out_redirect_url": "https://discover.wordpress.com",
+	"happychat_url": "https://happychat-io-staging.go-vip.co/customer",
 	"features": {
 		"accept-invite": true,
 		"ad-tracking": false,
@@ -25,6 +26,7 @@
 		"help": true,
 		"help/courses": true,
 		"jetpack/connect": true,
+		"jetpack/personalPlan": true,
 		"jetpack/seo-tools": true,
 		"jetpack/sso": true,
 		"jetpack/sync-panel": true,
@@ -45,6 +47,7 @@
 		"manage/menus-jetpack": true,
 		"manage/option_sync_non_public_post_stati": false,
 		"manage/pages": true,
+		"manage/pages/set-homepage": true,
 		"manage/payment-methods": true,
 		"manage/people": true,
 		"manage/people/readers": true,
@@ -103,7 +106,8 @@
 		"upgrades/in-app-purchase": false,
 		"upgrades/paypal": true,
 		"upgrades/premium-themes": true,
-		"upgrades/removal-survey": true
+		"upgrades/removal-survey": true,
+		"upgrades/precancellation-chat": true
 	},
 	"siftscience_key": "e00e878351",
 	"wpcom_signup_id": "39911",

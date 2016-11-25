@@ -82,11 +82,15 @@
 
 	.external-link .gridicons-external {
 		fill: darken( $gray, 10% );
-		top: 6px;
+		top: 5px;
 
 		@include breakpoint( ">660px" ) {
 			top: 3px;
 		}
+	}
+
+	@include breakpoint( ">660px" ) {
+		top: 47px;
 	}
 
 	.external-link {
@@ -506,8 +510,12 @@
 .reader-full-post .embed-youtube,
 .reader-full-post .embed-vimeo {
 	display: block;
+	margin-bottom: 25px;
 	position: relative;
 	padding: 25px 0 56.25%;
+	// We currently have to use !important here to override the inline style on the Youtube embed
+	// - see https://github.com/Automattic/wp-calypso/issues/9615
+	text-align: initial !important;
 
 	iframe {
 		height: 100%;
@@ -518,5 +526,5 @@
 }
 
 .reader-full-post .embed-vimeo {
-	margin-bottom: 33px;
+	margin-bottom: 0;
 }

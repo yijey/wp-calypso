@@ -9,7 +9,6 @@ import React from 'react';
  * Internal dependencies
  */
 import DocumentHead from 'components/data/document-head';
-import { getPlansBySiteId } from 'state/sites/plans/selectors';
 import { getPlans } from 'state/plans/selectors';
 import { getSelectedSite, getSelectedSiteId } from 'state/ui/selectors';
 import Main from 'components/main';
@@ -27,9 +26,8 @@ const Plans = React.createClass( {
 		context: React.PropTypes.object.isRequired,
 		intervalType: React.PropTypes.string,
 		plans: React.PropTypes.array.isRequired,
-		selectedSite: React.PropTypes.object.isRequired,
-		selectedSiteId: React.PropTypes.number.isRequired,
-		sitePlans: React.PropTypes.object.isRequired
+		selectedSite: React.PropTypes.object,
+		selectedSiteId: React.PropTypes.number
 	},
 
 	getDefaultProps() {
@@ -45,8 +43,26 @@ const Plans = React.createClass( {
 		}
 	},
 
+	renderPlaceholder() {
+		return (
+			<div>
+				<DocumentHead title={ this.props.translate( 'Plans', { textOnly: true } ) } />
+				<Main wideLayout={ true } >
+					<SidebarNavigation />
+
+					<div id="plans" className="plans has-sidebar">
+					</div>
+				</Main>
+			</div>
+		);
+	},
+
 	render() {
 		const { selectedSite, selectedSiteId, translate } = this.props;
+
+		if ( this.props.isPlaceholder ) {
+			return this.renderPlaceholder();
+		}
 
 		return (
 			<div>
@@ -58,7 +74,6 @@ const Plans = React.createClass( {
 
 					<div id="plans" className="plans has-sidebar">
 						<UpgradesNavigation
-							sitePlans={ this.props.sitePlans }
 							path={ this.props.context.path }
 							cart={ this.props.cart }
 							selectedSite={ selectedSite } />
@@ -82,9 +97,10 @@ const Plans = React.createClass( {
 export default connect(
 	( state ) => {
 		const selectedSiteId = getSelectedSiteId( state );
+		const isPlaceholder = ! selectedSiteId;
 		return {
+			isPlaceholder,
 			plans: getPlans( state ),
-			sitePlans: getPlansBySiteId( state, selectedSiteId ),
 			selectedSite: getSelectedSite( state ),
 			selectedSiteId: selectedSiteId
 		};

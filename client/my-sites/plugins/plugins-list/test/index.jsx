@@ -34,14 +34,14 @@ describe( 'PluginsList', () => {
 	before( () => {
 		React = require( 'react' );
 		TestUtils = require( 'react-addons-test-utils' );
-		const ReactInjection = require( 'react/lib/ReactInjection' );
+		const ReactClass = require( 'react/lib/ReactClass' );
 
-		ReactInjection.Class.injectMixin( require( 'i18n-calypso' ).mixin );
+		ReactClass.injection.injectMixin( require( 'i18n-calypso' ).mixin );
 
 		testRenderer = TestUtils.renderIntoDocument;
 
-		siteListMock = { getSelectedSite: () => sites[ 0 ] };
-		PluginsList = require( '../' );
+		siteListMock = { getSelectedSite: () => sites[ 0 ], get: () => sites };
+		PluginsList = require( '../' ).PluginsList;
 	} );
 
 	describe( 'rendering bulk actions', function() {

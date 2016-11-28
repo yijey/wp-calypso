@@ -8,6 +8,7 @@ import fspath from 'path';
 import marked from 'marked';
 import lunr from 'lunr';
 import { find, escape as escapeHTML } from 'lodash';
+import { parse as reactParser } from 'react-docgen';
 
 /**
  * Internal dependencies
@@ -164,7 +165,8 @@ function findDirectoryWithName( startPath, name, depth = 2 ) {
 
 	const children = listDirectories( startPath );
 
-	// this is quite likely the dumbest way to do this ... but it currently covers all existing cases
+	// this is quite likely the dumbest way to do this ... but it currently covers all existing
+	// cases
 	const singularName = name.substring( 0, name.length - 1 );
 
 	const matches = children
@@ -248,6 +250,52 @@ module.exports = function() {
 		}
 
 		response.json( listDocs( files.split( ',' ) ) );
+	} );
+
+	app.get( '/devdocs/service/component', ( request, response ) => {
+		const component = request.query.component;
+
+		if ( ! component ) {
+			response
+				.status( 400 )
+				.send( 'Need to provide a component name (e.g. component=author-selector)' );
+			return;
+		}
+
+		// todo: make DRY
+		// we need to search the entire component tree for this guy ... :(
+		try {
+			const basePath = fs.realpathSync( fspath.join( root, 'client' ) );
+			const results = [
+				fspath.join( basePath, 'blocks' ),
+				fspath.join( basePath, 'components' )
+			]
+				.map( ( search ) => findDirectoryWithName( search, component, 1 ) );
+			const files = [].concat.apply( [], results );
+
+			if ( files.length === 0 ) {
+				response
+					.status( 404 )
+					.send( 'Unable to find component' );
+				return;
+			}
+
+			const file = fspath.join( files[ 0 ], 'index.jsx' );
+
+			if ( ! file || file.substring( 0, root.length + 1 ) !== root + '/' ) {
+				response
+					.status( 404 )
+					.send( 'Unable to find index.jsx for component' );
+				return;
+			}
+
+			response.send( reactParser( fs.readFileSync( file, { encoding: 'utf8' } ) ) );
+		} catch ( err ) {
+			console.error( err );
+			response
+				.status( 500 )
+				.send( 'Unable to find component' );
+		}
 	} );
 
 	// return the HTML content of a document (assumes that the document is in markdown format)

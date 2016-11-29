@@ -33,6 +33,8 @@ const staticFiles = [
 	{ path: 'tinymce/skins/wordpress/wp-content.css' },
 	{ path: 'style-debug.css' },
 	{ path: 'style-rtl.css' },
+	{ path: 'style-wpadmin.css' },
+	{ path: 'style-debug-wpadmin.css' },
 	{ path: 'vendor.' + config( 'env' ) + '.js' }
 ];
 

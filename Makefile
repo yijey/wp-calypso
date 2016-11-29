@@ -132,8 +132,15 @@ public/style.css: node_modules $(SASS_FILES)
 	@$(SASS) assets/stylesheets/style.scss $@
 	@$(AUTOPREFIXER) $@
 
+public/style-wpadmin.css: node_modules $(SASS_FILES)
+	@$(SASS) --importer bin/custom-sass-importer.js assets/stylesheets/style.scss $@
+
 public/style-debug.css: node_modules $(SASS_FILES)
 	@$(SASS) --source-map "$(@D)/style-debug.css.map" assets/stylesheets/style.scss $@
+	@$(AUTOPREFIXER) $@
+
+public/style-debug-wpadmin.css: node_modules $(SASS_FILES)
+	@$(SASS) --importer bin/custom-sass-importer.js --source-map "$(@D)/style-debug.css.map" assets/stylesheets/style.scss $@
 	@$(AUTOPREFIXER) $@
 
 public/style-rtl.css: public/style.css
@@ -159,7 +166,7 @@ build-server: install
 
 build: install build-$(CALYPSO_ENV)
 
-build-css: public/style.css public/style-rtl.css public/style-debug.css public/editor.css
+build-css: public/style.css public/style-rtl.css public/style-debug.css public/style-debug-wpadmin.css public/editor.css public/style-wpadmin.css
 
 build-development: server/devdocs/components-usage-stats.json build-server build-dll $(CLIENT_CONFIG_FILE) server/devdocs/search-index.js build-css
 

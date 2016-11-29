@@ -51,9 +51,9 @@ html(lang=lang, dir=isRTL ? 'rtl' : 'ltr', class=isFluidWidth ? 'is-fluid-width'
 			link(rel='stylesheet', href=urls['style-rtl.css'])
 		else
 			if 'development' === env || isDebug
-				link(rel='stylesheet', href=urls['style-debug.css'])
+				link(rel='stylesheet', href=urls['style-debug-wpadmin.css'])
 			else
-				link(rel='stylesheet', href=urls['style.css'])
+				link(rel='stylesheet', href=urls['style-wpadmin.css'])
 
 	body(class=isRTL ? 'rtl' : '')
 		if renderedLayout

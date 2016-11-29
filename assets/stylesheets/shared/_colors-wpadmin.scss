@@ -1,0 +1,71 @@
+$white:                  rgba(255,255,255,1);
+$transparent:            rgba(255,255,255,0);
+$blue-wordpress:         #e14d43;
+$blue-medium:            #69a8bb;
+$gray:                   #a0a5aa;
+$gray-light:             #f1f1f1;
+$gray-dark:              #23282d;
+$orange-jazzy:           #f56e28;
+$orange-fire:            $orange-jazzy;
+
+$masterbar-color:        $gray-dark;
+$sidebar-bg-color:       $gray-dark;
+$sidebar-selected-color: $blue-medium;
+// Primary Accent (Blues)
+$blue-light:             #78dcfa;
+$blue-dark:              #005082;
+
+
+// $gray color functions:
+// lighten( $gray, 10% )
+// lighten( $gray, 20% )
+// lighten( $gray, 30% )
+// darken( $gray, 10% )
+// darken( $gray, 20% )
+// darken( $gray, 30% )
+//
+// See wordpress.com/design-handbook/colors/ for more info.
+
+// Secondary Accent (Oranges)
+
+// Alerts
+$alert-yellow:           #f0b849;
+$alert-red:              #d94f4f;
+$alert-green:            #4ab866;
+$alert-purple:           #855DA6;
+
+// Link hovers
+$link-highlight:         tint($blue-medium, 20%);
+
+// Essentials
+
+// Uncommon
+$border-ultra-light-gray: #e8f0f5;
+
+// Layout
+$masterbar-color:          $blue-wordpress;
+$sidebar-bg-color:         lighten( $gray, 30% );
+$sidebar-text-color:       $gray-dark;
+$sidebar-selected-color:   $gray;
+
+
+//Social media colors
+$color-facebook: #39579a;
+$color-twitter: #55ACEE;
+$color-gplus: #df4a32;
+$color-tumblr: #35465c;
+$color-linkedin: #0976b4;
+$color-path: #df3b2f;
+$color-instagram: #e12f67;
+$color-eventbrite: #ff8000;
+$color-stumbleupon: #eb4924;
+$color-reddit: #5f99cf;
+$color-pinterest: #cc2127;
+$color-pocket: #ee4256;
+$color-email: #f8f8f8;
+$color-print: #f8f8f8;
+$color-skype: #00AFF0;
+$color-telegram: #0088cc;
+$color-whatsapp: #43d854;
+
+

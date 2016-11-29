@@ -27,6 +27,9 @@ import {
 	getActiveTheme,
 	isRequestingActiveTheme,
 	isThemeActive,
+	isActivating,
+	hasActivated,
+	isThemePremium,
 	isThemePurchased,
 } from '../selectors';
 import ThemeQueryManager from 'lib/query-manager/theme';
@@ -1066,6 +1069,60 @@ describe( 'themes selectors', () => {
 		} );
 	} );
 
+	describe( '#isActivating', () => {
+		it( 'given no site, should return false', () => {
+			const activating = isActivating( {
+				themes: {
+					activationRequests: {}
+				}
+			} );
+
+			expect( activating ).to.be.false;
+		} );
+
+		it( 'given a site, should return true if theme is currently activated', () => {
+			const activating = isActivating(
+				{
+					themes: {
+						activationRequests: {
+							2916284: true
+						}
+					}
+				},
+				2916284
+			);
+
+			expect( activating ).to.be.true;
+		} );
+	} );
+
+	describe( '#hasActivated', () => {
+		it( 'given no site, should return false', () => {
+			const activated = hasActivated( {
+				themes: {
+					completedActivationRequests: {}
+				}
+			} );
+
+			expect( activated ).to.be.false;
+		} );
+
+		it( 'given a site, should return true if theme has been activated', () => {
+			const activated = hasActivated(
+				{
+					themes: {
+						completedActivationRequests: {
+							2916284: true
+						}
+					}
+				},
+				2916284
+			);
+
+			expect( activated ).to.be.true;
+		} );
+	} );
+
 	describe( '#isRequestingActiveTheme', () => {
 		it( 'given empty state, should return false', () => {
 			const isRequesting = isRequestingActiveTheme( {
@@ -1103,6 +1160,67 @@ describe( 'themes selectors', () => {
 		);
 
 			expect( isRequesting ).to.be.true;
+		} );
+	} );
+
+	describe( '#isPremium()', () => {
+		it( 'given no theme object, should return false', () => {
+			const premium = isThemePremium(
+				{
+					themes: {
+						queries: {}
+					}
+				}
+			);
+			expect( premium ).to.be.false;
+		} );
+
+		it( 'given the ID of a theme that doesn\'t exist, should return false', () => {
+			const premium = isThemePremium(
+				{
+					themes: {
+						queries: {
+							wpcom: new ThemeQueryManager( {
+								items: { twentysixteen }
+							} )
+						}
+					}
+				},
+				'twentyumpteen'
+			);
+			expect( premium ).to.be.false;
+		} );
+
+		it( 'given the ID of a free theme, should return false', () => {
+			const premium = isThemePremium(
+				{
+					themes: {
+						queries: {
+							wpcom: new ThemeQueryManager( {
+								items: { twentysixteen }
+							} )
+						}
+					}
+				},
+				'twentysixteen'
+			);
+			expect( premium ).to.be.false;
+		} );
+
+		it( 'given the ID of a premium theme, should return false', () => {
+			const premium = isThemePremium(
+				{
+					themes: {
+						queries: {
+							wpcom: new ThemeQueryManager( {
+								items: { mood }
+							} )
+						}
+					}
+				},
+				'mood'
+			);
+			expect( premium ).to.be.true;
 		} );
 	} );
 

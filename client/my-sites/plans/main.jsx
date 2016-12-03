@@ -9,7 +9,7 @@ import React from 'react';
  * Internal dependencies
  */
 import DocumentHead from 'components/data/document-head';
-import { getSelectedSite, getSelectedSiteId } from 'state/ui/selectors';
+import { getSelectedSite } from 'state/ui/selectors';
 import Main from 'components/main';
 import PageViewTracker from 'lib/analytics/page-view-tracker';
 import PlansFeaturesMain from 'my-sites/plans-features-main';
@@ -55,7 +55,7 @@ const Plans = React.createClass( {
 	render() {
 		const { selectedSite, translate } = this.props;
 
-		if ( this.props.isPlaceholder ) {
+		if ( ! selectedSite ) {
 			return this.renderPlaceholder();
 		}
 
@@ -88,7 +88,6 @@ const Plans = React.createClass( {
 
 export default connect(
 	( state ) => ( {
-		isPlaceholder: ! getSelectedSiteId( state ),
 		selectedSite: getSelectedSite( state )
 	} )
 )( localize( Plans ) );

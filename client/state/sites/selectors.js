@@ -22,10 +22,6 @@ import i18n from 'i18n-calypso';
  */
 import config from 'config';
 import { isHttps, withoutHttp, addQueryArgs } from 'lib/url';
-
-/**
- * Internal dependencies
- */
 import createSelector from 'lib/create-selector';
 import { fromApi as seoTitleFromApi } from 'components/seo/meta-title-editor/mappings';
 import versionCompare from 'lib/version-compare';

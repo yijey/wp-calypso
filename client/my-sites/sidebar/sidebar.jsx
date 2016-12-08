@@ -717,7 +717,7 @@ export class MySitesSidebar extends Component {
 				<SidebarRegion>
 				<CurrentSite
 					sites={ this.props.sites }
-					siteCount={ this.props.currentUser.visible_site_count }
+					siteCount={ this.props.currentUser.site_count }
 					onClick={ this.onPreviewSite }
 				/>
 				<SidebarMenu>

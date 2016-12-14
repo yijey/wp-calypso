@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { connect } from 'react-redux';
-import { each, pick, map, get } from 'lodash';
+import { each, pick, map } from 'lodash';
 
 /**
  * Internal dependencies
@@ -23,7 +23,11 @@ import Button from 'components/button';
 import QueryTerms from 'components/data/query-terms';
 import QueryTaxonomies from 'components/data/query-taxonomies';
 import TaxonomyCard from './taxonomies/taxonomy-card';
-import { isJetpackModuleActive, isJetpackMinimumVersion } from 'state/sites/selectors';
+import {
+	isJetpackModuleActive,
+	isJetpackMinimumVersion,
+	isJetpackSite
+} from 'state/sites/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { requestPostTypes } from 'state/post-types/actions';
 import { isRequestingTermsForQuery, getTerms } from 'state/terms/selectors';
@@ -252,7 +256,7 @@ const SiteSettingsFormWriting = React.createClass( {
 					</div>
 				) }
 				{
-					get( this.props.site, 'jetpack' ) && (
+					this.props.isJetpackSite && (
 						<MediaSettings
 							site={ this.props.site }
 							submittingForm={ this.state.submittingForm }
@@ -275,6 +279,7 @@ export default connect(
 		return {
 			jetpackCustomTypesModuleActive: false !== isJetpackModuleActive( state, siteId, 'custom-content-types' ),
 			jetpackVersionSupportsCustomTypes: false !== isJetpackMinimumVersion( state, siteId, '4.2.0' ),
+			isJetpackSite: isJetpackSite( state, siteId ),
 			categories,
 			isRequestingCategories,
 			siteId

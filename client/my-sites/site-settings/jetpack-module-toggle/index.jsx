@@ -16,11 +16,11 @@ import {
 	deactivateModule
 } from 'state/jetpack-settings/modules/actions';
 import {
-	isModuleActive,
 	isActivatingModule,
 	isDeactivatingModule,
 	getModule
 } from 'state/jetpack-settings/modules/selectors';
+import { isJetpackModuleActive as otherIsModuleActive } from 'state/sites/selectors';
 import { isJetpackSite } from 'state/sites/selectors';
 
 class JetpackModuleToggle extends Component {
@@ -88,7 +88,7 @@ class JetpackModuleToggle extends Component {
 }
 
 export default connect( ( state, ownProps ) => {
-	const active = isModuleActive( state, ownProps.siteId, ownProps.moduleSlug );
+	// const active = isModuleActive( state, ownProps.siteId, ownProps.moduleSlug );
 	const activating = isActivatingModule( state, ownProps.siteId, ownProps.moduleSlug );
 	const moduleDetails = getModule( state, ownProps.siteId, ownProps.moduleSlug );
 	const deactivating = isDeactivatingModule( state, ownProps.siteId, ownProps.moduleSlug );
@@ -96,7 +96,8 @@ export default connect( ( state, ownProps ) => {
 	const toggling = activating || deactivating;
 	return {
 		moduleDetails,
-		checked: ( active && ! deactivating ) || ( ! active && activating ),
+		// checked: ( active && ! deactivating ) || ( ! active && activating ),
+		checked: otherIsModuleActive( state, ownProps.siteId, ownProps.moduleSlug ),
 		toggling,
 		disabled: moduleDetailsNotLoaded || toggling,
 		isJetpackSite: isJetpackSite( state, ownProps.siteId )

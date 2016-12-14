@@ -1,0 +1,12 @@
+.info-link .gridicon {
+	cursor: pointer;
+	color: lighten( $gray, 15% );
+
+	&:hover {
+		color: $gray-dark;
+	}
+}
+
+.info-link.is_active .gridicon {
+	color: $gray-dark;
+}

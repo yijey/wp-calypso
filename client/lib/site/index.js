@@ -50,10 +50,12 @@ Emitter( Site.prototype );
 
 Site.prototype.attributes = function( attributes ) {
 	attributes = attributes || {};
-
-	for ( var prop in attributes ) {
+	for ( const prop in attributes ) {
 		if ( attributes.hasOwnProperty( prop ) ) {
 			this[ prop ] = attributes[ prop ];
+		}
+		if ( 'updates' === prop ) {
+			this.update = attributes[ prop ];
 		}
 	}
 	this.setMaxListeners( 40 );

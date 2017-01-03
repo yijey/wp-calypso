@@ -24,6 +24,7 @@ import { getSelectedSiteId } from 'state/ui/selectors';
 import { getPostTypeTaxonomy } from 'state/post-types/taxonomies/selectors';
 import { getTerms } from 'state/terms/selectors';
 import { addTerm, updateTerm } from 'state/terms/actions';
+import { recordGoogleEvent, bumpStat } from 'state/analytics/actions';
 
 class TermFormDialog extends Component {
 	static initialState = {
@@ -32,7 +33,8 @@ class TermFormDialog extends Component {
 		selectedParent: [],
 		isTopLevel: true,
 		isValid: false,
-		error: null
+		errors: {},
+		saving: false
 	};
 
 	static propTypes = {
@@ -46,7 +48,9 @@ class TermFormDialog extends Component {
 		taxonomy: PropTypes.string,
 		term: PropTypes.object,
 		terms: PropTypes.array,
-		translate: PropTypes.func
+		translate: PropTypes.func,
+		recordGoogleEvent: PropTypes.func,
+		bumpStat: PropTypes.func,
 	};
 
 	static defaultProps = {
@@ -61,7 +65,9 @@ class TermFormDialog extends Component {
 	};
 
 	closeDialog = () => {
-		this.setState( this.constructor.initialState );
+		if ( this.state.saving ) {
+			return;
+		}
 		this.props.onClose();
 	};
 
@@ -101,18 +107,35 @@ class TermFormDialog extends Component {
 
 	saveTerm = () => {
 		const term = this.getFormValues();
-		if ( ! this.isValid() ) {
+		if ( ! this.isValid() || this.state.saving ) {
 			return;
 		}
 
+		this.setState( { saving: true } );
 		const { siteId, taxonomy } = this.props;
+		const statLabels = {
+			mc: `edited_${ taxonomy }`,
+			ga: `Edited ${ taxonomy }`
+		};
+
 		const isNew = ! this.props.term;
 		const savePromise = isNew
 			? this.props.addTerm( siteId, taxonomy, term )
 			: this.props.updateTerm( siteId, taxonomy, this.props.term.ID, this.props.term.slug, term );
 
-		savePromise.then( this.props.onSuccess );
-		this.closeDialog();
+		if ( isNew ) {
+			statLabels.mc = `created_${ taxonomy }`;
+			statLabels.ga = `Created New ${ taxonomy }`;
+		}
+		this.props.bumpStat( 'taxonomy_manager', statLabels.mc );
+		this.props.recordGoogleEvent( 'Taxonomy Manager', statLabels.ga );
+
+		savePromise
+			.then( savedTerm => {
+				this.setState( { saving: false } );
+				this.props.onSuccess( savedTerm );
+				this.closeDialog();
+			} );
 	};
 
 	constructor( props ) {
@@ -138,7 +161,7 @@ class TermFormDialog extends Component {
 	componentWillReceiveProps( newProps ) {
 		if (
 			this.props.term !== newProps.term ||
-			this.props.showDialog !== newProps.showDialog
+			this.props.showDialog !== newProps.showDialog && newProps.showDialog
 		) {
 			this.init( newProps );
 		}
@@ -163,48 +186,59 @@ class TermFormDialog extends Component {
 	}
 
 	isValid() {
-		let error;
-
+		const errors = {};
 		const values = this.getFormValues();
 
+		// Validating the name
 		if ( ! values.name.length ) {
-			error = true;
+			errors.name = this.props.translate( 'Name required', { textOnly: true } );
 		}
-
 		const lowerCasedTermName = values.name.toLowerCase();
 		const matchingTerm = find( this.props.terms, ( term ) => {
 			return (
 				term.name.toLowerCase() === lowerCasedTermName &&
-				( ! this.props.term || term.ID !== this.props.term.ID ) &&
-				( ! this.props.isHierarchical || ( term.parent === values.parent ) )
+				( ! this.props.term || term.ID !== this.props.term.ID )
 			);
 		} );
-
 		if ( matchingTerm ) {
-			error = this.props.translate( 'Name already exists', {
+			errors.name = this.props.translate( 'Name already exists', {
 				context: 'Terms: Add term error message - duplicate term name exists',
 				textOnly: true
 			} );
 		}
 
-		if ( error !== this.state.error ) {
-			this.setState( {
-				error: error,
-				isValid: ! error
+		// Validating the parent
+		if ( this.props.isHierarchical && ! this.state.isTopLevel && ! values.parent ) {
+			errors.parent = this.props.translate( 'Parent item required when "Top level" is unchecked', {
+				context: 'Terms: Add term error message',
+				textOnly: true
 			} );
 		}
 
-		return ! error;
+		const isValid = ! Object.keys( errors ).length;
+		this.setState( {
+			errors,
+			isValid
+		} );
+
+		return isValid;
 	}
 
 	renderParentSelector() {
-		const { labels, siteId, taxonomy, translate } = this.props;
+		const { labels, siteId, taxonomy, translate, terms } = this.props;
 		const { searchTerm, selectedParent } = this.state;
 		const query = {};
 		if ( searchTerm && searchTerm.length ) {
 			query.search = searchTerm;
 		}
 		const hideTermAndChildren = get( this.props.term, 'ID' );
+		const isError = !! this.state.errors.parent;
+
+		// if there is only one term for the site, and we are editing that term
+		// do not show the parent selector
+		if ( hideTermAndChildren && terms && terms.length === 1 ) {
+			return null;
+		}
 
 		return (
 			<FormFieldset>
@@ -218,12 +252,14 @@ class TermFormDialog extends Component {
 				<TermTreeSelectorTerms
 					siteId={ siteId }
 					taxonomy={ taxonomy }
+					isError={ isError }
 					onSearch={ this.onSearch }
 					onChange={ this.onParentChange }
 					query={ query }
 					selected={ selectedParent }
 					hideTermAndChildren={ hideTermAndChildren }
 				/>
+				{ isError && <FormInputValidation isError text={ this.state.errors.parent } /> }
 			</FormFieldset>
 		);
 	}
@@ -232,18 +268,19 @@ class TermFormDialog extends Component {
 		const { isHierarchical, labels, term, translate, showDescriptionInput, showDialog } = this.props;
 		const { name, description } = this.state;
 		const isNew = ! term;
+		const submitLabel = isNew ? translate( 'Add' ) : translate( 'Update' );
 		const buttons = [ {
 			action: 'cancel',
 			label: translate( 'Cancel' )
 		}, {
 			action: isNew ? 'add' : 'update',
-			label: isNew ? translate( 'Add' ) : translate( 'Update' ),
+			label: this.state.saving ? translate( 'Saving…' ) : submitLabel,
 			isPrimary: true,
-			disabled: ! this.state.isValid,
+			disabled: ! this.state.isValid || this.state.saving,
 			onClick: this.saveTerm
 		} ];
 
-		const isError = this.state.error && !! this.state.error.length;
+		const isError = !! this.state.errors.name;
 
 		return (
 			<Dialog
@@ -263,7 +300,7 @@ class TermFormDialog extends Component {
 						value={ name }
 						onChange={ this.onNameChange }
 					/>
-					{ isError && <FormInputValidation isError text={ this.state.error } /> }
+					{ isError && <FormInputValidation isError text={ this.state.errors.name } /> }
 				</FormFieldset>
 				{ showDescriptionInput && <FormFieldset>
 						<FormLegend>
@@ -298,5 +335,5 @@ export default connect(
 			siteId
 		};
 	},
-	{ addTerm, updateTerm }
+	{ addTerm, updateTerm, recordGoogleEvent, bumpStat }
 )( localize( TermFormDialog ) );

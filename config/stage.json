@@ -30,6 +30,7 @@
 		"jetpack/seo-tools": true,
 		"jetpack/sso": true,
 		"jetpack/sync-panel": true,
+		"jetpack/api-cache": false,
 		"jetpack_core_inline_update": true,
 		"mailing-lists/unsubscribe": true,
 		"manage/add-people": true,
@@ -60,6 +61,7 @@
 		"manage/security": true,
 		"manage/sharing": true,
 		"manage/site-settings/analytics": true,
+		"manage/site-settings/categories": true,
 		"manage/site-settings/delete-site": true,
 		"manage/seo": true,
 		"manage/stats": true,
@@ -96,6 +98,7 @@
 		"rubberband-scroll-disable": false,
 		"server-side-rendering": true,
 		"settings/security/monitor": true,
+		"settings/security/monitor/wp-note": true,
 		"settings/security/scan": true,
 		"support-user": true,
 		"sync-handler": true,
@@ -107,7 +110,8 @@
 		"upgrades/paypal": true,
 		"upgrades/premium-themes": true,
 		"upgrades/removal-survey": true,
-		"upgrades/precancellation-chat": true
+		"upgrades/precancellation-chat": true,
+		"upgrades/presale-chat": true
 	},
 	"siftscience_key": "e00e878351",
 	"wpcom_signup_id": "39911",

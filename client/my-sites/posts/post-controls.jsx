@@ -96,11 +96,8 @@ module.exports = React.createClass( {
 				icon: 'external'
 			} );
 
-			if ( config.isEnabled( 'manage/stats' ) ) {
-				statsURL = '/stats/post/' + post.ID + '/' + this.props.site.slug;
-			} else {
-				statsURL = '//wordpress.com/my-stats/?view=post&post=' + post.ID + '&blog=' + post.site_ID;
-			}
+			statsURL = '/stats/post/' + post.ID + '/' + this.props.site.slug;
+
 			availableControls.push( {
 				text: this.translate( 'Stats' ),
 				className: 'post-controls__stats',
@@ -108,6 +105,16 @@ module.exports = React.createClass( {
 				onClick: this.viewStats,
 				icon: 'stats-alt'
 			} );
+
+			if ( config.isEnabled( 'republicize' ) ) {
+				availableControls.push( {
+					text: this.translate( 'Share' ),
+					className: 'post-controls__share',
+					onClick: this.props.onToggleShare,
+					icon: 'share'
+				} );
+			}
+
 		} else if ( post.status !== 'trash' ) {
 			parsed = url.parse( post.URL, true );
 			parsed.query.preview = 'true';

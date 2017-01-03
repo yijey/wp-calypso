@@ -29,13 +29,15 @@ const ReaderPostOptionsMenu = React.createClass( {
 	propTypes: {
 		post: React.PropTypes.object.isRequired,
 		feed: React.PropTypes.object,
-		onBlock: React.PropTypes.func
+		onBlock: React.PropTypes.func,
+		showFollow: React.PropTypes.bool
 	},
 
 	getDefaultProps() {
 		return {
 			onBlock: noop,
-			position: 'top left'
+			position: 'top left',
+			showFollow: true
 		};
 	},
 
@@ -99,12 +101,10 @@ const ReaderPostOptionsMenu = React.createClass( {
 		stats.recordTrackForPost( 'calypso_reader_post_options_menu_' + ( isMenuVisible ? 'opened' : 'closed' ), this.props.post );
 	},
 
-	editPost( closeMenu ) {
+	editPost() {
 		const post = this.props.post,
 			site = SiteStore.get( this.props.post.site_ID );
 		let editUrl = '//wordpress.com/post/' + post.site_ID + '/' + post.ID + '/';
-
-		closeMenu();
 
 		if ( site && site.get( 'slug' ) ) {
 			editUrl = PostUtils.getEditURL( post, site.toJS() );
@@ -144,7 +144,7 @@ const ReaderPostOptionsMenu = React.createClass( {
 				<EllipsisMenu
 					className="reader-post-options-menu__ellipsis-menu"
 					onToggle={ this.onMenuToggle }>
-					<FollowButton tagName={ PopoverMenuItem } siteUrl={ followUrl } />
+					{ this.props.showFollow && <FollowButton tagName={ PopoverMenuItem } siteUrl={ followUrl } /> }
 
 					{ isEditPossible ? <PopoverMenuItem onClick={ this.editPost } icon="pencil">
 						{ this.translate( 'Edit Post' ) }

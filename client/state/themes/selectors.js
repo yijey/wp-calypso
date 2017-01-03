@@ -1,43 +1,30 @@
 /**
  * External dependencies
  */
-import { includes, isEqual, omit, some, get } from 'lodash';
+import { includes, isEqual, omit, some, get, pick, uniq } from 'lodash';
 import createSelector from 'lib/create-selector';
 
 /**
  * Internal dependencies
  */
 import config from 'config';
-import { getSiteSlug, getSiteOption, isJetpackSite } from 'state/sites/selectors';
+import {
+	getSiteSlug,
+	getSiteOption,
+	isJetpackSite,
+	canJetpackSiteManage,
+	hasJetpackSiteJetpackThemesExtendedFeatures
+} from 'state/sites/selectors';
 import { getSitePurchases } from 'state/purchases/selectors';
-import { isPremiumTheme, oldShowcaseUrl } from './utils';
 import {
 	getDeserializedThemesQueryDetails,
 	getNormalizedThemesQuery,
 	getSerializedThemesQuery,
-	getSerializedThemesQueryWithoutPage
+	getSerializedThemesQueryWithoutPage,
+	isPremium,
+	oldShowcaseUrl
 } from './utils';
-import { isPremium } from 'lib/query-manager/theme/util';
 import { DEFAULT_THEME_QUERY } from './constants';
-
-/**
- * Returns an array of theme objects by site ID.
- *
- * @param  {Object} state  Global state tree
- * @param  {Number} siteId Site ID
- * @return {Array}         Site themes
- */
-export const getThemes = createSelector(
-	( state, siteId ) => {
-		const manager = state.themes.queries[ siteId ];
-		if ( ! manager ) {
-			return [];
-		}
-
-		return manager.getItems();
-	},
-	( state ) => state.themes.queries
-);
 
 /**
  * Returns a theme object by site ID, theme ID pair.
@@ -54,10 +41,35 @@ export const getTheme = createSelector(
 			return null;
 		}
 
-		return manager.getItem( themeId );
+		const theme = manager.getItem( themeId );
+		if ( siteId === 'wpcom' || siteId === 'wporg' ) {
+			return theme;
+		}
+		// We're dealing with a Jetpack site. If we have theme info obtained from the
+		// WordPress.org API, merge it.
+		const wporgTheme = getTheme( state, 'wporg', themeId );
+		if ( ! wporgTheme ) {
+			return theme;
+		}
+		return {
+			...theme,
+			...pick( wporgTheme, [ 'demo_uri', 'download', 'taxonomies' ] )
+		};
 	},
 	( state ) => state.themes.queries
 );
+
+/**
+ * Returns theme request error object
+ *
+ * @param  {Object}  state   Global state tree
+ * @param  {String}  themeId Theme ID
+ * @param  {Number}  siteId  Site ID
+ * @return {Object}          error object if present or null otherwise
+ */
+export function getThemeRequestErrors( state, themeId, siteId ) {
+	return get( state.themes.themeRequestErrors, [ siteId, themeId ], null );
+}
 
 /**
  * Returns an array of normalized themes for the themes query, or null if no
@@ -89,11 +101,24 @@ export const getThemesForQuery = createSelector(
 			return null;
 		}
 
-		return themes;
+		// FIXME: The themes endpoint weirdly sometimes returns duplicates (spread
+		// over different pages) which we need to remove manually here for now.
+		return uniq( themes );
 	},
 	( state ) => state.themes.queries,
 	( state, siteId, query ) => getSerializedThemesQuery( query, siteId )
 );
+
+/**
+ * Returns last query used.
+ *
+ * @param  {Object}  state  Global state tree
+ * @param  {Number}  siteId Site ID
+ * @return {Object}         Last query
+ */
+export function getLastThemeQuery( state, siteId ) {
+	return get( state.themes.lastQuery, siteId, {} );
+}
 
 /**
  * Returns true if currently requesting themes for the themes query, or false
@@ -145,6 +170,11 @@ export function getThemesLastPageForQuery( state, siteId, query ) {
 		return null;
 	}
 
+	// No pagination on Jetpack sites -- everything is returned at once, i.e. on one page
+	if ( isJetpackSite( state, siteId ) ) {
+		return 1;
+	}
+
 	return Math.max( pages, 1 );
 }
 
@@ -182,7 +212,14 @@ export const getThemesForQueryIgnoringPage = createSelector(
 			return null;
 		}
 
-		return themes.getItemsIgnoringPage( query );
+		const themesForQueryIgnoringPage = themes.getItemsIgnoringPage( query );
+		if ( ! themesForQueryIgnoringPage ) {
+			return null;
+		}
+
+		// FIXME: The themes endpoint weirdly sometimes returns duplicates (spread
+		// over different pages) which we need to remove manually here for now.
+		return uniq( themesForQueryIgnoringPage );
 	},
 	( state ) => state.themes.queries,
 	( state, siteId, query ) => getSerializedThemesQueryWithoutPage( query, siteId )
@@ -250,6 +287,17 @@ export function isRequestingActiveTheme( state, siteId ) {
 }
 
 /**
+ * Whether a theme is present in the WordPress.org Theme Directory
+ *
+ * @param  {Object}  state   Global state tree
+ * @param  {Number}  themeId Theme ID
+ * @return {Boolean}         Whether theme is in WP.org theme directory
+ */
+export function isWporgTheme( state, themeId ) {
+	return !! getTheme( state, 'wporg', themeId );
+}
+
+/**
  * Returns the URL for a given theme's details sheet.
  *
  * @param  {Object}  state  Global state tree
@@ -262,7 +310,12 @@ export function getThemeDetailsUrl( state, theme, siteId ) {
 		return null;
 	}
 
-	if ( isJetpackSite( state, siteId ) ) {
+	if ( isJetpackSite( state, siteId ) &&
+		! (
+			config.isEnabled( 'manage/themes/details/jetpack' ) &&
+			canJetpackSiteManage( state, siteId ) &&
+			hasJetpackSiteJetpackThemesExtendedFeatures( state, siteId )
+		) ) {
 		return getSiteOption( state, siteId, 'admin_url' ) + 'themes.php?theme=' + theme.id;
 	}
 
@@ -283,7 +336,7 @@ export function getThemeDetailsUrl( state, theme, siteId ) {
  * @return {?String}        Theme setup instructions URL
  */
 export function getThemeSupportUrl( state, theme, siteId ) {
-	if ( ! theme || ! isPremiumTheme( theme ) ) {
+	if ( isJetpackSite( state, siteId ) || ! theme || ! isThemePremium( state, theme.id ) ) {
 		return null;
 	}
 
@@ -326,7 +379,7 @@ export function getThemeHelpUrl( state, theme, siteId ) {
  * @return {?String}        Theme purchase URL
  */
 export function getThemePurchaseUrl( state, theme, siteId ) {
-	if ( ! isPremiumTheme( theme ) ) {
+	if ( isJetpackSite( state, siteId ) || ! isThemePremium( state, theme.id ) ) {
 		return null;
 	}
 
@@ -376,11 +429,34 @@ export function getThemeSignupUrl( state, theme ) {
 
 	let url = '/start/with-theme?ref=calypshowcase&theme=' + theme.id;
 
-	if ( isPremiumTheme( theme ) ) {
+	if ( isThemePremium( state, theme.id ) ) {
 		url += '&premium=true';
 	}
 
 	return url;
+}
+
+/**
+ * Returns the URL for a premium theme's dedicated forum, or for the general themes
+ * forum for a free theme.
+ *
+ * @param  {Object}  state   Global state tree
+ * @param  {String}  themeId Theme ID
+ * @param  {String}  siteId  Site ID
+ * @return {?String}         Theme forum URL
+ */
+export function getThemeForumUrl( state, themeId, siteId ) {
+	if ( isJetpackSite( state, siteId ) ) {
+		if ( isWporgTheme( state, themeId ) ) {
+			return '//wordpress.org/support/theme/' + themeId;
+		}
+		return null;
+	}
+
+	if ( isThemePremium( state, themeId ) ) {
+		return '//premium-themes.forums.wordpress.com/forum/' + themeId;
+	}
+	return '//en.forums.wordpress.com/forum/themes';
 }
 
 /**
@@ -421,7 +497,7 @@ export function isThemeActive( state, themeId, siteId ) {
  * @param  {Number}  siteId  Site ID
  * @return {Boolean}         True if theme activation is ongoing
  */
-export function isActivating( state, siteId ) {
+export function isActivatingTheme( state, siteId ) {
 	return get( state.themes.activationRequests, siteId, false );
 }
 
@@ -432,15 +508,12 @@ export function isActivating( state, siteId ) {
  * @param  {Number}  siteId  Site ID
  * @return {Boolean}         True if the theme activation has finished
  */
-export function hasActivated( state, siteId ) {
+export function hasActivatedTheme( state, siteId ) {
 	return get( state.themes.completedActivationRequests, siteId, false );
 }
 
 /**
  * Whether a WPCOM theme given by its ID is premium.
- *
- * Note that we aren't using this selector yet since the necessary reducer (queries)
- * isn't wired yet!
  *
  * @param  {Object} state   Global state tree
  * @param  {Object} themeId Theme ID

@@ -20,7 +20,21 @@ import * as stats from 'reader/stats';
 import { localize } from 'i18n-calypso';
 import ExternalLink from 'components/external-link';
 
-const ReaderPostActions = ( { translate, post, site, onCommentClick, showEdit, showVisit, showMenu, iconSize, className } ) => {
+const ReaderPostActions = ( props ) => {
+	const {
+		translate,
+		post,
+		site,
+		onCommentClick,
+		showEdit,
+		showVisit,
+		showMenu,
+		showMenuFollow,
+		iconSize,
+		className,
+		visitUrl
+	} = props;
+
 	const onEditClick = () => {
 		stats.recordAction( 'edit_post' );
 		stats.recordGaEvent( 'Clicked Edit Post', 'full_post' );
@@ -38,7 +52,7 @@ const ReaderPostActions = ( { translate, post, site, onCommentClick, showEdit, s
 		<ul className={ listClassnames }>
 			{ showVisit &&
 				<li className="reader-post-actions__item reader-post-actions__visit">
-					<ExternalLink href={ post.URL }
+					<ExternalLink href={ visitUrl || post.URL }
 						target="_blank"
 						icon={ true }
 						showIconFirst={ true }
@@ -83,7 +97,7 @@ const ReaderPostActions = ( { translate, post, site, onCommentClick, showEdit, s
 			}
 			{ showMenu &&
 				<li className="reader-post-actions__item">
-					<ReaderPostOptionsMenu className="ignore-click" post={ post } />
+					<ReaderPostOptionsMenu className="ignore-click" showFollow={ showMenuFollow } post={ post } />
 				</li>
 			}
 		</ul>
@@ -97,14 +111,17 @@ ReaderPostActions.propTypes = {
 	onCommentClick: React.PropTypes.func,
 	showEdit: React.PropTypes.bool,
 	iconSize: React.PropTypes.number,
-	showMenu: React.PropTypes.bool
+	showMenu: React.PropTypes.bool,
+	showMenuFollow: React.PropTypes.bool,
+	visitUrl: React.PropTypes.string
 };
 
 ReaderPostActions.defaultProps = {
 	showEdit: true,
 	showVisit: false,
 	showMenu: false,
-	iconSize: 24
+	iconSize: 24,
+	showMenuFollow: true
 };
 
 export default localize( ReaderPostActions );

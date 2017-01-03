@@ -3,7 +3,6 @@
  */
 import sinon from 'sinon';
 import { expect } from 'chai';
-import { Map } from 'immutable';
 
 /**
  * Internal dependencies
@@ -16,23 +15,35 @@ import {
 	THEME_ACTIVATE_REQUEST_SUCCESS,
 	THEME_ACTIVATE_REQUEST_FAILURE,
 	THEME_CLEAR_ACTIVATED,
+	THEME_INSTALL,
+	THEME_INSTALL_SUCCESS,
+	THEME_INSTALL_FAILURE,
 	THEME_REQUEST,
 	THEME_REQUEST_SUCCESS,
 	THEME_REQUEST_FAILURE,
+	THEME_TRANSFER_INITIATE_FAILURE,
+	THEME_TRANSFER_INITIATE_REQUEST,
+	THEME_TRANSFER_INITIATE_SUCCESS,
+	THEME_TRANSFER_STATUS_FAILURE,
+	THEME_TRANSFER_STATUS_RECEIVE,
 	THEMES_RECEIVE,
 	THEMES_REQUEST,
 	THEMES_REQUEST_SUCCESS,
-	THEMES_REQUEST_FAILURE
+	THEMES_REQUEST_FAILURE,
 } from 'state/action-types';
 import {
 	themeActivated,
 	clearActivated,
 	activateTheme,
+	installAndActivate,
 	requestActiveTheme,
 	receiveTheme,
 	receiveThemes,
 	requestThemes,
-	requestTheme
+	requestTheme,
+	pollThemeTransferStatus,
+	initiateThemeTransfer,
+	installTheme
 } from '../actions';
 import useNock from 'test/helpers/use-nock';
 
@@ -229,19 +240,19 @@ describe( 'actions', () => {
 	} );
 
 	describe( '#requestTheme()', () => {
-		useNock( ( nock ) => {
-			nock( 'https://public-api.wordpress.com:443' )
-				.persist()
-				.get( '/rest/v1.2/themes/twentysixteen' )
-				.reply( 200, { id: 'twentysixteen', title: 'Twenty Sixteen' } )
-				.get( '/rest/v1.2/themes/twentyumpteen' )
-				.reply( 404, {
-					error: 'unknown_theme',
-					message: 'Unknown theme'
-				} );
-		} );
-
 		context( 'with a wpcom site', () => {
+			useNock( ( nock ) => {
+				nock( 'https://public-api.wordpress.com:443' )
+					.persist()
+					.get( '/rest/v1.2/themes/twentysixteen' )
+					.reply( 200, { id: 'twentysixteen', name: 'Twenty Sixteen' } )
+					.get( '/rest/v1.2/themes/twentyumpteen' )
+					.reply( 404, {
+						error: 'unknown_theme',
+						message: 'Unknown theme'
+					} );
+			} );
+
 			it( 'should dispatch request action when thunk triggered', () => {
 				requestTheme( 'twentysixteen', 'wpcom' )( spy );
 
@@ -257,7 +268,7 @@ describe( 'actions', () => {
 					expect( spy ).to.have.been.calledWith( {
 						type: THEMES_RECEIVE,
 						themes: [
-							sinon.match( { id: 'twentysixteen', title: 'Twenty Sixteen' } )
+							sinon.match( { id: 'twentysixteen', name: 'Twenty Sixteen' } )
 						],
 						siteId: 'wpcom'
 					} );
@@ -285,9 +296,120 @@ describe( 'actions', () => {
 				} );
 			} );
 		} );
+
 		context( 'with a Jetpack site', () => {
-			// TODO!
-			// But do we have a theme details endpoint on Jetpack sites at all?
+			// see lib/wpcom-undocumented/lib/undocumented#jetpackThemeDetails
+			useNock( ( nock ) => {
+				nock( 'https://public-api.wordpress.com:443' )
+					.persist()
+					.post( '/rest/v1.1/sites/77203074/themes', { themes: 'twentyfifteen' } )
+					.reply( 200, { themes: [ { id: 'twentyfifteen', name: 'Twenty Fifteen' } ] } )
+					.post( '/rest/v1.1/sites/77203074/themes', { themes: 'twentyumpteen' } )
+					.reply( 404, {
+						error: 'unknown_theme',
+						message: 'Unknown theme'
+					} );
+			} );
+
+			it( 'should dispatch request action when thunk triggered', () => {
+				requestTheme( 'twentyfifteen', 77203074 )( spy );
+
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_REQUEST,
+					siteId: 77203074,
+					themeId: 'twentyfifteen'
+				} );
+			} );
+
+			it( 'should dispatch themes receive action when request completes', () => {
+				return requestTheme( 'twentyfifteen', 77203074 )( spy ).then( () => {
+					expect( spy ).to.have.been.calledWith( {
+						type: THEMES_RECEIVE,
+						themes: [
+							sinon.match( { id: 'twentyfifteen', name: 'Twenty Fifteen' } )
+						],
+						siteId: 77203074
+					} );
+				} );
+			} );
+
+			it( 'should dispatch themes request success action when request completes', () => {
+				return requestTheme( 'twentyfifteen', 77203074 )( spy ).then( () => {
+					expect( spy ).to.have.been.calledWith( {
+						type: THEME_REQUEST_SUCCESS,
+						siteId: 77203074,
+						themeId: 'twentyfifteen'
+					} );
+				} );
+			} );
+
+			it( 'should dispatch fail action when request fails', () => {
+				return requestTheme( 'twentyumpteen', 77203074 )( spy ).then( () => {
+					expect( spy ).to.have.been.calledWith( {
+						type: THEME_REQUEST_FAILURE,
+						siteId: 77203074,
+						themeId: 'twentyumpteen',
+						error: sinon.match( { message: 'Unknown theme' } )
+					} );
+				} );
+			} );
+		} );
+
+		context( 'with the WP.org API', () => {
+			useNock( ( nock ) => {
+				nock( 'https://api.wordpress.org' )
+					.persist()
+					.defaultReplyHeaders( {
+						'Content-Type': 'application/json'
+					} )
+					.get( '/themes/info/1.1/?action=theme_information&request%5Bslug%5D=twentyseventeen' )
+					.reply( 200, { slug: 'twentyseventeen', name: 'Twenty Seventeen' } )
+					.get( '/themes/info/1.1/?action=theme_information&request%5Bslug%5D=twentyumpteen' )
+					.reply( 200, false );
+			} );
+
+			it( 'should dispatch request action when thunk triggered', () => {
+				requestTheme( 'twentyseventeen', 'wporg' )( spy );
+
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_REQUEST,
+					siteId: 'wporg',
+					themeId: 'twentyseventeen'
+				} );
+			} );
+
+			it( 'should dispatch themes receive action when request completes', () => {
+				return requestTheme( 'twentyseventeen', 'wporg' )( spy ).then( () => {
+					expect( spy ).to.have.been.calledWith( {
+						type: THEMES_RECEIVE,
+						themes: [
+							sinon.match( { id: 'twentyseventeen', name: 'Twenty Seventeen' } )
+						],
+						siteId: 'wporg'
+					} );
+				} );
+			} );
+
+			it( 'should dispatch themes request success action when request completes', () => {
+				return requestTheme( 'twentyseventeen', 'wporg' )( spy ).then( () => {
+					expect( spy ).to.have.been.calledWith( {
+						type: THEME_REQUEST_SUCCESS,
+						siteId: 'wporg',
+						themeId: 'twentyseventeen'
+					} );
+				} );
+			} );
+
+			it( 'should dispatch fail action when request fails', () => {
+				return requestTheme( 'twentyumpteen', 'wporg' )( spy ).then( () => {
+					expect( spy ).to.have.been.calledWith( {
+						type: THEME_REQUEST_FAILURE,
+						siteId: 'wporg',
+						themeId: 'twentyumpteen',
+						error: sinon.match( 'not found' )
+					} );
+				} );
+			} );
 		} );
 	} );
 
@@ -313,25 +435,24 @@ describe( 'actions', () => {
 					],
 				},
 				type: THEME_ACTIVATE_REQUEST_SUCCESS,
-				theme: { id: 'twentysixteen' },
+				themeStylesheet: 'pub/twentysixteen',
 				siteId: 2211667,
 			};
 
 			const fakeGetState = () => ( {
 				themes: {
-					currentTheme: Map( {
-						currentThemes: Map().set( 2211667, {
-							id: 'twentyfifteen'
-						} ) } ),
-					themesList: Map( {
-						query: Map( {
+					activeThemes: {
+						2211667: 'twentyfifteen'
+					},
+					lastQuery: {
+						2211667: {
 							search: 'simple, white'
-						} )
-					} )
+						}
+					}
 				}
 			} );
 
-			themeActivated( { id: 'twentysixteen' }, 2211667 )( spy, fakeGetState );
+			themeActivated( 'pub/twentysixteen', 2211667 )( spy, fakeGetState );
 			expect( spy ).to.have.been.calledWith( expectedActivationSuccess );
 		} );
 	} );
@@ -393,6 +514,32 @@ describe( 'actions', () => {
 
 			return activateTheme( 'badTheme', 2211667, trackingData )( spy ).then( () => {
 				expect( spy ).to.have.been.calledWith( themeActivationFailure );
+			} );
+		} );
+	} );
+
+	describe( '#installAndActivate', () => {
+		function isEqualFunction( f1, f2 ) {
+			// TODO: Also compare params!
+			return f1.toString() === f2.toString();
+		}
+
+		function matchFunction( fn ) {
+			return sinon.match( ( value ) => (
+				isEqualFunction( value, fn )
+			) );
+		}
+
+		const stub = sinon.stub();
+		stub.returns( new Promise( ( res ) => {
+			res();
+		} ) );
+
+		it( 'should dispatch THEME_ACTIVATE_REQUEST, installTheme(), and activateTheme()', ( done ) => {
+			installAndActivate( 'karuna-wpcom', 2211667 )( stub ).then( () => {
+				expect( stub ).to.have.been.calledWith( matchFunction( installTheme( 'karuna-wpcom', 2211667 ) ) );
+				expect( stub ).to.have.been.calledWith( matchFunction( activateTheme( 'karuna-wpcom', 2211667 ) ) );
+				done();
 			} );
 		} );
 	} );
@@ -479,6 +626,213 @@ describe( 'actions', () => {
 					type: ACTIVE_THEME_REQUEST_FAILURE,
 					siteId: 666,
 					error: sinon.match( { message: 'Unknown blog' } ),
+				} );
+			} );
+		} );
+	} );
+
+	describe( '#pollThemeTransferStatus', () => {
+		const siteId = '2211667';
+
+		useNock( ( nock ) => {
+			nock( 'https://public-api.wordpress.com:443' )
+				.get( `/rest/v1.1/sites/${ siteId }/automated-transfers/status/1` )
+				.reply( 200, { status: 'complete', message: 'all done', uploaded_theme_slug: 'mood' } )
+				.get( `/rest/v1.1/sites/${ siteId }/automated-transfers/status/2` ).thrice()
+				.reply( 200, { status: 'stuck', message: 'jammed' } )
+				.get( `/rest/v1.1/sites/${ siteId }/automated-transfers/status/3` ).twice()
+				.reply( 200, { status: 'progress', message: 'in progress' } )
+				.get( `/rest/v1.1/sites/${ siteId }/automated-transfers/status/3` )
+				.reply( 200, { status: 'complete', message: 'all done', uploaded_theme_slug: 'mood' } )
+				.get( `/rest/v1.1/sites/${ siteId }/automated-transfers/status/4` )
+				.reply( 400, 'something wrong' );
+		} );
+
+		it( 'should dispatch success on status complete', () => {
+			return pollThemeTransferStatus( siteId, 1 )( spy ).then( () => {
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_TRANSFER_STATUS_RECEIVE,
+					siteId,
+					transferId: 1,
+					status: 'complete',
+					message: 'all done',
+					themeId: 'mood',
+				} );
+			} );
+		} );
+
+		it( 'should time-out if status never complete', () => {
+			return pollThemeTransferStatus( siteId, 2, 10, 25 )( spy ).then( () => {
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_TRANSFER_STATUS_FAILURE,
+					siteId,
+					transferId: 2,
+					error: 'client timeout',
+				} );
+			} );
+		} );
+
+		it( 'should dispatch status update', () => {
+			return pollThemeTransferStatus( siteId, 3, 20 )( spy ).then( () => {
+				// Two 'progress' then a 'complete'
+				expect( spy ).to.have.been.calledThrice;
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_TRANSFER_STATUS_RECEIVE,
+					siteId: siteId,
+					transferId: 3,
+					status: 'progress',
+					message: 'in progress',
+					themeId: undefined,
+				} );
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_TRANSFER_STATUS_RECEIVE,
+					siteId: siteId,
+					transferId: 3,
+					status: 'complete',
+					message: 'all done',
+					themeId: 'mood',
+				} );
+			} );
+		} );
+
+		it( 'should dispatch failure on receipt of error', () => {
+			return pollThemeTransferStatus( siteId, 4 )( spy ).then( () => {
+				expect( spy ).to.have.been.calledWithMatch( {
+					type: THEME_TRANSFER_STATUS_FAILURE,
+					siteId,
+					transferId: 4,
+				} );
+				expect( spy ).to.have.been.calledWith( sinon.match.has( 'error', sinon.match.truthy ) );
+			} );
+		} );
+	} );
+
+	describe( '#initiateThemeTransfer', () => {
+		const siteId = '2211667';
+
+		useNock( ( nock ) => {
+			nock( 'https://public-api.wordpress.com:443' )
+				.post( `/rest/v1.1/sites/${ siteId }/automated-transfers/initiate` )
+				.reply( 200, { success: true, status: 'progress', transfer_id: 1, } )
+				.get( `/rest/v1.1/sites/${ siteId }/automated-transfers/initiate` )
+				.reply( 400, 'some problem' );
+		} );
+
+		it( 'should dispatch success', () => {
+			return initiateThemeTransfer( siteId )( spy ).then( () => {
+				expect( spy ).to.have.been.calledThrice;
+
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_TRANSFER_INITIATE_REQUEST,
+					siteId,
+				} );
+
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_TRANSFER_INITIATE_SUCCESS,
+					siteId,
+					transferId: 1,
+				} );
+
+				expect( spy ).to.have.been.calledWith( sinon.match.func );
+			} );
+		} );
+
+		it( 'should dispatch failure on error', () => {
+			return initiateThemeTransfer( siteId )( spy ).catch( () => {
+				expect( spy ).to.have.been.calledOnce;
+
+				expect( spy ).to.have.been.calledWithMatch( {
+					type: THEME_TRANSFER_INITIATE_FAILURE,
+					siteId,
+				} );
+				expect( spy ).to.have.been.calledWith( sinon.match.has( 'error', sinon.match.truthy ) );
+			} );
+		} );
+	} );
+
+	describe( '#installTheme', () => {
+		const successResponse = {
+			id: 'karuna-wpcom',
+			screenshot: '//i0.wp.com/budzanowski.wpsandbox.me/wp-content/themes/karuna-wpcom/screenshot.png',
+			active: false,
+			name: 'Karuna',
+			theme_uri: 'https://wordpress.com/themes/karuna/',
+			description: 'Karuna is a clean business theme designed with health and wellness-focused sites in mind.' +
+				' With bright, bold colors, prominent featured images, and support for customer testimonials',
+			author: 'Automattic',
+			author_uri: 'http://wordpress.com/themes/',
+			version: '1.1.0',
+			autoupdate: false,
+			log: [
+				[
+					'Unpacking the package&#8230;',
+					'Installing the theme&#8230;',
+					'Theme installed successfully.'
+				]
+			]
+		};
+
+		const downloadFailureResponse = {
+			status: 400,
+			code: 'problem_fetching_theme',
+			message: 'Problem downloading theme'
+		};
+
+		const alreadyInstalledFailureResponse = {
+			status: 400,
+			code: 'theme_already_installed',
+			message: 'The theme is already installed'
+		};
+
+		useNock( ( nock ) => {
+			nock( 'https://public-api.wordpress.com:443' )
+				.persist()
+				.post( '/rest/v1.1/sites/2211667/themes/karuna-wpcom/install' )
+				.reply( 200, successResponse )
+				.post( '/rest/v1.1/sites/2211667/themes/typist-wpcom/install' )
+				.reply( 400, downloadFailureResponse )
+				.post( '/rest/v1.1/sites/2211667/themes/pinboard-wpcom/install' )
+				.reply( 400, alreadyInstalledFailureResponse );
+		} );
+
+		it( 'should dispatch install theme request action when triggered', () => {
+			installTheme( 'karuna-wpcom', 2211667 )( spy );
+
+			expect( spy ).to.have.been.calledWith( {
+				type: THEME_INSTALL,
+				siteId: 2211667,
+				themeId: 'karuna-wpcom'
+			} );
+		} );
+
+		it( 'should dispatch wpcom theme install request success action when request completes', () => {
+			return installTheme( 'karuna-wpcom', 2211667 )( spy ).then( () => {
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_INSTALL_SUCCESS,
+					siteId: 2211667,
+					themeId: 'karuna-wpcom',
+				} );
+			} );
+		} );
+
+		it( 'should dispatch wpcom theme install request failure action when theme was not found', () => {
+			return installTheme( 'typist-wpcom', 2211667 )( spy ).then( () => {
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_INSTALL_FAILURE,
+					siteId: 2211667,
+					themeId: 'typist-wpcom',
+					error: sinon.match( { message: 'Problem downloading theme' } ),
+				} );
+			} );
+		} );
+
+		it( 'should dispatch wpcom theme install request failure action when theme is already installed', () => {
+			return installTheme( 'pinboard-wpcom', 2211667 )( spy ).then( () => {
+				expect( spy ).to.have.been.calledWith( {
+					type: THEME_INSTALL_FAILURE,
+					siteId: 2211667,
+					themeId: 'pinboard-wpcom',
+					error: sinon.match( { message: 'The theme is already installed' } ),
 				} );
 			} );
 		} );

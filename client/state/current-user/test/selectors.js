@@ -12,8 +12,8 @@ import {
 	getCurrentUserLocale,
 	getCurrentUserDate,
 	isValidCapability,
-	canCurrentUser,
-	getCurrentUserCurrencyCode
+	getCurrentUserCurrencyCode,
+	getCurrentUserEmail,
 } from '../selectors';
 
 describe( 'selectors', () => {
@@ -185,46 +185,6 @@ describe( 'selectors', () => {
 		} );
 	} );
 
-	describe( 'canCurrentUser', () => {
-		it( 'should return null if the site is not known', () => {
-			const isCapable = canCurrentUser( {
-				currentUser: {
-					capabilities: {}
-				}
-			}, 2916284, 'manage_options' );
-
-			expect( isCapable ).to.be.null;
-		} );
-
-		it( 'should return the value for the specified capability', () => {
-			const isCapable = canCurrentUser( {
-				currentUser: {
-					capabilities: {
-						2916284: {
-							manage_options: false
-						}
-					}
-				}
-			}, 2916284, 'manage_options' );
-
-			expect( isCapable ).to.be.false;
-		} );
-
-		it( 'should return null if the capability is invalid', () => {
-			const isCapable = canCurrentUser( {
-				currentUser: {
-					capabilities: {
-						2916284: {
-							manage_options: false
-						}
-					}
-				}
-			}, 2916284, 'manage_foo' );
-
-			expect( isCapable ).to.be.null;
-		} );
-	} );
-
 	describe( 'getCurrentUserCurrencyCode', () => {
 		it( 'should return null if currencyCode is not set', () => {
 			const selected = getCurrentUserCurrencyCode( {
@@ -241,6 +201,57 @@ describe( 'selectors', () => {
 				}
 			} );
 			expect( selected ).to.equal( 'USD' );
+		} );
+	} );
+
+	describe( 'getCurrentUserEmail', () => {
+		it( 'should return a null it the current user is not there for whatever reasons', () => {
+			const selected = getCurrentUserEmail( {
+				users: {
+					items: {}
+				},
+				currentUser: {
+					id: 123456
+				},
+			} );
+
+			expect( selected ).to.equal( null );
+		} );
+
+		it( 'should return a null if the primary email is not set', () => {
+			const selected = getCurrentUserEmail( {
+				users: {
+					items: {
+						123456: {
+							ID: 123456,
+						},
+					},
+				},
+				currentUser: {
+					id: 123456
+				},
+			} );
+
+			expect( selected ).to.equal( null );
+		} );
+
+		it( 'should return value if the email is set', () => {
+			const testEmail = 'test@example.com';
+			const selected = getCurrentUserEmail( {
+				users: {
+					items: {
+						123456: {
+							ID: 123456,
+							email: testEmail,
+						},
+					},
+				},
+				currentUser: {
+					id: 123456
+				},
+			} );
+
+			expect( selected ).to.equal( testEmail );
 		} );
 	} );
 } );

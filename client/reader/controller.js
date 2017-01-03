@@ -150,6 +150,9 @@ module.exports = {
 			followingStore = feedStreamFactory( 'following' ),
 			mcKey = 'following';
 
+		const recommendationsStore = feedStreamFactory( 'custom_recs_posts_with_images' );
+		recommendationsStore.perPage = 4;
+
 		ensureStoreLoading( followingStore, context );
 
 		trackPageLoad( basePath, fullAnalyticsPageTitle, mcKey );
@@ -163,6 +166,7 @@ module.exports = {
 					key: 'following',
 					listName: i18n.translate( 'Followed Sites' ),
 					store: followingStore,
+					recommendationsStore,
 					showPrimaryFollowButtonOnCards: false,
 					trackScrollPage: trackScrollPage.bind(
 						null,

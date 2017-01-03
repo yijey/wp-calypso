@@ -28,7 +28,7 @@ import Buttons from 'components/button/docs/example';
 import ButtonGroups from 'components/button-group/docs/example';
 import Gridicons from 'components/gridicon/docs/example';
 import Accordions from 'components/accordion/docs/example';
-import SocialLogos from 'components/social-logo/docs/example';
+import SocialLogos from 'social-logos/example';
 import SelectDropdown from 'components/select-dropdown/docs/example';
 import SegmentedControl from 'components/segmented-control/docs/example';
 import Cards from 'components/card/docs/example';
@@ -68,6 +68,7 @@ import FilePickers from 'components/file-picker/docs/example';
 import Collection from 'devdocs/design/search-collection';
 import FAQ from 'components/faq/docs/example';
 import VerticalMenu from 'components/vertical-menu/docs/example';
+import Banner from 'components/banner/docs/example';
 
 let DesignAssets = React.createClass( {
 	displayName: 'DesignAssets',
@@ -114,6 +115,7 @@ let DesignAssets = React.createClass( {
 					filter={ filter }
 				>
 					<Accordions componentUsageStats={ componentsUsageStats.accordion } />
+					<Banner />
 					<BulkSelect />
 					<ButtonGroups />
 					<Buttons componentUsageStats={ componentsUsageStats.button } />

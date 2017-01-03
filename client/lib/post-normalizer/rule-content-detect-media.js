@@ -2,7 +2,7 @@
  * External Dependencies
  */
 import { map, compact, includes, some, filter } from 'lodash';
-import getVideoId from 'get-video-id';
+import getEmbedMetadata from 'get-video-id';
 
 /**
  * Internal Dependencies
@@ -66,7 +66,9 @@ const detectImage = ( image ) => {
  * @returns {string} html src for an iframe that autoplays if from a source we understand.  else null;
  */
 const getAutoplayIframe = ( iframe ) => {
-	if ( iframe.src.indexOf( 'youtube' ) > 0 ) {
+	const KNOWN_SERVICES = [ 'youtube', 'vimeo', 'videopress' ];
+	const metadata = getEmbedMetadata( iframe.src );
+	if ( metadata && includes( KNOWN_SERVICES, metadata.service ) ) {
 		const autoplayIframe = iframe.cloneNode();
 		if ( autoplayIframe.src.indexOf( '?' ) === -1 ) {
 			autoplayIframe.src += '?autoplay=1';
@@ -74,19 +76,6 @@ const getAutoplayIframe = ( iframe ) => {
 			autoplayIframe.src += '&autoplay=1';
 		}
 		return autoplayIframe.outerHTML;
-	}
-	return null;
-};
-
-/** For an iframe we know how to process, return the url of a thumbnail
- * @param {Node} iframe - the DOM node for the iframe
- * @returns {string} thumbnailUrl - the url for a thumbnail of the video, null if we cannot determine it
- */
-const getThumbnailUrl = ( iframe ) => {
-	if ( iframe.src.indexOf( 'youtube' ) > 0 ) {
-		const videoId = getVideoId( iframe.src );
-
-		return videoId ? `https://img.youtube.com/vi/${ videoId }/mqdefault.jpg` : null;
 	}
 	return null;
 };
@@ -121,19 +110,15 @@ const detectEmbed = ( iframe ) => {
 	const height = Number( iframe.height );
 	const aspectRatio = width / height;
 
-	const embedUrl = iframe.getAttribute( 'data-wpcom-embed-url' );
-
 	return {
 		type: getEmbedType( iframe ),
 		src: iframe.src,
-		embedUrl,
 		iframe: iframe.outerHTML,
 		aspectRatio: aspectRatio,
 		width: width,
 		height: height,
 		mediaType: 'video',
 		autoplayIframe: getAutoplayIframe( iframe ),
-		thumbnailUrl: getThumbnailUrl( iframe ),
 	};
 };
 

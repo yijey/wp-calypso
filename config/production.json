@@ -27,6 +27,7 @@
 		"jetpack/seo-tools": true,
 		"jetpack/sso": true,
 		"jetpack/sync-panel": true,
+		"jetpack/api-cache": false,
 		"mailing-lists/unsubscribe": true,
 		"manage/add-people": true,
 		"manage/ads": true,
@@ -58,6 +59,7 @@
 		"manage/seo": true,
 		"manage/sharing": true,
 		"manage/site-settings/analytics": true,
+		"manage/site-settings/categories": true,
 		"manage/site-settings/delete-site": true,
 		"manage/stats": true,
 		"manage/themes": true,
@@ -77,6 +79,7 @@
 		"persist-redux": true,
 		"plans/personal-plan": true,
 		"post-editor/author-selector": true,
+		"post-editor/insert-menu": true,
 		"press-this": true,
 		"preview-layout": true,
 		"push-notifications": true,
@@ -101,7 +104,8 @@
 		"upgrades/paypal": true,
 		"upgrades/premium-themes": true,
 		"upgrades/removal-survey": true,
-		"upgrades/precancellation-chat": true
+		"upgrades/precancellation-chat": true,
+		"upgrades/presale-chat": true
 	},
 	"rtl": false,
 	"jetpack_min_version": "3.3",

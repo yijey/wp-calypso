@@ -26,7 +26,7 @@ import QueryPlans from 'components/data/query-plans';
 import QuerySitePlans from 'components/data/query-site-plans';
 import { isRequestingPlans, getPlanBySlug } from 'state/plans/selectors';
 import { getSelectedSite } from 'state/ui/selectors';
-import { canCurrentUser } from 'state/current-user/selectors';
+import { canCurrentUser } from 'state/selectors';
 import {
 	getFlowType,
 	isRedirectingToWpAdmin,
@@ -35,6 +35,7 @@ import {
 	getAuthorizationData,
 	isCalypsoStartedConnection
 } from 'state/jetpack-connect/selectors';
+import { mc } from 'lib/analytics';
 
 const CALYPSO_REDIRECTION_PAGE = '/posts/';
 const CALYPSO_PLANS_PAGE = '/plans/my-plan/';
@@ -186,6 +187,8 @@ class Plans extends Component {
 		this.props.recordTracksEvent( 'calypso_jpc_plans_submit_free', {
 			user: this.props.userId
 		} );
+		mc.bumpStat( 'calypso_jpc_plan_selection', 'jetpack_free' );
+
 		if ( this.props.calypsoStartedConnection ) {
 			this.redirect( CALYPSO_REDIRECTION_PAGE );
 		} else {
@@ -205,31 +208,37 @@ class Plans extends Component {
 			this.props.recordTracksEvent( 'calypso_jpc_plans_submit_39', {
 				user: this.props.userId
 			} );
+			mc.bumpStat( 'calypso_jpc_plan_selection', 'jetpack_personal' );
 		}
 		if ( cartItem.product_slug === PLAN_JETPACK_PERSONAL_MONTHLY ) {
 			this.props.recordTracksEvent( 'calypso_jpc_plans_submit_3', {
 				user: this.props.userId
 			} );
+			mc.bumpStat( 'calypso_jpc_plan_selection', 'jetpack_personal_monthly' );
 		}
 		if ( cartItem.product_slug === PLAN_JETPACK_PREMIUM ) {
 			this.props.recordTracksEvent( 'calypso_jpc_plans_submit_99', {
 				user: this.props.userId
 			} );
+			mc.bumpStat( 'calypso_jpc_plan_selection', 'jetpack_premium' );
 		}
 		if ( cartItem.product_slug === PLAN_JETPACK_PREMIUM_MONTHLY ) {
 			this.props.recordTracksEvent( 'calypso_jpc_plans_submit_12', {
 				user: this.props.userId
 			} );
+			mc.bumpStat( 'calypso_jpc_plan_selection', 'jetpack_premium_monthly' );
 		}
 		if ( cartItem.product_slug === PLAN_JETPACK_BUSINESS ) {
 			this.props.recordTracksEvent( 'calypso_jpc_plans_submit_299', {
 				user: this.props.userId
 			} );
+			mc.bumpStat( 'calypso_jpc_plan_selection', 'jetpack_business' );
 		}
 		if ( cartItem.product_slug === PLAN_JETPACK_BUSINESS_MONTHLY ) {
 			this.props.recordTracksEvent( 'calypso_jpc_plans_submit_29', {
 				user: this.props.userId
 			} );
+			mc.bumpStat( 'calypso_jpc_plan_selection', 'jetpack_business_monthly' );
 		}
 		addItem( cartItem );
 		this.redirecting = true;
@@ -254,7 +263,7 @@ class Plans extends Component {
 			( ! this.props.showFirst && ! this.props.canPurchasePlans ) ||
 			( ! this.props.showFirst && this.hasPlan( this.props.selectedSite ) )
 		) {
-			return null;
+			return <QueryPlans />;
 		}
 
 		return (
@@ -266,7 +275,7 @@ class Plans extends Component {
 				}
 				<PlansGrid
 					{ ...this.props }
-					basePlansPath={ this.props.showFirst ? '/jetpack/connect/authorize' : '/jetpack/connect' }
+					basePlansPath={ this.props.showFirst ? '/jetpack/connect/authorize' : '/jetpack/connect/plans' }
 					onSelect={ this.props.showFirst || this.props.isLanding ? this.storeSelectedPlan : this.selectPlan } />
 			</div>
 		);

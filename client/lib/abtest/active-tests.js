@@ -15,14 +15,6 @@ module.exports = {
 		defaultVariation: 'disabled',
 		allowExistingUsers: true,
 	},
-	domainSuggestionClickableRow: {
-		datestamp: '20160802',
-		variations: {
-			clickableRow: 20,
-			clickableButton: 80
-		},
-		defaultVariation: 'clickableButton'
-	},
 	multiDomainRegistrationV1: {
 		datestamp: '20200721',
 		variations: {
@@ -70,50 +62,32 @@ module.exports = {
 		defaultVariation: 'showPopover',
 		allowExistingUsers: false,
 	},
-	domainDotBlogSubdomain: {
-		datestamp: '20161125',
+	designShowcaseWelcomeTour: {
+		datestamp: '20161206',
 		variations: {
-			excludeDotBlogSubdomain: 50,
-			includeDotBlogSubdomain: 50,
+			enabled: 0,
+			disabled: 100,
 		},
-		defaultVariation: 'excludeDotBlogSubdomain',
-		allowAnyLocale: true,
+		defaultVariation: 'disabled',
+		allowExistingUsers: true,
 	},
-	paidNuxThankYouPage: {
-		datestamp: '20161114',
+	themeSheetWelcomeTour: {
+		datestamp: '20161206',
 		variations: {
-			original: 50,
-			emailNudgeOnTop: 50,
+			enabled: 0,
+			disabled: 100,
 		},
-		defaultVariation: 'original',
+		defaultVariation: 'disabled',
+		allowExistingUsers: true,
 	},
 	siteTitleStep: {
-		datestamp: '20160928',
+		datestamp: '20170102',
 		variations: {
 			showSiteTitleStep: 5,
 			hideSiteTitleStep: 95,
 		},
 		defaultVariation: 'hideSiteTitleStep',
 		allowExistingUsers: false
-	},
-	domainToPersonalPlanNudge3: {
-		datestamp: '20161109',
-		variations: {
-			original: 50,
-			nudge: 50
-		},
-		defaultVariation: 'original',
-		allowExistingUsers: true
-	},
-
-	gSuiteOnSignup: {
-		datestamp: '20161025',
-		variations: {
-			original: 50,
-			removed: 50
-		},
-		defaultVariation: 'original',
-		allowExistingUsers: true
 	},
 
 	jetpackConnectPlansFirst: {
@@ -125,5 +99,14 @@ module.exports = {
 		defaultVariation: 'showPlansAfterAuth',
 		allowExistingUsers: true
 	},
-};
 
+	siteTitleTour: {
+		datestamp: '20161207',
+		variations: {
+			disabled: 100,
+			enabled: 0,
+		},
+		defaultVariation: 'disabled',
+		allowExistingUsers: true,
+	},
+};

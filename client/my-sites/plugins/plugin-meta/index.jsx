@@ -6,13 +6,16 @@ import classNames from 'classnames';
 import i18n from 'i18n-calypso';
 import some from 'lodash/some';
 import get from 'lodash/get';
+import { includes } from 'lodash';
 
 /**
  * Internal dependencies
  */
 import analytics from 'lib/analytics';
+import Button from 'components/button';
 import Card from 'components/card';
 import Count from 'components/count';
+import Gridicon from 'components/gridicon';
 import NoticeAction from 'components/notice/notice-action';
 import ExternalLink from 'components/external-link';
 import Notice from 'components/notice';
@@ -26,6 +29,7 @@ import PluginInstallButton from 'my-sites/plugins/plugin-install-button';
 import PluginRemoveButton from 'my-sites/plugins/plugin-remove-button';
 import PluginInformation from 'my-sites/plugins/plugin-information';
 import WpcomPluginInstallButton from 'my-sites/plugins-wpcom/plugin-install-button';
+import PluginAutomatedTransfer from 'my-sites/plugins/plugin-automated-transfer';
 import { userCan } from 'lib/site/utils';
 import UpgradeNudge from 'my-sites/upgrade-nudge';
 import { FEATURE_UPLOAD_PLUGINS } from 'lib/plans/constants';
@@ -33,6 +37,7 @@ import {
 	isBusiness,
 	isEnterprise
 } from 'lib/products-values';
+import QueryEligibility from 'components/data/query-atat-eligibility';
 
 export default React.createClass( {
 	OUT_OF_DATE_YEARS: 2,
@@ -65,6 +70,16 @@ export default React.createClass( {
 		return isBusiness( this.props.selectedSite.plan ) || isEnterprise( this.props.selectedSite.plan );
 	},
 
+	isWpcomPreinstalled: function() {
+		const installedPlugins = [ 'Jetpack by WordPress.com', 'Akismet' ];
+
+		if ( ! this.props.selectedSite ) {
+			return false;
+		}
+
+		return ! this.props.selectedSite.jetpack && includes( installedPlugins, this.props.plugin.name );
+	},
+
 	renderActions() {
 		if ( ! this.props.selectedSite ) {
 			return (
@@ -88,8 +103,18 @@ export default React.createClass( {
 			return;
 		}
 
-		if ( this.props.isInstalledOnSite === null && this.props.selectedSite.jetpack) {
+		if ( this.props.isInstalledOnSite === null && this.props.selectedSite.jetpack ) {
 			return;
+		}
+
+		if ( this.isWpcomPreinstalled() ) {
+			return (
+				<div className="plugin-meta__actions">
+					<Button className="plugin-meta__active" compact borderless>
+						<Gridicon icon="checkmark" />{ this.translate( 'Active' ) }
+					</Button>
+				</div>
+			);
 		}
 
 		if ( this.props.isInstalledOnSite === false || ! this.props.selectedSite.jetpack ) {
@@ -141,7 +166,11 @@ export default React.createClass( {
 		}
 
 		if ( this.props.selectedSite && ! this.props.selectedSite.jetpack ) {
-			return <WpcomPluginInstallButton disabled={ ! this.hasBusinessPlan() } />;
+			return <WpcomPluginInstallButton
+						disabled={ ! this.hasBusinessPlan() }
+						plugin={ this.props.plugin }
+						site={ this.props.selectedSite }
+			/>;
 		}
 	},
 
@@ -300,6 +329,9 @@ export default React.createClass( {
 
 		return (
 			<div className="plugin-meta">
+				{ config.isEnabled( 'automated-transfer' ) && this.props.selectedSite &&
+					<QueryEligibility siteId={ this.props.selectedSite.ID } />
+				}
 				<Card>
 					{ this.displayBanner() }
 					<div className={ cardClasses } >
@@ -324,11 +356,15 @@ export default React.createClass( {
 					}
 				</Card>
 
-				{ ( get( this.props.selectedSite, 'jetpack' ) || this.hasBusinessPlan() ) &&
+				{ config.isEnabled( 'automated-transfer' ) && this.hasBusinessPlan() &&
+					<PluginAutomatedTransfer plugin={ this.props.plugin } />
+				}
+
+				{ ( get( this.props.selectedSite, 'jetpack' ) || this.hasBusinessPlan() || this.isWpcomPreinstalled() ) &&
 					<div style={ { marginBottom: 16 } } />
 				}
 
-				{ ! get( this.props.selectedSite, 'jetpack' ) && ! this.hasBusinessPlan() &&
+				{ ! get( this.props.selectedSite, 'jetpack' ) && ! this.hasBusinessPlan() && ! this.isWpcomPreinstalled() &&
 					<div className="plugin-meta__upgrade_nudge">
 						<UpgradeNudge
 							feature={ FEATURE_UPLOAD_PLUGINS }

@@ -13,6 +13,8 @@ import sites from './sites/reducer';
 import start from './start/reducer';
 import posts from './posts/reducer';
 import relatedPosts from './related-posts/reducer';
+import tags from './tags/reducer';
+import thumbnails from './thumbnails/reducer';
 
 export default combineReducers( {
 	feeds,
@@ -21,5 +23,7 @@ export default combineReducers( {
 	sites,
 	start,
 	posts,
-	relatedPosts
+	relatedPosts,
+	tags,
+	thumbnails,
 } );

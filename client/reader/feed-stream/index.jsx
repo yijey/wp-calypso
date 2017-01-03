@@ -11,25 +11,25 @@ import { localize } from 'i18n-calypso';
 import EmptyContent from './empty';
 import DocumentHead from 'components/data/document-head';
 import Stream from 'reader/stream';
-import OldFeedHeader from 'reader/feed-header';
 import FeedStore from 'lib/feed-store';
 import FeedStoreActions from 'lib/feed-store/actions';
 import { state as FeedStoreState } from 'lib/feed-store/constants';
 import FeedError from 'reader/feed-error';
-import HeaderBack from 'reader/header-back';
 import SiteStore from 'lib/reader-site-store';
 import { state as SiteState } from 'lib/reader-site-store/constants';
 import RefreshFeedHeader from 'blocks/reader-feed-header';
-import config from 'config';
 
 class FeedStream extends React.Component {
 
 	static propTypes = {
-		feedId: React.PropTypes.number.isRequired
+		feedId: React.PropTypes.number.isRequired,
+		className: React.PropTypes.string,
+		showBack: React.PropTypes.bool
 	};
 
 	static defaultProps = {
-		showBack: true
+		showBack: true,
+		className: 'is-site-stream',
 	};
 
 	constructor( props ) {
@@ -159,13 +159,15 @@ class FeedStream extends React.Component {
 			return <FeedError sidebarTitle={ this.state.title } />;
 		}
 
-		const FeedHeader = config.isEnabled( 'reader/refresh/stream' ) ? RefreshFeedHeader : OldFeedHeader;
-
 		return (
-			<Stream { ...this.props } listName={ this.state.title } emptyContent={ emptyContent } showPostHeader={ false } showSiteNameOnCards={ false }>
+			<Stream
+				{ ...this.props }
+				listName={ this.state.title }
+				emptyContent={ emptyContent }
+				showPostHeader={ false }
+				showSiteNameOnCards={ false }>
 				<DocumentHead title={ this.props.translate( '%s ‹ Reader', { args: this.state.title } ) } />
-				{ this.props.showBack && <HeaderBack /> }
-				<FeedHeader feed={ feed } site={ this.state.site } />
+				<RefreshFeedHeader feed={ feed } site={ this.state.site } showBack={ this.props.showBack } />
 			</Stream>
 		);
 	}

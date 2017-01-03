@@ -32,7 +32,11 @@
 		margin: 0 0 8px;
 	}
 
-	p {
+	h5 {
+		font-weight: 700;
+	}
+
+	p, > div {
 		margin: 0 0 24px;
 
 		&:last-child {
@@ -156,7 +160,8 @@
 	}
 
 	.wp-caption-text,
-	figure figcaption {
+	figure figcaption,
+	figure .caption {
 		padding: 12px;
 		margin: 0;
 		font-size: 13px;
@@ -324,7 +329,7 @@
 }
 
 // gizmodo fixes
-.reader-full-post.feed-19797 {
+.reader-full-post.feed-10080096 {
 	.align--bleed {
 		display: none;
 	}

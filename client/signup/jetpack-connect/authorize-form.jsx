@@ -19,6 +19,7 @@ import LoggedOutFormLinkItem from 'components/logged-out-form/link-item';
 import SignupForm from 'components/signup-form';
 import WpcomLoginForm from 'signup/wpcom-login-form';
 import config from 'config';
+import QuerySites from 'components/data/query-sites';
 import {
 	createAccount,
 	authorize,
@@ -33,6 +34,7 @@ import {
 	getSSOSessions,
 	isCalypsoStartedConnection,
 	hasXmlrpcError,
+	hasExpiredSecretError,
 	getSiteSelectedPlan,
 	isRemoteSiteOnSitesList,
 	getGlobalSelectedPlan,
@@ -66,6 +68,7 @@ import Notice from 'components/notice';
 import NoticeAction from 'components/notice/notice-action';
 import Plans from './plans';
 import CheckoutData from 'components/data/checkout';
+import { externalRedirect } from 'lib/route/path';
 
 /**
  * Constants
@@ -93,6 +96,7 @@ const SiteCard = React.createClass( {
 
 		return (
 			<CompactCard className="jetpack-connect__site">
+				<QuerySites allSites />
 				<Site site={ site } />
 			</CompactCard>
 		);
@@ -244,10 +248,22 @@ const LoggedInForm = React.createClass( {
 			this.props.authorize( queryObject );
 		} else if ( siteReceived && ! isActivating ) {
 			this.activateManageAndRedirect();
+		} else if ( this.props.isAlreadyOnSitesList && queryObject.already_authorized && ! isActivating ) {
+			this.activateManageAndRedirect();
 		}
-		if ( authorizeError && this.props.authAttempts < MAX_AUTH_ATTEMPTS && ! this.retryingAuth ) {
+		if (
+			authorizeError &&
+			this.props.authAttempts < MAX_AUTH_ATTEMPTS &&
+			! this.retryingAuth &&
+			! props.requestHasXmlrpcError() &&
+			! props.requestHasExpiredSecretError()
+		) {
+			// Expired secret errors, and XMLRPC errors will be resolved in `handleResolve`.
+			// Any other type of error, we will immediately and automatically retry the request as many times
+			// as controlled by MAX_AUTH_ATTEMPTS.
+			const attempts = this.props.authAttempts || 0;
 			this.retryingAuth = true;
-			this.props.retryAuth( queryObject.site, this.props.authAttempts + 1 );
+			this.props.retryAuth( queryObject.site, attempts + 1 );
 		}
 	},
 
@@ -293,9 +309,16 @@ const LoggedInForm = React.createClass( {
 		} = this.props.jetpackConnectAuthorize;
 
 		if ( ! this.props.isAlreadyOnSitesList &&
+			! this.props.isFetchingSites(),
 			queryObject.already_authorized ) {
 			return this.props.goBackToWpAdmin( queryObject.redirect_after_auth );
 		}
+
+		if ( this.props.isAlreadyOnSitesList &&
+			queryObject.already_authorized ) {
+			return this.activateManageAndRedirect();
+		}
+
 		if ( activateManageSecret && ! manageActivated ) {
 			return this.activateManageAndRedirect();
 		}
@@ -303,7 +326,7 @@ const LoggedInForm = React.createClass( {
 			return this.handleResolve();
 		}
 		if ( this.props.isAlreadyOnSitesList ) {
-			return this.props.goBackToWpAdmin( queryObject.redirect_after_auth );
+			return this.activateManageAndRedirect();
 		}
 
 		return this.props.authorize( queryObject );
@@ -324,8 +347,20 @@ const LoggedInForm = React.createClass( {
 	},
 
 	handleResolve() {
-		this.retryingAuth = false;
 		const { queryObject, authorizationCode } = this.props.jetpackConnectAuthorize;
+		const authUrl = '/wp-admin/admin.php?page=jetpack&connect_url_redirect=true';
+		this.retryingAuth = false;
+		if ( this.props.requestHasExpiredSecretError() ) {
+			// In this case, we need to re-issue the secret.
+			// We do this by redirecting to Jetpack client, which will automatically redirect back here.
+			this.props.recordTracksEvent( 'calypso_jpc_resolve_expired_secret_error_click' );
+			externalRedirect( queryObject.site + authUrl );
+			return;
+		}
+		// Otherwise, we assume the site is having trouble receive XMLRPC requests.
+		// To resolve, we redirect to the Jetpack Client, and attempt to complete the connection with
+		// legacy functions on the client.
+		this.props.recordTracksEvent( 'calypso_jpc_resolve_xmlrpc_error_click' );
 		this.props.goToXmlrpcErrorFallbackUrl( queryObject, authorizationCode );
 	},
 
@@ -369,19 +404,27 @@ const LoggedInForm = React.createClass( {
 	},
 
 	renderNotices() {
-		const { authorizeError, queryObject } = this.props.jetpackConnectAuthorize;
-		if ( queryObject.already_authorized && ! this.props.isAlreadyOnSitesList ) {
+		const { authorizeError, queryObject, isAuthorizing, authorizeSuccess } = this.props.jetpackConnectAuthorize;
+		if ( queryObject.already_authorized && ! this.props.isFetchingSites() && ! this.props.isAlreadyOnSitesList ) {
 			return <JetpackConnectNotices noticeType="alreadyConnectedByOtherUser" />;
 		}
 
-		if ( this.retryingAuth || ! authorizeError || this.props.authAttempts < MAX_AUTH_ATTEMPTS ) {
+		if ( this.retryingAuth ) {
+			return <JetpackConnectNotices noticeType="retryingAuth" />;
+		}
+
+		if ( this.props.authAttempts < MAX_AUTH_ATTEMPTS && this.props.authAttempts > 0 && ! isAuthorizing && ! authorizeSuccess ) {
+			return <JetpackConnectNotices noticeType="retryAuth" />;
+		}
+
+		if ( ! authorizeError ) {
 			return null;
 		}
 
 		if ( authorizeError.message.indexOf( 'already_connected' ) >= 0 ) {
 			return <JetpackConnectNotices noticeType="alreadyConnected" />;
 		}
-		if ( authorizeError.message.indexOf( 'verify_secrets_expired' ) >= 0 ) {
+		if ( this.props.requestHasExpiredSecretError() ) {
 			return <JetpackConnectNotices noticeType="secretExpired" siteUrl={ queryObject.site } />;
 		}
 		if ( this.props.requestHasXmlrpcError() ) {
@@ -405,6 +448,7 @@ const LoggedInForm = React.createClass( {
 		} = this.props.jetpackConnectAuthorize;
 
 		if ( ! this.props.isAlreadyOnSitesList &&
+			! this.props.isFetchingSites() &&
 			queryObject.already_authorized ) {
 			return this.translate( 'Go back to your site' );
 		}
@@ -608,7 +652,7 @@ const JetpackConnectAuthorizeForm = React.createClass( {
 
 	renderNoQueryArgsError() {
 		return (
-			<Main>
+			<Main className="jetpack-connect__main-error">
 				<EmptyContent
 					illustration="/calypso/images/drake/drake-whoops.svg"
 					title={ this.translate(
@@ -655,7 +699,7 @@ const JetpackConnectAuthorizeForm = React.createClass( {
 		}
 
 		if ( queryObject && queryObject.already_authorized && ! this.props.isAlreadyOnSitesList ) {
-			this.renderMainForm();
+			this.renderForm();
 		}
 
 		if ( this.props.plansFirst && ! this.props.selectedPlan ) {
@@ -679,6 +723,9 @@ export default connect(
 		const requestHasXmlrpcError = () => {
 			return hasXmlrpcError( state );
 		};
+		const requestHasExpiredSecretError = () => {
+			return hasExpiredSecretError( state );
+		};
 		const selectedPlan = getSiteSelectedPlan( state, siteSlug ) || getGlobalSelectedPlan( state );
 
 		const isFetchingSites = () => {
@@ -693,8 +740,9 @@ export default connect(
 			isAlreadyOnSitesList: isRemoteSiteOnSitesList( state ),
 			isFetchingSites,
 			requestHasXmlrpcError,
+			requestHasExpiredSecretError,
 			calypsoStartedConnection: isCalypsoStartedConnection( state, remoteSiteUrl ),
-			authAttempts: getAuthAttempts( state, siteSlug )
+			authAttempts: getAuthAttempts( state, siteSlug ),
 		};
 	},
 	dispatch => bindActionCreators( {

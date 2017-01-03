@@ -10,6 +10,7 @@ import { createStore, applyMiddleware, combineReducers, compose } from 'redux';
 import noticesMiddleware from './notices/middleware';
 import application from './application/reducer';
 import accountRecovery from './account-recovery/reducer';
+import automatedTransfer from './automated-transfer/reducer';
 import comments from './comments/reducer';
 import componentsUsageStats from './components-usage-stats/reducer';
 import consoleDispatcher from './console-dispatch';
@@ -25,6 +26,7 @@ import jetpackSettings from './jetpack-settings/reducer';
 import jetpackSync from './jetpack-sync/reducer';
 import happinessEngineers from './happiness-engineers/reducer';
 import happychat from './happychat/reducer';
+import media from './media/reducer';
 import notices from './notices/reducer';
 import pageTemplates from './page-templates/reducer';
 import plans from './plans/reducer';
@@ -60,6 +62,7 @@ import wordads from './wordads/reducer';
 export const reducer = combineReducers( {
 	application,
 	accountRecovery,
+	automatedTransfer,
 	comments,
 	componentsUsageStats,
 	countryStates,
@@ -74,6 +77,7 @@ export const reducer = combineReducers( {
 	jetpackConnect,
 	jetpackSettings,
 	jetpackSync,
+	media,
 	notices,
 	pageTemplates,
 	plugins,
@@ -109,7 +113,8 @@ const middleware = [ thunkMiddleware, noticesMiddleware ];
 if ( typeof window === 'object' ) {
 	// Browser-specific middlewares
 	middleware.push(
-		require( './analytics/middleware.js' ).analyticsMiddleware
+		require( './analytics/middleware.js' ).analyticsMiddleware,
+		require( './data-layer/wpcom-api-middleware.js' ).middleware,
 	);
 }
 
@@ -123,8 +128,8 @@ export function createReduxStore( initialState = {} ) {
 		window.devToolsExtension
 	) {
 		createStoreWithMiddleware = compose(
-			createStoreWithMiddleware,
 			consoleDispatcher,
+			createStoreWithMiddleware,
 			window.devToolsExtension(),
 		);
 	}

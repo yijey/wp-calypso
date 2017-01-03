@@ -11,13 +11,17 @@ import { translate } from 'i18n-calypso';
  */
 import Dialog from 'components/dialog';
 import PulsingDot from 'components/pulsing-dot';
-import { getForumUrl, trackClick } from './helpers';
-import { getThemeDetailsUrl, getThemeCustomizeUrl } from 'state/themes/selectors';
+import { trackClick } from './helpers';
+import { isJetpackSite } from 'state/sites/selectors';
 import {
-	isActivating,
-	hasActivated,
-	getCurrentTheme
-} from 'state/themes/current-theme/selectors';
+	getActiveTheme,
+	getTheme,
+	getThemeDetailsUrl,
+	getThemeCustomizeUrl,
+	getThemeForumUrl,
+	isActivatingTheme,
+	hasActivatedTheme
+} from 'state/themes/selectors';
 import { clearActivated } from 'state/themes/actions';
 
 const ThanksModal = React.createClass( {
@@ -25,7 +29,7 @@ const ThanksModal = React.createClass( {
 
 	propTypes: {
 		// Where is the modal being used?
-		source: React.PropTypes.oneOf( [ 'details', 'list' ] ).isRequired,
+		source: React.PropTypes.oneOf( [ 'details', 'list', 'upload' ] ).isRequired,
 		// Connected props
 		isActivating: React.PropTypes.bool.isRequired,
 		hasActivated: React.PropTypes.bool.isRequired,
@@ -79,7 +83,7 @@ const ThanksModal = React.createClass( {
 			<li>
 				{ translate( 'Have questions? Stop by our {{a}}support forums.{{/a}}', {
 					components: {
-						a: <a href={ getForumUrl( this.props.currentTheme ) }
+						a: <a href={ this.props.forumUrl }
 							onClick={ this.onLinkClick( 'support' ) } />
 					}
 				} ) }
@@ -178,30 +182,37 @@ const ThanksModal = React.createClass( {
 	},
 
 	render() {
-		const visitSiteText = this.props.hasActivated ? translate( 'Visit site' ) : translate( 'Activating theme…' );
+		const { currentTheme, hasActivated, isActivating } = this.props;
+		const visitSiteText = hasActivated ? translate( 'Visit site' ) : translate( 'Activating theme…' );
 		const buttons = [
 			{ action: 'back', label: translate( 'Back to themes' ), onClick: this.goBack },
-			{ action: 'visitSite', label: visitSiteText, isPrimary: true, disabled: ! this.props.hasActivated, onClick: this.visitSite },
+			{ action: 'visitSite', label: visitSiteText, isPrimary: true, disabled: ! hasActivated, onClick: this.visitSite },
 		];
 
 		return (
-			<Dialog className="themes-thanks-modal" isVisible={ this.props.isActivating || this.props.hasActivated } buttons={ buttons } onClose={ this.onCloseModal } >
-				{ this.props.hasActivated ? this.renderContent() : this.renderLoading() }
+			<Dialog className="themes-thanks-modal"
+				isVisible={ isActivating || hasActivated }
+				buttons={ buttons }
+				onClose={ this.onCloseModal } >
+				{ hasActivated && currentTheme ? this.renderContent() : this.renderLoading() }
 			</Dialog>
 		);
 	},
 } );
 
 export default connect(
-	( state, props ) => {
-		const currentTheme = getCurrentTheme( state, props.site && props.site.ID );
+	( state, { site } ) => {
+		const siteIdOrWpcom = ( site && isJetpackSite( state, site.ID ) ) ? site.ID : 'wpcom';
+		const currentThemeId = site && getActiveTheme( state, site.ID );
+		const currentTheme = currentThemeId && getTheme( state, siteIdOrWpcom, currentThemeId );
 
 		return {
 			currentTheme,
-			detailsUrl: props.site && getThemeDetailsUrl( state, currentTheme, props.site.ID ),
-			customizeUrl: props.site && getThemeCustomizeUrl( state, currentTheme, props.site.ID ),
-			isActivating: isActivating( state ),
-			hasActivated: hasActivated( state ),
+			detailsUrl: site && getThemeDetailsUrl( state, currentTheme, site.ID ),
+			customizeUrl: site && getThemeCustomizeUrl( state, currentTheme, site.ID ),
+			forumUrl: getThemeForumUrl( state, currentThemeId ),
+			isActivating: !! ( site && isActivatingTheme( state, site.ID ) ),
+			hasActivated: !! ( site && hasActivatedTheme( state, site.ID ) )
 		};
 	},
 	{ clearActivated }

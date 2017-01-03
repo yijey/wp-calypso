@@ -16,21 +16,63 @@
 
 .posts__list {
 
+	.posts__post-share-main {
+		border-top: solid 1px transparentize( lighten( $gray, 20% ), .5 );
+		display: flex;
+		flex-direction: column-reverse;
+		padding: 0 24px 24px;
+
+		@include breakpoint( ">480px" ) {
+			flex-direction: row;
+		}
+	}
+	.posts__post-share-head {
+		padding: 0 24px;
+	}
+
+	.posts__post-share-form {
+		flex: 3;
+	}
+
 	.posts__post-share-services {
-		flex-direction: row;
-		justify-content: space-around;
+		flex: 2;
+		flex-direction: column;
+		justify-content: flex-start;
 		display: flex;
 		flex-wrap: wrap;
-		border-bottom: solid 1px transparentize( lighten( $gray, 20% ), .5 );
+		margin-top: 16px;
+
+		@include breakpoint( ">480px" ) {
+			margin-left: 20px;
+		}
 	}
+
+	.posts__post-share-services-header {
+		font-weight: 600;
+		margin-bottom: 4px;
+	}
+	.posts__post-share-services-add {
+		text-align: center
+	}
+
 	.posts__post-share-service {
 		cursor: pointer;
-		padding: 4px;
 		display: flex;
-		justify-content: center;
-		flex: 1;
-		border-top: solid 1px transparentize( lighten( $gray, 20% ), .5 );
+		justify-content: left;
+		padding: 0 0 12px 4px;
 		color: lighten( $gray, 20% );
+		.social-logo {
+			padding-left: 4px;
+		}
+
+		&:first-of-type {
+			margin-top: 8px;
+		}
+
+		&.is-broken {
+			cursor: not-allowed;
+		}
+
 		&.is-active {
 			color: black;
 
@@ -42,7 +84,7 @@
 				color: $color-facebook;
 			}
 
-			.social-logo.google_plus {
+			.social-logo.google-plus {
 				color: $color-gplus;
 			}
 
@@ -76,7 +118,12 @@
 			font-size: 13px;
 		}
 		.posts__post-share-wrapper .notice {
-			margin-bottom: 0;
+			margin-top: 4px;
+			margin-bottom: 0px;
+
+			&:first-of-type {
+				margin-top: 0px;
+			}
 		}
 	}
 
@@ -430,14 +477,17 @@
 
 .post .posts__post-share {
 	margin: 0;
-	padding: 0 24px 24px;
 	animation: appear .3s ease-in-out;
 	border-top: solid 1px transparentize( lighten( $gray, 20% ), .5 );
 }
 
 .posts__post-share-title {
-	margin: 24px 0 24px 0;
-	font-weight: bold;
+	margin: 24px 0 0 0;
+	font-weight: 600;
+}
+
+.posts__post-share-subtitle {
+	margin-bottom: 24px;
 }
 
 .post-controls {
@@ -591,5 +641,13 @@
 
 	.count {
 		margin-left: 8px;
+	}
+}
+
+.posts__post-share-button{
+	width: 100%;
+
+	@include breakpoint( ">480px" ) {
+		width: auto;
 	}
 }

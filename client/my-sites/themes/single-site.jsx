@@ -12,13 +12,13 @@ import Main from 'components/main';
 import SingleSiteThemeShowcaseWpcom from './single-site-wpcom';
 import SingleSiteThemeShowcaseJetpack from './single-site-jetpack';
 import sitesFactory from 'lib/sites-list';
-import { getSelectedSite } from 'state/ui/selectors';
+import { getSelectedSiteId } from 'state/ui/selectors';
 import { isJetpackSite } from 'state/sites/selectors';
-import { isActiveTheme } from 'state/themes/current-theme/selectors';
-import { canCurrentUser } from 'state/current-user/selectors';
+import { isThemeActive } from 'state/themes/selectors';
+import { canCurrentUser } from 'state/selectors';
 
 const SingleSiteThemeShowcaseWithOptions = ( props ) => {
-	const { isJetpack } = props;
+	const { isJetpack, translate } = props;
 	const sites = sitesFactory();
 	const site = sites.getSelectedSite();
 
@@ -48,6 +48,8 @@ const SingleSiteThemeShowcaseWithOptions = ( props ) => {
 				defaultOption="activate"
 				secondaryOption="tryandcustomize"
 				source="showcase"
+				showUploadButton={ true }
+				uploadLabel={ translate( 'Custom themes' ) }
 			/>
 		);
 	}
@@ -69,18 +71,20 @@ const SingleSiteThemeShowcaseWithOptions = ( props ) => {
 			] }
 			defaultOption="activate"
 			secondaryOption="tryandcustomize"
-			source="showcase" />
+			source="showcase"
+			showUploadButton={ true }
+			uploadLabel={ translate( 'WordPress.com themes' ) }
+		/>
 	);
 };
 
 export default connect(
 	( state ) => {
-		const selectedSite = getSelectedSite( state );
+		const selectedSiteId = getSelectedSiteId( state );
 		return {
-			selectedSite,
-			isJetpack: selectedSite && isJetpackSite( state, selectedSite.ID ),
-			isCustomizable: selectedSite && canCurrentUser( state, selectedSite.ID, 'edit_theme_options' ),
-			getScreenshotOption: ( theme ) => ( selectedSite && isActiveTheme( state, theme.id, selectedSite.ID ) ) ? 'customize' : 'info'
+			isJetpack: isJetpackSite( state, selectedSiteId ),
+			isCustomizable: canCurrentUser( state, selectedSiteId, 'edit_theme_options' ),
+			getScreenshotOption: ( theme ) => isThemeActive( state, theme.id, selectedSiteId ) ? 'customize' : 'info'
 		};
 	}
 )( localize( SingleSiteThemeShowcaseWithOptions ) );

@@ -4,9 +4,9 @@
 
 .is-reader-page .reader__content,
 .is-reader-page .reader-start {
-	margin-top: 10px;
+	margin-top: 0;
 
-	@include breakpoint( ">480px" ) {
+	@include breakpoint( ">660px" ) {
 		margin-top: 30px;
 	}
 }
@@ -112,6 +112,48 @@
 	}
 }
 
+// Back button in Reader FeedHeader
+.is-reader-page .is-site-stream .reader-feed-header.has-back-button .reader-feed-header__follow {
+
+	@include breakpoint( "<660px" ) {
+		right: 0;
+	}
+
+	// Drops Follow count in FeedHeader if Back button exists
+	.reader-feed-header__follow-count {
+
+		@include breakpoint( "<960px" ) {
+			display: none;
+		}
+	}
+}
+
+.is-reader-page .is-site-stream .reader-feed-header__back-and-follow {
+
+	.card.header-cake {
+		background: none;
+		box-shadow: none;
+		flex: 1;
+		margin-right: 100px;
+		position: relative;
+			top: 4px;
+		z-index: z-index( '.reader-feed-header__back-and-follow', '.card.header-cake' );
+
+		@include breakpoint( "<960px" ) {
+			margin-top: 0;
+		}
+
+		@include breakpoint( "<660px" ) {
+			left: 0;
+		}
+	}
+
+	.button.header-cake__back {
+		overflow: visible;
+		padding: 0;
+		position: relative;
+	}
+}
 
 // WPcom Reblogs
 .wpcom-reblog-snapshot {
@@ -167,7 +209,6 @@
 	}
 }
 
-
 // Post Card Footer
 // Where things like reading time, embed counts,
 // tags, likes, and comments live.
@@ -191,12 +232,6 @@
 		&:last-child {
 			margin-right: 0;
 		}
-	}
-
-	// This creates the space that pushes the like and comment
-	// buttons off to the right.
-	.post-permalink {
-		margin-right: auto;
 	}
 
 	a {
@@ -271,16 +306,20 @@
 
 .tiled-gallery-caption { /* Captions */
 	box-sizing: border-box; /* to make width: 100% work */
-	background: #eee;
-	background: rgba( 255,255,255,0.8 );
-	color: #333;
-	font-size: 13px;
+	background: #222;
+	background: rgba( 0,0,0,0.3 );
+	background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.2) 73%, rgba( 0,0,0,.5) 100%);
+	color: $white;
+	font-family: $sans;
+	font-size: 14px;
+	text-shadow: 0 1px rgba(0, 0, 0, 0.3);
 	font-weight: 400;
 	overflow: hidden;
 	padding: 10px 20px;
 	position: absolute;
-		bottom: 0;
-	width: 100%;
+		bottom: 2px;
+		left: 2px;
+		right: 2px;
 }
 
 .tiled-gallery .tiled-gallery-item-small .tiled-gallery-caption { /* Smaller captions */
@@ -323,7 +362,7 @@
 
 .is-group-reader .main .empty-content,
 .is-reader-page .main .empty-content {
-	margin-top: -120px;
+	margin-top: -90px;
 	padding-top: 0;
 
 	img {
@@ -344,6 +383,11 @@
 	@include breakpoint( "<480px" ) {
 		margin-bottom: 10px;
 	}
+}
+
+// No Results in new Search
+.is-reader-page .search-stream .empty-content {
+	margin-top: 0;
 }
 
 /* = Foldable card (toggle arrow is opposite side in Reader)
@@ -367,7 +411,7 @@
 		.foldable-card__content {
 			padding: 0;
 		}
- 	}
+	}
 
 	.foldable-card__expand .gridicon {
 		transform: rotate( -90deg );
@@ -380,4 +424,18 @@
  // Make sure it rotates in the right direction
 .following-edit .foldable-card.is-expanded .gridicon {
 	transform: rotate( 0deg );
+}
+
+/* = Infinite scroll end (shown at end of streams)
+ --------------------------------------------------------------- */
+
+.is-reader-page .infinite-scroll-end {
+	&:before {
+		border-bottom: none;
+	}
+
+	&:after {
+		background-color: inherit;
+		margin-top: 20px;
+	}
 }

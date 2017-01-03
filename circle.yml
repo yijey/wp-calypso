@@ -5,8 +5,17 @@ test:
   pre:
     - NODE_ENV=test make client/config/index.js:
         parallel: true
-    - case $CIRCLE_NODE_INDEX in 0) NODE_ENV=test make build-server ;; esac:
-        parallel: true
+    - ? |
+          # make the build-server and i18n string data in parallel
+          if [[ "$CIRCLE_NODE_INDEX" == 0 ]]; then NODE_ENV=test make build-server; fi
+          if ( [[ "$CIRCLE_NODE_INDEX" == 1 ]] || [[ "$CIRCLE_NODE_TOTAL" == 1 ]] ) && [[ "$CIRCLE_BRANCH" == "master" ]]; then
+            make translate; mkdir -p $CIRCLE_ARTIFACTS/translate; mv calypso-strings.pot $CIRCLE_ARTIFACTS/translate
+          elif [[ "$CIRCLE_NODE_INDEX" == 1 ]] || [[ "$CIRCLE_NODE_TOTAL" == 1 ]]; then
+            git clone https://github.com/Automattic/gp-localci-client.git
+            bash gp-localci-client/generate-new-strings-pot.sh $CIRCLE_BRANCH $CIRCLE_SHA1 $CIRCLE_ARTIFACTS/translate
+            rm -rf gp-localci-client
+          fi
+      : parallel: true
   override:
     - bin/run-lint :
         parallel: true
@@ -24,4 +33,6 @@ test:
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit/ && find . -type f -regex  "./test-results.*\.xml" -exec cp {} $CIRCLE_TEST_REPORTS/junit/ \;:
         parallel: true
-    - if [[ $CIRCLE_BRANCH == "master" ]]; then make translate; mkdir $CIRCLE_ARTIFACTS/translate; cp calypso-strings.pot $CIRCLE_ARTIFACTS/translate/calypso-strings.pot; fi;
+notify:
+  webhooks:
+    - url: https://translate.wordpress.com/api/localci/-relay-new-strings-to-gh

@@ -50,7 +50,7 @@ import { JPC_PLANS_PAGE } from './constants';
 const _fetching = {};
 const calypsoEnv = config( 'env_id' ) || process.env.NODE_ENV;
 const apiBaseUrl = 'https://jetpack.wordpress.com';
-const remoteAuthPath = '/wp-admin/admin.php?page=jetpack&connect_url_redirect=true';
+const remoteAuthPath = '/wp-admin/admin.php?page=jetpack&connect_url_redirect=true&calypso_env=' + calypsoEnv;
 const remoteInstallPath = '/wp-admin/plugin-install.php?tab=plugin-information&plugin=jetpack';
 const remoteActivatePath = '/wp-admin/plugins.php';
 const tracksEvent = ( dispatch, eventName, props ) => {
@@ -207,6 +207,7 @@ export default {
 	},
 	retryAuth( url, attemptNumber ) {
 		return ( dispatch ) => {
+			debug( 'retrying auth', url, attemptNumber );
 			dispatch( {
 				type: JETPACK_CONNECT_RETRY_AUTH,
 				attemptNumber: attemptNumber,
@@ -278,7 +279,6 @@ export default {
 				type: JETPACK_CONNECT_REDIRECT_XMLRPC_ERROR_FALLBACK_URL,
 				url
 			} );
-			tracksEvent( dispatch, 'calyspo_jpc_xmlrpc_error', { error: queryObject.authorizeError } );
 			externalRedirect( url );
 		};
 	},

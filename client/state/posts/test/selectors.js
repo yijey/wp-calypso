@@ -113,7 +113,11 @@ describe( 'selectors', () => {
 				author: {
 					name: 'Badman <img onerror= />'
 				},
-				featured_image: 'https://example.com/logo.png'
+				post_thumbnail: {
+					URL: 'https://example.com/logo.png',
+					width: 700,
+					height: 200,
+				}
 			};
 
 			const normalizedPost = getNormalizedPost( deepFreeze( {
@@ -137,7 +141,9 @@ describe( 'selectors', () => {
 					name: 'Badman '
 				},
 				canonical_image: {
-					uri: 'https://example.com/logo.png'
+					uri: 'https://example.com/logo.png',
+					width: 700,
+					height: 200,
 				}
 			} );
 		} );
@@ -1538,6 +1544,30 @@ describe( 'selectors', () => {
 			}, 2916284, 841 );
 
 			expect( slug ).to.eql( 'chewbacca' );
+		} );
+
+		it( 'should return decoded non-latin post.slug if post is published', () => {
+			const slug = getEditedPostSlug( {
+				posts: {
+					queries: {
+						2916284: new PostQueryManager( {
+							items: {
+								841: {
+									ID: 841,
+									site_ID: 2916284,
+									global_ID: '3d097cb7c5473c169bba0eb8e3c6cb64',
+									status: 'publish',
+									slug: '%D7%96%D7%94%D7%95%20%D7%A2%D7%99%D7%9F%20%D7%94%D7%A0%D7%9E%D7%A8'
+								}
+							}
+						} )
+					},
+					edits: {
+					}
+				}
+			}, 2916284, 841 );
+
+			expect( slug ).to.eql( 'זהו עין הנמר' );
 		} );
 
 		it( 'should return edited slug if post is not published', () => {

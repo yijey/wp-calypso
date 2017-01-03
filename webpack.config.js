@@ -38,6 +38,9 @@ const webpackConfig = {
 		devtoolModuleFilenameTemplate: 'app:///[resource-path]'
 	},
 	module: {
+		// avoids this warning:
+		// https://github.com/localForage/localForage/issues/577
+		noParse: /[\/\\]node_modules[\/\\]localforage[\/\\]dist[\/\\]localforage\.js$/,
 		loaders: [
 			{
 				test: /sections.js$/,
@@ -64,10 +67,11 @@ const webpackConfig = {
 	},
 	resolve: {
 		extensions: [ '', '.json', '.js', '.jsx' ],
-		root: [ path.join( __dirname, 'client' ) ],
+		root: [ path.join( __dirname, 'client' ), path.join( __dirname, 'client', 'extensions' ) ],
 		modulesDirectories: [ 'node_modules' ],
 		alias: {
-			'react-virtualized': 'react-virtualized/dist/commonjs'
+			'react-virtualized': 'react-virtualized/dist/commonjs',
+			'social-logos/example': 'social-logos/build/example'
 		}
 	},
 	resolveLoader: {

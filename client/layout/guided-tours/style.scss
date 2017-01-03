@@ -20,6 +20,15 @@
 		strong {
 			color: $white;
 		}
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	.gridicon {
+		vertical-align: middle;
+		margin-top: -4px;
 	}
 
 	.gridicon[height="16"] {
@@ -100,11 +109,8 @@
 	color: lighten( $gray, 10 );
 	margin-bottom: 0;
 	font-style: italic;
-
-	.gridicon {
-		position: relative;
-		top: 7px;
-	}
+	line-height: 24px;
+	min-height: 24px;
 
 	.external-link {
 		font-style: normal;
@@ -113,10 +119,6 @@
 		padding-top: 12px;
 		margin-top: 16px;
 	}
-}
-
-.guided-tours__actionstep-instructions {
-	margin-top: -7px;
 }
 
 // style the pure text representation of the actionstep icon

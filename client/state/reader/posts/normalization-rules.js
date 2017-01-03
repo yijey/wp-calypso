@@ -1,13 +1,12 @@
 /**
  * External Dependencies
  */
-import { filter, find, flow, forEach, matches } from 'lodash';
+import { filter, find, flow, forEach } from 'lodash';
 import url from 'url';
 
 /**
  * Internal Dependencies
  */
-import config from 'config';
 import resizeImageUrl from 'lib/resize-image-url';
 import DISPLAY_TYPES from './display-types';
 
@@ -15,7 +14,6 @@ import DISPLAY_TYPES from './display-types';
  * Rules
  */
 import createBetterExcerpt from 'lib/post-normalizer/rule-create-better-excerpt';
-import createBetterExcerptRefresh from 'lib/post-normalizer/rule-create-better-excerpt-refresh';
 import detectMedia from 'lib/post-normalizer/rule-content-detect-media';
 import detectPolls from 'lib/post-normalizer/rule-content-detect-polls';
 import makeEmbedsSafe from 'lib/post-normalizer/rule-content-make-embeds-safe';
@@ -23,7 +21,7 @@ import removeStyles from 'lib/post-normalizer/rule-content-remove-styles';
 import makeImagesSafe from 'lib/post-normalizer/rule-content-make-images-safe';
 import { disableAutoPlayOnMedia, disableAutoPlayOnEmbeds } from 'lib/post-normalizer/rule-content-disable-autoplay';
 import decodeEntities from 'lib/post-normalizer/rule-decode-entities';
-import firstPassCanonicalImage from 'lib/post-normalizer/rule-first-pass-canonical-image';
+import pickCanonicalImage from 'lib/post-normalizer/rule-pick-canonical-image';
 import makeSiteIdSafeForApi from 'lib/post-normalizer/rule-make-site-id-safe-for-api';
 import pickPrimaryTag from 'lib/post-normalizer/rule-pick-primary-tag';
 import preventWidows from 'lib/post-normalizer/rule-prevent-widows';
@@ -31,7 +29,6 @@ import safeImageProperties from 'lib/post-normalizer/rule-safe-image-properties'
 import stripHtml from 'lib/post-normalizer/rule-strip-html';
 import withContentDom from 'lib/post-normalizer/rule-with-content-dom';
 import keepValidImages from 'lib/post-normalizer/rule-keep-valid-images';
-import pickCanonicalImage from 'lib/post-normalizer/rule-pick-canonical-image';
 import waitForImagesToLoad from 'lib/post-normalizer/rule-wait-for-images-to-load';
 import pickCanonicalMedia from 'lib/post-normalizer/rule-pick-canonical-media';
 import removeElementsBySelector from 'lib/post-normalizer/rule-content-remove-elements-by-selector';
@@ -40,10 +37,9 @@ import removeElementsBySelector from 'lib/post-normalizer/rule-content-remove-el
  * Module vars
  */
 const
-	isRefreshedStream = config.isEnabled( 'reader/refresh/stream' ),
 	READER_CONTENT_WIDTH = 720,
 	DISCOVER_FULL_BLEED_WIDTH = 1082,
-	PHOTO_ONLY_MIN_WIDTH = isRefreshedStream ? 480 : 570,
+	PHOTO_ONLY_MIN_WIDTH = 480,
 	DISCOVER_BLOG_ID = 53424024,
 	GALLERY_MIN_IMAGES = 4,
 	GALLERY_MIN_IMAGE_WIDTH = 350;
@@ -61,14 +57,6 @@ function discoverFullBleedImages( post, dom ) {
 	return post;
 }
 
-function getWordCount( post ) {
-	if ( ! post || ! post.better_excerpt_no_html ) {
-		return 0;
-	}
-
-	return ( post.better_excerpt_no_html.replace( /['";:,.?¿\-!¡]+/g, '' ).match( /\S+/g ) || [] ).length;
-}
-
 function getCharacterCount( post ) {
 	if ( ! post || ! post.better_excerpt_no_html ) {
 		return 0;
@@ -81,9 +69,7 @@ export function imageIsBigEnoughForGallery( image ) {
 	return image.width >= GALLERY_MIN_IMAGE_WIDTH;
 }
 
-const hasShortContent = isRefreshedStream
-	? post => getCharacterCount( post ) <= 100
-	: post => getWordCount( post ) < 100;
+const hasShortContent = post => getCharacterCount( post ) <= 100;
 
 /**
  * Attempt to classify the post into a display type
@@ -122,15 +108,10 @@ function classifyPost( post ) {
 		}
 
 		const canonicalImageUrl = url.parse( canonicalImage.uri, true, true ),
-			canonicalImageUrlImportantParts = {
-				hostname: canonicalImageUrl.hostname,
-				pathname: canonicalImageUrl.pathname,
-				query: canonicalImageUrl.query
-			},
-			matcher = matches( canonicalImageUrlImportantParts );
+			canonicalImagePath = canonicalImageUrl.pathname;
 		if ( find( post.content_images, ( img ) => {
 			const imgUrl = url.parse( img.src, true, true );
-			return matcher( imgUrl );
+			return imgUrl.pathname === canonicalImagePath;
 		} ) ) {
 			displayType ^= DISPLAY_TYPES.CANONICAL_IN_CONTENT;
 		}
@@ -163,7 +144,7 @@ const fastPostNormalizationRules = flow( [
 	withContentDom( [
 		removeStyles,
 		removeElementsBySelector,
-		makeImagesSafe( READER_CONTENT_WIDTH ),
+		makeImagesSafe(),
 		discoverFullBleedImages,
 		makeEmbedsSafe,
 		disableAutoPlayOnEmbeds,
@@ -171,8 +152,8 @@ const fastPostNormalizationRules = flow( [
 		detectMedia,
 		detectPolls,
 	] ),
-	firstPassCanonicalImage,
-	config.isEnabled( 'reader/refresh/stream' ) ? createBetterExcerptRefresh : createBetterExcerpt,
+	createBetterExcerpt,
+	pickCanonicalImage,
 	pickCanonicalMedia,
 	classifyPost,
 ] );

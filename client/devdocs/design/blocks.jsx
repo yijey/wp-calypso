@@ -20,7 +20,7 @@ import SearchCard from 'components/search-card';
 import CreditCardForm from 'blocks/credit-card-form/docs/example';
 import AuthorSelector from 'blocks/author-selector/docs/example';
 import CommentButtons from 'blocks/comment-button/docs/example';
-import FollowButton from 'components/follow-button/docs/example';
+import FollowButton from 'blocks/follow-button/docs/example';
 import LikeButtons from 'blocks/like-button/docs/example';
 import PostSchedule from 'components/post-schedule/docs/example';
 import PostSelector from 'my-sites/post-selector/docs/example';
@@ -43,14 +43,13 @@ import ReaderFullPostHeader from 'blocks/reader-full-post/docs/header-example';
 import AuthorCompactProfile from 'blocks/author-compact-profile/docs/example';
 import RelatedPostCard from 'blocks/reader-related-card/docs/example';
 import RelatedPostCardv2 from 'blocks/reader-related-card-v2/docs/example';
-import SearchPostCard from 'blocks/reader-search-card/docs/example';
 import PlanPrice from 'my-sites/plan-price/docs/example';
 import PlanThankYouCard from 'blocks/plan-thank-you-card/docs/example';
 import DismissibleCard from 'blocks/dismissible-card/docs/example';
 import PostEditButton from 'blocks/post-edit-button/docs/example';
 import ReaderAvatar from 'blocks/reader-avatar/docs/example';
 import ImageEditor from 'blocks/image-editor/docs/example';
-import RefreshPostCard from 'blocks/reader-post-card/docs/example';
+import ReaderPostCard from 'blocks/reader-post-card/docs/example';
 import ReaderPostOptionsMenu from 'blocks/reader-post-options-menu/docs/example';
 import DailyPostButton from 'blocks/daily-post-button/docs/example';
 
@@ -111,7 +110,6 @@ export default React.createClass( {
 					<DomainTip />
 					<RelatedPostCard />
 					<RelatedPostCardv2 />
-					<SearchPostCard />
 					<PostItem />
 					<PostRelativeTime />
 					<PostStatus />
@@ -119,7 +117,7 @@ export default React.createClass( {
 					<ReaderSiteStreamLink />
 					<ReaderFullPostHeader />
 					<AuthorCompactProfile />
-					<RefreshPostCard />
+					<ReaderPostCard />
 					<PlanPrice />
 					<PlanThankYouCard />
 					<DismissibleCard />

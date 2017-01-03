@@ -4,8 +4,7 @@
 import React, { PropTypes } from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
-import includes from 'lodash/includes';
-import map from 'lodash/map';
+import { includes, map } from 'lodash';
 import SocialLogo from 'social-logos';
 
 /**
@@ -13,7 +12,7 @@ import SocialLogo from 'social-logos';
  */
 import QueryPostTypes from 'components/data/query-post-types';
 import Button from 'components/button';
-import { getSelectedSiteId } from 'state/ui/selectors';
+import { getSelectedSiteId, getSelectedSiteSlug } from 'state/ui/selectors';
 import { postTypeSupports } from 'state/post-types/selectors';
 import { isJetpackModuleActive } from 'state/sites/selectors';
 import { getCurrentUserId } from 'state/current-user/selectors';
@@ -23,10 +22,13 @@ import { isRequestingSharePost, sharePostFailure, sharePostSuccessMessage } from
 import PostMetadata from 'lib/post-metadata';
 import PublicizeMessage from 'post-editor/editor-sharing/publicize-message';
 import Notice from 'components/notice';
+import NoticeAction from 'components/notice/notice-action';
 import QueryPublicizeConnections from 'components/data/query-publicize-connections';
+import FormToggle from 'components/forms/form-toggle/compact';
 
 const PostSharing = React.createClass( {
 	propTypes: {
+		siteSlug: PropTypes.string,
 		site: PropTypes.object,
 		post: PropTypes.object,
 		siteId: PropTypes.number,
@@ -57,6 +59,13 @@ const PostSharing = React.createClass( {
 		this.setState( { skipped } );
 	},
 
+	isConnectionActive: function( connection ) {
+		return (
+			connection.status !== 'broken' &&
+			this.state.skipped.indexOf( connection.keyring_connection_ID ) === -1
+		);
+	},
+
 	renderServices: function() {
 		if ( ! this.props.site || ! this.hasConnections() ) {
 			return;
@@ -68,10 +77,12 @@ const PostSharing = React.createClass( {
 				className={ classNames( {
 					'posts__post-share-service': true,
 					[ connection.service ]: true,
-					'is-active': ( this.state.skipped.indexOf( connection.keyring_connection_ID ) === -1 )
+					'is-active': this.isConnectionActive( connection ),
+					'is-broken': connection.status === 'broken'
 				} ) }
 			>
-				<SocialLogo icon={ connection.service }/>
+				<FormToggle checked={ this.isConnectionActive( connection ) }/>
+				<SocialLogo icon={ connection.service === 'google_plus' ? 'google-plus' : connection.service }/>
 				<div className="posts__post-share-service-account-name">
 					<span>{ connection && connection.external_display }</span>
 				</div>
@@ -80,10 +91,7 @@ const PostSharing = React.createClass( {
 		);
 	},
 	renderMessage: function() {
-		const skipped = this.state.skipped;
-		const targeted = this.hasConnections() ? this.props.connections.filter( function( connection ) {
-				return skipped && -1 === skipped.indexOf( connection.keyring_connection_ID );
-			} ) : [];
+		const targeted = this.hasConnections() ? this.props.connections.filter( this.isConnectionActive ) : [];
 		const requireCount = includes( map( targeted, 'service' ), 'twitter' );
 		const acceptableLength = ( requireCount ) ? 140 - 23 - 23 : null;
 
@@ -102,6 +110,16 @@ const PostSharing = React.createClass( {
 	},
 	dismiss: function() {
 		this.props.dismissShareConfirmation( this.props.siteId, this.props.post.ID );
+	},
+	sharePost: function() {
+		this.props.sharePost( this.props.siteId, this.props.post.ID, this.state.skipped, this.state.message );
+	},
+	isButtonDisabled() {
+		if ( this.props.requesting ) {
+			return true;
+		}
+
+		return this.props.connections.filter( this.isConnectionActive ).length < 1;
 	},
 	render: function() {
 		if ( ! this.props.isPublicizeEnabled ) {
@@ -122,24 +140,67 @@ const PostSharing = React.createClass( {
 
 		return (
 			<div className="posts__post-share-wrapper">
-				{ this.props.requesting && <Notice status="is-warning" showDismiss={ false }>{ this.translate( 'Hang tight, socializing your media...' ) }</Notice> }
-				{ this.props.success && <Notice status="is-success" onDismissClick={ this.dismiss }>{ this.translate( 'It went out! Your social media is on fire!' ) }</Notice> }
+				{ this.props.requesting && <Notice status="is-warning" showDismiss={ false }>{ this.translate( 'Scheduling...' ) }</Notice> }
+				{ this.props.success && <Notice status="is-success" onDismissClick={ this.dismiss }>{ this.translate( `Updates sent. Please check your social media accounts.` ) }</Notice> }
 				{ this.props.failure && <Notice status="is-error" onDismissClick={ this.dismiss }>{ this.translate( `Something went wrong. Please don't be mad.` ) }</Notice> }
 				<div className={ classes }>
 					{ this.props.siteId && <QueryPostTypes siteId={ this.props.siteId } /> }
-					<h3 className="posts__post-share-title">
-						{ this.translate( 'Share the post and spread the word!' ) }
-					</h3>
-					<div className="posts__post-share-services">
-						{ this.renderServices() }
+					<div className="posts__post-share-head">
+						<h4 className="posts__post-share-title">
+							{ this.translate( 'Publicize your content' ) }
+						</h4>
+						<div className="posts__post-share-subtitle">
+							{ this.translate( 'Share your post on all of your connected social media accounts using {{a}}Publicize{{/a}}', {
+								components: {
+									a: <a href={ '/sharing/' + this.props.siteSlug } />
+								}
+							} ) }
+						</div>
 					</div>
-					{ this.renderMessage() }
-					<Button
-						onClick={ () => this.props.sharePost( this.props.siteId, this.props.post.ID, this.state.skipped, this.state.message ) }
-						disabled={ this.props.requesting || ( ( this.props.connections.length || 0 ) - this.state.skipped.length  < 1 ) }
-					>
-						{ this.translate( 'Share post' ) }
-					</Button>
+					{ this.hasConnections() && <div>
+						<div>
+							{ this.props.connections
+								.filter( connection => connection.status === 'broken' )
+								.map( connection => <Notice
+									key={ connection.keyring_connection_ID }
+									status="is-warning"
+									showDismiss={ false }
+									text={ this.translate( 'There is an issue connecting to %s.', { args: connection.label } ) }
+								>
+									<NoticeAction href={ '/sharing/' + this.props.siteSlug }>
+										{ this.translate( 'Reconnect' ) }
+									</NoticeAction>
+								</Notice> )
+							}
+						</div>
+						<div className="posts__post-share-main">
+							<div className="posts__post-share-form">
+								{ this.renderMessage() }
+								<Button
+									className="posts__post-share-button"
+									primary={ true }
+									onClick={ this.sharePost }
+									disabled={ this.isButtonDisabled() }
+								>
+									{ this.translate( 'Share post' ) }
+								</Button>
+							</div>
+							<div className="posts__post-share-services">
+								<h5 className="posts__post-share-services-header">
+									{ this.translate( 'Connected services' ) }
+								</h5>
+								{ this.renderServices() }
+								<Button href={ '/sharing/' + this.props.siteId } compact={ true } className="posts__post-share-services-add">
+									{ this.translate( 'Add account' ) }
+								</Button>
+							</div>
+						</div>
+					</div> }
+					{ ! this.hasConnections() && <Notice status="is-warning" showDismiss={ false } text={ this.translate( 'No social accounts connected' ) }>
+						<NoticeAction href={ '/sharing/' + this.props.siteSlug }>
+							{ this.translate( 'Settings' ) }
+						</NoticeAction>
+					</Notice> }
 				</div>
 				{ this.props.site && <QueryPublicizeConnections siteId={ this.props.site.ID } /> }
 			</div>
@@ -158,6 +219,7 @@ export default connect(
 		);
 
 		return {
+			siteSlug: getSelectedSiteSlug( state ),
 			siteId,
 			isPublicizeEnabled,
 			connections: getSiteUserConnections( state, siteId, userId ),

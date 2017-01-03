@@ -11,12 +11,15 @@ import { localize } from 'i18n-calypso';
  */
 import Card from 'components/card';
 import ReaderFollowButton from 'reader/follow-button';
-import resizeImageUrl from 'lib/resize-image-url';
-import safeImageUrl from 'lib/safe-image-url';
 import Site from 'blocks/site';
 import { state as feedState } from 'lib/feed-store/constants';
+import HeaderBack from 'reader/header-back';
 
 class FeedHeader extends Component {
+
+	static propTypes = {
+		showBack: React.PropTypes.bool
+	};
 
 	componentWillReceiveProps = ( nextProps ) => {
 		if ( nextProps.site !== this.props.site || nextProps.feed !== this.props.feed ) {
@@ -59,40 +62,30 @@ class FeedHeader extends Component {
 	render() {
 		const site = this.props.site,
 			feed = this.props.feed,
-			headerImage = site && site.getIn( [ 'options', 'header_image' ] ),
-			headerColor = site && site.getIn( [ 'options', 'background_color' ] ),
 			followerCount = this.getFollowerCount( feed, site ),
 			ownerDisplayName = site && site.getIn( [ 'owner', 'name' ] );
 
-		let headerImageUrl;
-
-		if ( headerImage && headerImage.get( 'width' ) > 300 ) {
-			headerImageUrl = resizeImageUrl(
-				safeImageUrl( headerImage.get( 'url' ) ),
-				{ w: 600 }
-			);
-		}
-
 		const classes = classnames( {
 			'reader-feed-header': true,
-			'is-placeholder': ! this.state.siteish
+			'is-placeholder': ! this.state.siteish,
+			'has-back-button': this.props.showBack,
 		} );
 
 		return (
 			<div className={ classes }>
-				<div className="reader-feed-header__follow">
-					{ followerCount ? <span className="reader-feed-header__follow-count"> {
-					this.props.translate( '%s follower', '%s followers',
-					{ count: followerCount, args: [ this.props.numberFormat( followerCount ) ] } ) }
-					</span> : null }
-					{ this.props.feed && this.props.feed.state === feedState.COMPLETE ? <div className="reader-feed-header__follow-button">
-						<ReaderFollowButton siteUrl={ this.props.feed.feed_URL } iconSize={ 24 } />
-					</div> : null }
+				<div className="reader-feed-header__back-and-follow">
+					{ this.props.showBack && <HeaderBack /> }
+					<div className="reader-feed-header__follow">
+						{ followerCount ? <span className="reader-feed-header__follow-count"> {
+						this.props.translate( '%s follower', '%s followers',
+						{ count: followerCount, args: [ this.props.numberFormat( followerCount ) ] } ) }
+						</span> : null }
+						{ this.props.feed && this.props.feed.state === feedState.COMPLETE ? <div className="reader-feed-header__follow-button">
+							<ReaderFollowButton siteUrl={ this.props.feed.feed_URL } iconSize={ 24 } />
+						</div> : null }
+					</div>
 				</div>
 				<Card className="reader-feed-header__site">
-					<div className="reader-feed-header__image" style={ headerColor ? { backgroundColor: '#' + headerColor } : null }>
-						{ headerImageUrl ? <img src={ headerImageUrl } /> : null }
-					</div>
 					{ this.state.siteish &&
 						<Site
 							site={ this.state.siteish }

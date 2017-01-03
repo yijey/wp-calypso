@@ -18,11 +18,11 @@ const FeaturedImage = ( { imageUri, href, children, onClick } ) => {
 		backgroundImage: 'url(' + cssSafeUrl( imageUri ) + ')',
 		backgroundSize: 'cover',
 		backgroundRepeat: 'no-repeat',
-		backgroundPosition: 'right center'
+		backgroundPosition: 'center center'
 	};
 
 	return (
-		<a className="reader-post-card__featured-image" href={ href } style={ featuredImageStyle } onClick={ onClick } >
+		<a className="reader-post-card__featured-image" href={ href } style={ featuredImageStyle } onClick={ onClick }>
 			{ children }
 		</a>
 	);

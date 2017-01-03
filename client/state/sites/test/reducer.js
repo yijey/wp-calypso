@@ -9,6 +9,7 @@ import deepFreeze from 'deep-freeze';
  */
 import { useSandbox } from 'test/helpers/use-sinon';
 import {
+	MEDIA_DELETE,
 	SITE_FRONT_PAGE_SET_SUCCESS,
 	SITE_RECEIVE,
 	SITE_REQUEST,
@@ -18,6 +19,8 @@ import {
 	SITES_REQUEST,
 	SITES_REQUEST_FAILURE,
 	SITES_REQUEST_SUCCESS,
+	SITE_SETTINGS_RECEIVE,
+	SITE_SETTINGS_UPDATE,
 	THEME_ACTIVATE_REQUEST_SUCCESS,
 	WORDADS_SITE_APPROVE_REQUEST_SUCCESS,
 	SERIALIZE,
@@ -40,7 +43,8 @@ describe( 'reducer', () => {
 			'guidedTransfer',
 			'vouchers',
 			'updates',
-			'requesting'
+			'requesting',
+			'sharingButtons',
 		] );
 	} );
 
@@ -226,10 +230,7 @@ describe( 'reducer', () => {
 			const state = items( original, {
 				type: THEME_ACTIVATE_REQUEST_SUCCESS,
 				siteId: 2916284,
-				theme: {
-					name: 'Twenty Sixteen',
-					stylesheet: 'pub/twentysixteen'
-				}
+				themeStylesheet: 'pub/twentysixteen'
 			} );
 
 			expect( state ).to.eql( {
@@ -275,6 +276,164 @@ describe( 'reducer', () => {
 			} );
 
 			expect( state ).to.eql( original );
+		} );
+
+		it( 'should return same state when site settings updated but not site icon', () => {
+			const original = deepFreeze( {} );
+			const state = items( original, {
+				type: SITE_SETTINGS_UPDATE,
+				siteId: 2916284,
+				settings: {}
+			} );
+
+			expect( state ).to.equal( original );
+		} );
+
+		it( 'should return same state when site settings received with icon for untracked site', () => {
+			const original = deepFreeze( {} );
+			const state = items( original, {
+				type: SITE_SETTINGS_RECEIVE,
+				siteId: 2916284,
+				settings: {
+					site_icon: 42
+				}
+			} );
+
+			expect( state ).to.equal( original );
+		} );
+
+		it( 'should return same state if received icon setting and matches current value', () => {
+			const original = deepFreeze( {
+				2916284: {
+					ID: 2916284,
+					name: 'WordPress.com Example Blog',
+					icon: {
+						media_id: 42
+					}
+				}
+			} );
+			const state = items( original, {
+				type: SITE_SETTINGS_RECEIVE,
+				siteId: 2916284,
+				settings: {
+					site_icon: 42
+				}
+			} );
+
+			expect( state ).to.equal( original );
+		} );
+
+		it( 'should return same state if received null icon setting and already unset', () => {
+			const original = deepFreeze( {
+				2916284: {
+					ID: 2916284,
+					name: 'WordPress.com Example Blog'
+				}
+			} );
+			const state = items( original, {
+				type: SITE_SETTINGS_RECEIVE,
+				siteId: 2916284,
+				settings: {
+					site_icon: null
+				}
+			} );
+
+			expect( state ).to.equal( original );
+		} );
+
+		it( 'should return site with unset icon property if received null icon setting', () => {
+			const original = deepFreeze( {
+				2916284: {
+					ID: 2916284,
+					name: 'WordPress.com Example Blog',
+					icon: {
+						media_id: 42
+					}
+				}
+			} );
+			const state = items( original, {
+				type: SITE_SETTINGS_RECEIVE,
+				siteId: 2916284,
+				settings: {
+					site_icon: null
+				}
+			} );
+
+			expect( state ).to.eql( {
+				2916284: {
+					ID: 2916284,
+					name: 'WordPress.com Example Blog'
+				}
+			} );
+		} );
+
+		it( 'should return site with icon property with media id if received different icon setting', () => {
+			const original = deepFreeze( {
+				2916284: {
+					ID: 2916284,
+					name: 'WordPress.com Example Blog'
+				}
+			} );
+			const state = items( original, {
+				type: SITE_SETTINGS_RECEIVE,
+				siteId: 2916284,
+				settings: {
+					site_icon: 42
+				}
+			} );
+
+			expect( state ).to.eql( {
+				2916284: {
+					ID: 2916284,
+					name: 'WordPress.com Example Blog',
+					icon: {
+						media_id: 42
+					}
+				}
+			} );
+		} );
+
+		it( 'should return same state if media deleted but not including site icon setting', () => {
+			const original = deepFreeze( {
+				2916284: {
+					ID: 2916284,
+					name: 'WordPress.com Example Blog',
+					icon: {
+						media_id: 42
+					}
+				}
+			} );
+			const state = items( original, {
+				type: MEDIA_DELETE,
+				siteId: 2916284,
+				mediaIds: [ 36 ]
+			} );
+
+			expect( state ).to.equal( original );
+		} );
+
+		it( 'should return site with unset icon property if media deleted includes icon setting', () => {
+			const original = deepFreeze( {
+				2916284: {
+					ID: 2916284,
+					name: 'WordPress.com Example Blog',
+					icon: {
+						media_id: 42
+					}
+				}
+			} );
+			const state = items( original, {
+				type: MEDIA_DELETE,
+				siteId: 2916284,
+				mediaIds: [ 42 ]
+			} );
+
+			expect( state ).to.eql( {
+				2916284: {
+					ID: 2916284,
+					name: 'WordPress.com Example Blog'
+				}
+			} );
 		} );
 
 		it( 'should persist state', () => {

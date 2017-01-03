@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { keyBy } from 'lodash';
+import { omit, mapValues } from 'lodash';
 
 /**
  * Internal dependencies
@@ -28,7 +28,7 @@ export const activateModule = ( siteId, moduleSlug ) => {
 			moduleSlug
 		} );
 
-		return wp.undocumented().jetpackModulesActivate( siteId, moduleSlug )
+		return wp.undocumented().jetpackModuleActivate( siteId, moduleSlug )
 			.then( () => {
 				dispatch( {
 					type: JETPACK_MODULE_ACTIVATE_SUCCESS,
@@ -54,7 +54,7 @@ export const deactivateModule = ( siteId, moduleSlug ) => {
 			moduleSlug
 		} );
 
-		return wp.undocumented().jetpackModulesDeactivate( siteId, moduleSlug )
+		return wp.undocumented().jetpackModuleDeactivate( siteId, moduleSlug )
 			.then( () => {
 				dispatch( {
 					type: JETPACK_MODULE_DEACTIVATE_SUCCESS,
@@ -95,9 +95,16 @@ export const fetchModuleList = ( siteId ) => {
 			siteId
 		} );
 
-		return wp.undocumented().jetpackModules( siteId )
-			.then( ( data ) => {
-				const modules = keyBy( data.modules, 'id' );
+		return wp.undocumented().getJetpackModules( siteId )
+			.then( ( { data } ) => {
+				const modules = mapValues(
+					data,
+					( module ) => ( {
+						active: module.activated,
+						...omit( module, 'activated' )
+					} )
+				);
+
 				dispatch( receiveJetpackModules( siteId, modules ) );
 				dispatch( {
 					type: JETPACK_MODULES_REQUEST_SUCCESS,

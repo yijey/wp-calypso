@@ -9,14 +9,11 @@ import { localize } from 'i18n-calypso';
 /**
  * Internal dependencies
  */
-import config from 'config';
 import DocumentHead from 'components/data/document-head';
 import RefreshFeedHeader from 'blocks/reader-feed-header';
-import OldFeedHeader from 'reader/feed-header';
 import FeedFeatured from './featured';
 import EmptyContent from './empty';
 import Stream from 'reader/stream';
-import HeaderBack from 'reader/header-back';
 import SiteStore from 'lib/reader-site-store';
 import SiteStoreActions from 'lib/reader-site-store/actions';
 import { state as SiteState } from 'lib/reader-site-store/constants';
@@ -24,7 +21,7 @@ import FeedError from 'reader/feed-error';
 import FeedStore from 'lib/feed-store';
 import FeedStoreActions from 'lib/feed-store/actions';
 import { state as FeedState } from 'lib/feed-store/constants';
-import FeedStreamStoreActions from 'lib/feed-stream-store/actions';
+import * as FeedStreamStoreActions from 'lib/feed-stream-store/actions';
 import feedStreamFactory from 'lib/feed-stream-store';
 import smartSetState from 'lib/react-smart-set-state';
 
@@ -39,7 +36,9 @@ function checkForRedirect( site ) {
 class SiteStream extends React.Component {
 
 	static propTypes = {
-		siteId: React.PropTypes.number.isRequired
+		siteId: React.PropTypes.number.isRequired,
+		className: React.PropTypes.string,
+		showBack: React.PropTypes.bool
 	};
 
 	static defaultProps = {
@@ -153,13 +152,15 @@ class SiteStream extends React.Component {
 			featuredContent = ( <FeedFeatured store={ featuredStore } /> );
 		}
 
-		const FeedHeader = config.isEnabled( 'reader/refresh/stream' ) ? RefreshFeedHeader : OldFeedHeader;
-
 		return (
-			<Stream { ...this.props } listName={ title } emptyContent={ emptyContent } showPostHeader={ false } showSiteNameOnCards={ false }>
+			<Stream
+				{ ...this.props }
+				listName={ title }
+				emptyContent={ emptyContent }
+				showPostHeader={ false }
+				showSiteNameOnCards={ false }>
 				<DocumentHead title={ this.props.translate( '%s ‹ Reader', { args: title } ) } />
-				{ this.props.showBack && <HeaderBack /> }
-				<FeedHeader site={ site } feed={ this.state.feed } />
+				<RefreshFeedHeader site={ site } feed={ this.state.feed } showBack={ this.props.showBack } />
 				{ featuredContent }
 			</Stream>
 

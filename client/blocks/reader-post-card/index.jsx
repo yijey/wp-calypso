@@ -2,7 +2,7 @@
  * External Dependencies
  */
 import React, { PropTypes } from 'react';
-import { noop, truncate, trim } from 'lodash';
+import { noop, truncate, trim, get } from 'lodash';
 import classnames from 'classnames';
 import ReactDom from 'react-dom';
 import closest from 'component-closest';
@@ -10,6 +10,7 @@ import closest from 'component-closest';
 /**
  * Internal Dependencies
  */
+import AutoDirection from 'components/auto-direction';
 import Card from 'components/card';
 import DisplayTypes from 'state/reader/posts/display-types';
 import ReaderPostActions from 'blocks/reader-post-actions';
@@ -19,10 +20,14 @@ import FeaturedVideo from './featured-video';
 import FeaturedImage from './featured-image';
 import FollowButton from 'reader/follow-button';
 import PostGallery from './gallery';
+import PostPhoto from './photo';
 import DailyPostButton from 'blocks/daily-post-button';
 import { isDailyPostChallengeOrPrompt } from 'blocks/daily-post-button/helper';
+import * as DiscoverHelper from 'reader/discover/helper';
+import DiscoverFollowButton from 'reader/discover/follow-button';
+import PostStoreActions from 'lib/feed-post-store/actions';
 
-export default class RefreshPostCard extends React.Component {
+export default class ReaderPostCard extends React.Component {
 	static propTypes = {
 		post: PropTypes.object.isRequired,
 		site: PropTypes.object,
@@ -34,7 +39,8 @@ export default class RefreshPostCard extends React.Component {
 		originalPost: PropTypes.object, // used for Discover only
 		showEntireExcerpt: PropTypes.bool,
 		useBetterExcerpt: PropTypes.bool,
-		showSiteName: PropTypes.bool
+		showSiteName: PropTypes.bool,
+		followSource: PropTypes.string,
 	};
 
 	static defaultProps = {
@@ -92,6 +98,14 @@ export default class RefreshPostCard extends React.Component {
 		}
 	}
 
+	handlePhotoCardExpanded = () => {
+		stats.recordTrackForPost( 'calypso_reader_photo_expanded', this.props.post );
+
+		// Record page view
+		PostStoreActions.markSeen( this.props.post );
+		stats.recordTrackForPost( 'calypso_reader_article_opened', this.props.post );
+	}
+
 	render() {
 		const {
 			post,
@@ -103,7 +117,8 @@ export default class RefreshPostCard extends React.Component {
 			isSelected,
 			showEntireExcerpt,
 			useBetterExcerpt,
-			showSiteName
+			showSiteName,
+			followSource,
 		} = this.props;
 		const isPhotoOnly = !! ( post.display_type & DisplayTypes.PHOTO_ONLY );
 		const isGallery = !! ( post.display_type & DisplayTypes.GALLERY );
@@ -115,11 +130,13 @@ export default class RefreshPostCard extends React.Component {
 			'is-showing-entire-excerpt': showEntireExcerpt
 		} );
 		const showExcerpt = ! isPhotoOnly;
-		const excerptAttribute = useBetterExcerpt && trim( post.better_excerpt_no_html ) ? 'better_excerpt_no_html' : 'excerpt_no_html';
+		const excerptAttribute = useBetterExcerpt && trim( post.better_excerpt ) ? 'better_excerpt' : 'excerpt';
 		let title = truncate( post.title, {
 			length: 140,
 			separator: /,? +/
 		} );
+		const isDiscoverPost = DiscoverHelper.isDiscoverPost( post );
+		const discoverBlogName = isDiscoverPost && get( post, 'discover_metadata.attribution.blog_name' );
 
 		if ( ! title && isPhotoOnly ) {
 			title = '\xa0'; // force to non-breaking space if empty so that the title h1 doesn't collapse and complicate things
@@ -127,7 +144,11 @@ export default class RefreshPostCard extends React.Component {
 
 		let followUrl;
 		if ( showPrimaryFollowButton ) {
-			followUrl = feed ? feed.feed_URL : post.site_URL;
+			if ( isDiscoverPost ) {
+				followUrl = DiscoverHelper.getSourceFollowUrl( post );
+			} else {
+				followUrl = feed ? feed.feed_URL : post.site_URL;
+			}
 		}
 
 		let featuredAsset;
@@ -136,27 +157,48 @@ export default class RefreshPostCard extends React.Component {
 		} else if ( post.canonical_media.mediaType === 'video' ) {
 			featuredAsset = <FeaturedVideo { ...post.canonical_media } videoEmbed={ post.canonical_media } />;
 		} else {
-			featuredAsset = <FeaturedImage imageUri={ post.canonical_media.src } href={ post.URL } />;
+			featuredAsset = isPhotoOnly
+				? <PostPhoto imageUri={ post.canonical_media.src } href={ post.URL } imageSize={ {
+					height: post.canonical_media.height,
+					width: post.canonical_media.width,
+				} } onExpanded={ this.handlePhotoCardExpanded } />
+				: <FeaturedImage imageUri={ post.canonical_media.src } href={ post.URL } />;
 		}
 
 		return (
 			<Card className={ classes } onClick={ this.handleCardClick }>
 				<PostByline post={ post } site={ site } feed={ feed } showSiteName={ showSiteName } />
-				{ showPrimaryFollowButton && <FollowButton siteUrl={ followUrl } /> }
+				{ showPrimaryFollowButton && followUrl && <FollowButton siteUrl={ followUrl } followSource={ followSource } /> }
 				<div className="reader-post-card__post">
 					{ ! isGallery && featuredAsset }
 					{ isGallery && <PostGallery post={ post } /> }
 					<div className="reader-post-card__post-details">
-						<h1 className="reader-post-card__title">
-							<a className="reader-post-card__title-link" href={ post.URL }>{ title }</a>
-						</h1>
-						{ showExcerpt && <div className="reader-post-card__excerpt">{ post[ excerptAttribute ] }</div> }
+						<AutoDirection>
+							<h1 className="reader-post-card__title">
+								<a className="reader-post-card__title-link" href={ post.URL }>{ title }</a>
+							</h1>
+						</AutoDirection>
+						{ showExcerpt && (
+								<AutoDirection>
+									<div className="reader-post-card__excerpt"
+										dangerouslySetInnerHTML={ { __html: post[ excerptAttribute ] } } // eslint-disable-line react/no-danger
+									/>
+								</AutoDirection> )
+						}
 						{ isDailyPostChallengeOrPrompt( post ) && <DailyPostButton post={ post } tagName="span" /> }
+						{ discoverBlogName &&
+							<DiscoverFollowButton
+									siteName={ discoverBlogName }
+									followUrl={ DiscoverHelper.getSourceFollowUrl( post ) } />
+						}
+
 						{ post &&
 							<ReaderPostActions
 								post={ originalPost ? originalPost : post }
+								visitUrl = { post.URL }
 								showVisit={ true }
 								showMenu={ true }
+								showMenuFollow={ ! isDiscoverPost }
 								onCommentClick={ onCommentClick }
 								showEdit={ false }
 								className="ignore-click"

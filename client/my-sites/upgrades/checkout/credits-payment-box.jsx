@@ -10,11 +10,19 @@ var PayButton = require( './pay-button' ),
 	PaymentBox = require( './payment-box' ),
 	TermsOfService = require( './terms-of-service' );
 
-import CartCoupon from 'my-sites/upgrades/cart/cart-coupon'
+import CartCoupon from 'my-sites/upgrades/cart/cart-coupon';
+import PaymentChatButton from './payment-chat-button';
+import config from 'config';
+import { PLAN_BUSINESS } from 'lib/plans/constants';
+import { some } from 'lodash';
 
 var CreditsPaymentBox = React.createClass( {
 	content: function() {
-		var cart = this.props.cart;
+		const { cart, transactionStep } = this.props;
+		const hasBusinessPlanInCart = some( cart.products, { product_slug: PLAN_BUSINESS } );
+		const showPaymentChatButton =
+			config.isEnabled( 'upgrades/presale-chat' ) &&
+			hasBusinessPlanInCart;
 
 		return (
 			<form onSubmit={ this.props.onSubmit }>
@@ -43,7 +51,14 @@ var CreditsPaymentBox = React.createClass( {
 				<div className="payment-box-actions">
 					<PayButton
 						cart={ this.props.cart }
-						transactionStep={ this.props.transactionStep } />
+						transactionStep={ transactionStep } />
+					{
+						showPaymentChatButton &&
+						<PaymentChatButton
+							paymentType="credits"
+							cart={ cart }
+							transactionStep={ transactionStep } />
+					}
 				</div>
 			</form>
 		);

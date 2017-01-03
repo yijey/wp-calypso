@@ -559,7 +559,7 @@ describe( 'index', function() {
 	describe( 'canonical image picker', function() {
 		it( 'can pick the canonical image from images', function( done ) {
 			const postRunThroughWaitForImagesToLoad = {
-				images: [
+				content_images: [
 					null, // null reference
 					{
 						height: 1,
@@ -598,10 +598,10 @@ describe( 'index', function() {
 		it( 'will pick featured_image if present and images missing', function( done ) {
 			normalizer(
 				{
-					featured_image: 'http://example.com/featured.jpg',
-					featured_media: {
-						type: 'image',
-						uri: 'http://example.com/media.jpg'
+					post_thumbnail: {
+						URL: 'http://example.com/featured.jpg',
+						width: 700,
+						height: 200,
 					}
 				},
 				[ normalizer.pickCanonicalImage ], function( err, normalized ) {
@@ -949,11 +949,19 @@ describe( 'index', function() {
 		}
 
 		it( 'removes tags but inserts spaces between p tags', function( done ) {
-			assertExcerptBecomes( '<p>one</p><p>two</p><p>three</p><p>four</p>', 'one two three four ', done );
+			assertExcerptBecomes( '<p>one</p><p>two</p><p>three</p><p>four</p>', 'one two three four', done );
 		} );
 
 		it( 'turns br tags into spaces', function( done ) {
-			assertExcerptBecomes( '<p>one<br>two<br/>three</p>', 'one two three ', done );
+			assertExcerptBecomes( '<p>one<br>two<br/>three</p>', 'one two three', done );
+		} );
+
+		it( 'trims whitespace from the excerpt', function( done ) {
+			assertExcerptBecomes( '<p> </p><p>one</p><p>two</p><p>three</p><p>four</p><p> </p>', 'one two three four', done );
+		} );
+
+		it( 'removes tables from the content', function( done ) {
+			assertExcerptBecomes( '<p>test</p><table><tr><td>in a table</td></tr></table><p>more</p>', 'test more', done );
 		} );
 	} );
 } );

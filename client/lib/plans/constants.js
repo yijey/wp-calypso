@@ -40,6 +40,7 @@ export const FEATURE_JETPACK_ESSENTIAL = 'jetpack-essential';
 export const FEATURE_FREE_THEMES = 'free-themes';
 export const FEATURE_UNLIMITED_PREMIUM_THEMES = 'premium-themes';
 export const FEATURE_3GB_STORAGE = '3gb-storage';
+export const FEATURE_6GB_STORAGE = '6gb-storage';
 export const FEATURE_13GB_STORAGE = '13gb-storage';
 export const FEATURE_UNLIMITED_STORAGE = 'unlimited-storage';
 export const FEATURE_COMMUNITY_SUPPORT = 'community-support';
@@ -117,7 +118,7 @@ export const PLANS_LIST = {
 			FEATURE_EMAIL_LIVE_CHAT_SUPPORT,
 			FEATURE_FREE_THEMES,
 			FEATURE_BASIC_DESIGN,
-			FEATURE_3GB_STORAGE,
+			FEATURE_6GB_STORAGE,
 			FEATURE_NO_ADS
 		],
 		getBillingTimeFrame: () => i18n.translate( 'per month, billed yearly' )
@@ -230,8 +231,8 @@ export const PLANS_LIST = {
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
 			FEATURE_EASY_SITE_MIGRATION,
-			FEATURE_MALWARE_SCANNING_DAILY,
-			FEATURE_PREMIUM_SUPPORT
+			FEATURE_PREMIUM_SUPPORT,
+			FEATURE_MALWARE_SCANNING_DAILY
 		],
 		getBillingTimeFrame: () => i18n.translate( 'per month, billed yearly' )
 	},
@@ -250,7 +251,8 @@ export const PLANS_LIST = {
 			FEATURE_BACKUP_STORAGE_SPACE_UNLIMITED,
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
-			FEATURE_EASY_SITE_MIGRATION
+			FEATURE_EASY_SITE_MIGRATION,
+			FEATURE_PREMIUM_SUPPORT
 		],
 		getBillingTimeFrame: () => i18n.translate( 'per month, billed yearly' )
 	},
@@ -270,8 +272,8 @@ export const PLANS_LIST = {
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
 			FEATURE_EASY_SITE_MIGRATION,
-			FEATURE_MALWARE_SCANNING_DAILY,
-			FEATURE_PREMIUM_SUPPORT
+			FEATURE_PREMIUM_SUPPORT,
+			FEATURE_MALWARE_SCANNING_DAILY
 		],
 		getBillingTimeFrame: () => i18n.translate( 'per month, billed monthly' )
 	},
@@ -291,7 +293,8 @@ export const PLANS_LIST = {
 			FEATURE_BACKUP_STORAGE_SPACE_UNLIMITED,
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
-			FEATURE_EASY_SITE_MIGRATION
+			FEATURE_EASY_SITE_MIGRATION,
+			FEATURE_PREMIUM_SUPPORT
 		],
 		getBillingTimeFrame: () => i18n.translate( 'per month, billed monthly' )
 	},
@@ -311,8 +314,8 @@ export const PLANS_LIST = {
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
 			FEATURE_EASY_SITE_MIGRATION,
-			FEATURE_MALWARE_SCANNING_DAILY_AND_ON_DEMAND,
 			FEATURE_PREMIUM_SUPPORT,
+			FEATURE_MALWARE_SCANNING_DAILY_AND_ON_DEMAND,
 			FEATURE_ONE_CLICK_THREAT_RESOLUTION,
 			FEATURE_POLLS_PRO,
 			FEATURE_ADVANCED_SEO
@@ -335,8 +338,8 @@ export const PLANS_LIST = {
 			FEATURE_AUTOMATED_RESTORES,
 			FEATURE_SPAM_AKISMET_PLUS,
 			FEATURE_EASY_SITE_MIGRATION,
-			FEATURE_MALWARE_SCANNING_DAILY_AND_ON_DEMAND,
 			FEATURE_PREMIUM_SUPPORT,
+			FEATURE_MALWARE_SCANNING_DAILY_AND_ON_DEMAND,
 			FEATURE_ONE_CLICK_THREAT_RESOLUTION,
 			FEATURE_POLLS_PRO,
 			FEATURE_ADVANCED_SEO
@@ -518,6 +521,19 @@ export const FEATURES_LIST = {
 		)
 	},
 
+	[ FEATURE_6GB_STORAGE ]: {
+		getSlug: () => FEATURE_6GB_STORAGE,
+		getTitle: () => i18n.translate( '{{strong}}6GB{{/strong}} Storage Space', {
+			components: {
+				strong: <strong />
+			}
+		} ),
+		getDescription: () => i18n.translate(
+			"With increased storage space you'll be able to upload " +
+			'more images, videos, audio, and documents to your website.'
+		)
+	},
+
 	[ FEATURE_13GB_STORAGE ]: {
 		getSlug: () => FEATURE_13GB_STORAGE,
 		getTitle: () => i18n.translate( '{{strong}}13GB{{/strong}} Storage Space', {
@@ -526,7 +542,7 @@ export const FEATURES_LIST = {
 			}
 		} ),
 		getDescription: () => i18n.translate(
-			"With increased storage space you'll be able to upload " +
+			'With increased storage space you\'ll be able to upload ' +
 			'more images, videos, audio, and documents to your website.'
 		)
 	},

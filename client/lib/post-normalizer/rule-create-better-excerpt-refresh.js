@@ -1,7 +1,7 @@
 /**
  * External Dependencies
  */
-import { forEach } from 'lodash';
+import { forEach, trim } from 'lodash';
 
 /**
  * Internal Dependencies
@@ -22,7 +22,7 @@ export function formatExcerpt( content ) {
 
 	// Ditch any photo captions with the wp-caption-text class, styles, scripts
 	forEach(
-		dom.querySelectorAll( '.wp-caption-text, style, script, blockquote[class^="instagram-"], figure' ),
+		dom.querySelectorAll( '.wp-caption-text, style, script, blockquote[class^="instagram-"], figure, table' ),
 		removeElement
 	);
 
@@ -33,7 +33,7 @@ export function formatExcerpt( content ) {
 		}
 	);
 
-	const betterExcerpt = dom.textContent;
+	const betterExcerpt = trim( dom.textContent );
 	dom.innerHTML = '';
 	return betterExcerpt;
 }

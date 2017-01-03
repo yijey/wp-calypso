@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { connect } from 'react-redux';
-import { each, pick, map } from 'lodash';
+import { each, pick } from 'lodash';
 
 /**
  * Internal dependencies
@@ -20,13 +20,11 @@ import FormLabel from 'components/forms/form-label';
 import SectionHeader from 'components/section-header';
 import Card from 'components/card';
 import Button from 'components/button';
-import QueryTerms from 'components/data/query-terms';
 import QueryTaxonomies from 'components/data/query-taxonomies';
 import TaxonomyCard from './taxonomies/taxonomy-card';
 import { isJetpackModuleActive, isJetpackMinimumVersion } from 'state/sites/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { requestPostTypes } from 'state/post-types/actions';
-import { isRequestingTermsForQuery, getTerms } from 'state/terms/selectors';
 import CustomPostTypeFieldset from './custom-post-types-fieldset';
 
 const SiteSettingsFormWriting = React.createClass( {
@@ -34,7 +32,6 @@ const SiteSettingsFormWriting = React.createClass( {
 
 	getSettingsFromSite: function( site ) {
 		let writingAttributes = [
-			'default_category',
 			'default_post_format',
 			'wpcom_publish_posts_with_markdown',
 			'markdown_supported',
@@ -70,7 +67,6 @@ const SiteSettingsFormWriting = React.createClass( {
 	resetState: function() {
 		this.replaceState( {
 			fetchingSettings: true,
-			default_category: '',
 			default_post_format: '',
 		} );
 	},
@@ -118,6 +114,22 @@ const SiteSettingsFormWriting = React.createClass( {
 		}
 	},
 
+	renderSectionHeader( title, showButton = true ) {
+		return (
+			<SectionHeader label={ title }>
+				{ showButton &&
+					<Button
+						compact
+						primary
+						onClick={ this.submitFormAndActivateCustomContentModule }
+						disabled={ this.state.fetchingSettings || this.state.submittingForm }>
+						{ this.state.submittingForm ? this.translate( 'Saving…' ) : this.translate( 'Save Settings' ) }
+					</Button>
+				}
+			</SectionHeader>
+		);
+	},
+
 	render: function() {
 		const markdownSupported = this.state.markdown_supported;
 		return (
@@ -129,31 +141,10 @@ const SiteSettingsFormWriting = React.createClass( {
 						<TaxonomyCard taxonomy="post_tag" postType="post" />
 					</div>
 				}
-				<SectionHeader label={ this.translate( 'Writing Settings' ) }>
-					<Button
-						compact
-						primary
-						onClick={ this.submitFormAndActivateCustomContentModule }
-						disabled={ this.state.fetchingSettings || this.state.submittingForm }>
-						{ this.state.submittingForm ? this.translate( 'Saving…' ) : this.translate( 'Save Settings' ) }
-					</Button>
-				</SectionHeader>
+
+				{ this.renderSectionHeader( this.translate( 'Composing' ) ) }
 				<Card className="site-settings">
 					<FormFieldset>
-						<QueryTerms siteId={ this.props.siteId } taxonomy="category" />
-						<FormLabel htmlFor="default_category">
-							{ this.translate( 'Default Post Category' ) }
-						</FormLabel>
-						<FormSelect
-							name="default_category"
-							id="default_category"
-							valueLink={ this.linkState( 'default_category' ) }
-							disabled={ this.props.isRequestingCategories }
-							onClick={ this.recordEvent.bind( this, 'Selected Default Post Category' ) }>
-							{ map(this.props.categories, category => {
-								return <option value={ category.ID } key={ 'post-category-' + category.ID }>{ category.name }</option>;
-							} ) }
-						</FormSelect>
 						<FormLabel htmlFor="default_post_format">
 							{ this.translate( 'Default Post Format' ) }
 						</FormLabel>
@@ -176,14 +167,6 @@ const SiteSettingsFormWriting = React.createClass( {
 						</FormSelect>
 					</FormFieldset>
 
-					{ config.isEnabled( 'manage/custom-post-types' ) && this.props.jetpackVersionSupportsCustomTypes && (
-						<CustomPostTypeFieldset
-							requestingSettings={ this.state.fetchingSettings }
-							value={ pick( this.state, 'jetpack_testimonial', 'jetpack_portfolio' ) }
-							onChange={ this.setCustomPostTypeSetting }
-							recordEvent={ this.recordEvent }
-							className="site-settings__custom-post-type-fieldset has-divider is-top-only" />
-					) }
 					{ markdownSupported &&
 						<FormFieldset className="has-divider is-top-only">
 							<FormLabel>
@@ -195,35 +178,59 @@ const SiteSettingsFormWriting = React.createClass( {
 									checkedLink={ this.linkState( 'wpcom_publish_posts_with_markdown' ) }
 									disabled={ this.state.fetchingSettings }
 									onClick={ this.recordEvent.bind( this, 'Clicked Markdown for Posts Checkbox' ) } />
-								<span>{ this.translate( 'Use markdown for posts and pages. {{a}}Learn more about markdown{{/a}}.', {
+								<span>{
+									this.translate( 'Use markdown for posts and pages. {{a}}Learn more about markdown{{/a}}.', {
 										components: {
 											a: <a href="http://en.support.wordpress.com/markdown-quick-reference/" target="_blank" rel="noopener noreferrer" />
 										}
-									} ) }</span>
+									} )
+								}</span>
 							</FormLabel>
 						</FormFieldset>
 					}
-
-					{ config.isEnabled( 'press-this' ) &&
-						<FormFieldset className="has-divider is-top-only">
-							<div className="press-this">
-								<FormLabel>{ this.translate( 'Press This', { context: 'name of browser bookmarklet tool' } ) }</FormLabel>
-								<p>{ this.translate( 'Press This is a bookmarklet: a little app that runs in your browser and lets you grab bits of the web.' ) }</p>
-								<p>{ this.translate( 'Use Press This to clip text, images and videos from any web page. Then edit and add more straight from Press This before you save or publish it in a post on your site.' ) }</p>
-								<p>{ this.translate( 'Drag-and-drop the following link to your bookmarks bar or right click it and add it to your favorites for a posting shortcut.' ) }</p>
-								<p className="pressthis">
-									<PressThisLink
-										site={ this.props.site }
-										onClick={ this.recordEvent.bind( this, 'Clicked Press This Button' ) }
-										onDragStart={ this.recordEvent.bind( this, 'Dragged Press This Button' ) }>
-										<span className="noticon noticon-pinned"></span>
-										<span>{ this.translate( 'Press This', { context: 'name of browser bookmarklet tool' } ) }</span>
-									</PressThisLink>
-								</p>
-							</div>
-						</FormFieldset>
-					}
 				</Card>
+
+				{ config.isEnabled( 'manage/custom-post-types' ) && this.props.jetpackVersionSupportsCustomTypes && (
+					<div>
+						{ this.renderSectionHeader( this.translate( 'Custom Content Types' ) ) }
+						<Card className="site-settings">
+							<CustomPostTypeFieldset
+								requestingSettings={ this.state.fetchingSettings }
+								value={ pick( this.state, 'jetpack_testimonial', 'jetpack_portfolio' ) }
+								onChange={ this.setCustomPostTypeSetting }
+								recordEvent={ this.recordEvent }
+								className="site-settings__custom-post-type-fieldset" />
+						</Card>
+					</div>
+				) }
+
+				{ config.isEnabled( 'press-this' ) && (
+					<div className="press-this">
+						{
+							this.renderSectionHeader( this.translate( 'Press This', {
+								context: 'name of browser bookmarklet tool'
+							} ), false )
+						}
+						<Card className="site-settings">
+							<FormFieldset>
+								<div>
+									<p>{ this.translate( 'Press This is a bookmarklet: a little app that runs in your browser and lets you grab bits of the web.' ) }</p>
+									<p>{ this.translate( 'Use Press This to clip text, images and videos from any web page. Then edit and add more straight from Press This before you save or publish it in a post on your site.' ) }</p>
+									<p>{ this.translate( 'Drag-and-drop the following link to your bookmarks bar or right click it and add it to your favorites for a posting shortcut.' ) }</p>
+									<p className="pressthis">
+										<PressThisLink
+											site={ this.props.site }
+											onClick={ this.recordEvent.bind( this, 'Clicked Press This Button' ) }
+											onDragStart={ this.recordEvent.bind( this, 'Dragged Press This Button' ) }>
+											<span className="noticon noticon-pinned"></span>
+											<span>{ this.translate( 'Press This', { context: 'name of browser bookmarklet tool' } ) }</span>
+										</PressThisLink>
+									</p>
+								</div>
+							</FormFieldset>
+						</Card>
+					</div>
+				) }
 			</form>
 		);
 	}
@@ -232,14 +239,10 @@ const SiteSettingsFormWriting = React.createClass( {
 export default connect(
 	( state ) => {
 		const siteId = getSelectedSiteId( state );
-		const isRequestingCategories = isRequestingTermsForQuery( state, siteId, 'category', {} );
-		const categories = getTerms( state, siteId, 'category' );
 
 		return {
 			jetpackCustomTypesModuleActive: false !== isJetpackModuleActive( state, siteId, 'custom-content-types' ),
 			jetpackVersionSupportsCustomTypes: false !== isJetpackMinimumVersion( state, siteId, '4.2.0' ),
-			categories,
-			isRequestingCategories,
 			siteId
 		};
 	},

@@ -7,6 +7,7 @@ import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import filter from 'lodash/filter';
 import range from 'lodash/range';
+import get from 'lodash/get';
 import { localize } from 'i18n-calypso';
 
 /**
@@ -30,7 +31,7 @@ import utils from 'lib/site/utils';
 
 // Redux actions & selectors
 import { getSelectedSite, getSelectedSiteId } from 'state/ui/selectors';
-import { isJetpackSite, isRequestingSites } from 'state/sites/selectors';
+import { isJetpackSite, isRequestingSites, getRawSite } from 'state/sites/selectors';
 import { getPlugin } from 'state/plugins/wporg/selectors';
 import { fetchPluginData } from 'state/plugins/wporg/actions';
 import { requestSites } from 'state/sites/actions';
@@ -69,6 +70,10 @@ const PlansSetup = React.createClass( {
 
 	trackManualInstall() {
 		analytics.tracks.recordEvent( 'calypso_plans_autoconfig_click_manual_error' );
+	},
+
+	trackManagePlans() {
+		analytics.tracks.recordEvent( 'calypso_plans_autoconfig_click_manage_plans' );
 	},
 
 	trackContactSupport() {
@@ -262,68 +267,102 @@ const PlansSetup = React.createClass( {
 	},
 
 	renderStatus( plugin ) {
-		const { translate } = this.props;
+		if ( plugin.error ) {
+			return this.renderStatusError( plugin );
+		}
+
+		if ( 'done' === plugin.status ) {
+			return (
+				<div className="plugin-item__finished">
+					{ this.getStatusText( plugin ) }
+				</div>
+			);
+		}
+
 		const statusProps = {
 			isCompact: true,
 			status: 'is-info',
 			showDismiss: false,
+			icon: 'plugins',
 		};
 
-		if ( plugin.error ) {
-			statusProps.status = 'is-error';
-			switch ( plugin.status ) {
-				case 'install':
-					statusProps.text = translate(
-						'An error occurred when installing %(plugin)s.',
-						{ args: { plugin: plugin.name } }
-					);
-					break;
-				case 'activate':
-					statusProps.text = translate(
-						'An error occurred when activating %(plugin)s.',
-						{ args: { plugin: plugin.name } }
-					);
-					break;
-				case 'configure':
-					statusProps.text = translate(
-						'An error occurred when configuring %(plugin)s.',
-						{ args: { plugin: plugin.name } }
-					);
-					break;
-				default:
-					statusProps.text = plugin.error.message || translate( 'An error occured.' );
-					break;
-			}
-			statusProps.children = (
-				<NoticeAction key="notice_action" href={ helpLinks[ plugin.slug ] } onClick={ this.trackManualInstall }>
-					{ translate( 'Manual Installation' ) }
-				</NoticeAction>
+		return <Notice { ...statusProps } text={ this.getStatusText( plugin ) } />;
+	},
+
+	getStatusText( plugin ) {
+		const { translate } = this.props;
+		switch ( plugin.status ) {
+			case 'done':
+				return translate( 'Successfully installed & configured.' );
+			case 'activate':
+			case 'configure':
+				return translate( 'Almost done' );
+			case 'install':
+				return translate( 'Working…' );
+			case 'wait':
+			default:
+				return translate( 'Waiting to install' );
+		}
+	},
+
+	renderStatusError( plugin ) {
+		const { translate } = this.props;
+
+		// This state isn't quite an error
+		if ( plugin.error.code === 'already_registered' ) {
+			return (
+				<Notice
+					showDismiss={ false }
+					isCompact={ true }
+					status="is-info"
+					text={ translate( 'This plugin is already registered with another plan.' ) }
+				>
+					<NoticeAction key="notice_action" href="/me/purchases" onClick={ this.trackManagePlans }>
+						{ translate( 'Manage Plans' ) }
+					</NoticeAction>
+				</Notice>
 			);
-		} else {
-			statusProps.icon = 'plugins';
-			statusProps.status = 'is-info';
-			switch ( plugin.status ) {
-				case 'done':
-					// Done doesn't use a notice
-					return (
-						<div className="plugin-item__finished">
-							{ translate( 'Successfully installed & configured.' ) }
-						</div>
-					);
-				case 'activate':
-				case 'configure':
-					statusProps.text = translate( 'Almost done' );
-					break;
-				case 'install':
-					statusProps.text = translate( 'Working…' );
-					break;
-				case 'wait':
-				default:
-					statusProps.text = translate( 'Waiting to install' );
-			}
 		}
 
-		return ( <Notice { ...statusProps } /> );
+		const statusProps = {
+			isCompact: true,
+			status: 'is-error',
+			showDismiss: false,
+		};
+		statusProps.children = (
+			<NoticeAction key="notice_action" href={ helpLinks[ plugin.slug ] } onClick={ this.trackManualInstall }>
+				{ translate( 'Manual Installation' ) }
+			</NoticeAction>
+		);
+
+		switch ( plugin.status ) {
+			case 'install':
+				return (
+					<Notice { ...statusProps } text={ translate(
+						'An error occurred when installing %(plugin)s.',
+						{ args: { plugin: plugin.name } }
+					) } />
+				);
+			case 'activate':
+				return (
+					<Notice { ...statusProps } text={ translate(
+						'An error occurred when activating %(plugin)s.',
+						{ args: { plugin: plugin.name } }
+					) } />
+				);
+			case 'configure':
+				return (
+					<Notice { ...statusProps } text={ translate(
+						'An error occurred when configuring %(plugin)s.',
+						{ args: { plugin: plugin.name } }
+					) } />
+				);
+			default:
+				const errorMessage = get( plugin, 'error.message', '' ).replace( /<.[^<>]*?>/g, '' );
+				return (
+					<Notice { ...statusProps } text={ errorMessage || translate( 'An error occured.' ) } />
+				);
+		}
 	},
 
 	renderActions( plugin ) {
@@ -342,13 +381,10 @@ const PlansSetup = React.createClass( {
 		return null;
 	},
 
-	renderErrorMessage() {
+	renderErrorMessage( plugins ) {
 		let noticeText;
 		const { translate } = this.props;
-		const plugins = this.addWporgDataToPlugins( this.props.plugins );
-		const pluginsWithErrors = filter( plugins, ( item ) => {
-			return ( item.error !== null );
-		} );
+		const pluginsWithErrors = this.addWporgDataToPlugins( plugins );
 
 		const tracksData = {};
 		pluginsWithErrors.map( ( item ) => {
@@ -398,7 +434,8 @@ const PlansSetup = React.createClass( {
 		}
 
 		const pluginsWithErrors = filter( this.props.plugins, ( item ) => {
-			return ( item.error !== null );
+			const errorCode = get( item, 'error.code', null );
+			return errorCode && errorCode !== 'already_registered';
 		} );
 
 		if ( pluginsWithErrors.length ) {
@@ -508,6 +545,11 @@ export default connect(
 		const site = getSelectedSite( state );
 		const whitelist = ownProps.whitelist || false;
 
+		// We need to pass the raw redux site to JetpackSite() in order to properly build the site.
+		const selectedSite = site && isJetpackSite( state, siteId )
+			? JetpackSite( getRawSite( state, siteId ) )
+			: site;
+
 		return {
 			wporg: state.plugins.wporg.items,
 			isRequesting: isRequesting( state, siteId ),
@@ -517,7 +559,7 @@ export default connect(
 			plugins: getPluginsForSite( state, siteId, whitelist ),
 			activePlugin: getActivePlugin( state, siteId, whitelist ),
 			nextPlugin: getNextPlugin( state, siteId, whitelist ),
-			selectedSite: site && isJetpackSite( state, siteId ) ? JetpackSite( site ) : site,
+			selectedSite: selectedSite,
 			isRequestingSites: isRequestingSites( state ),
 			siteId
 		};

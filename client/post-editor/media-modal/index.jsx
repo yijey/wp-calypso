@@ -5,27 +5,26 @@ var React = require( 'react' ),
 	closest = require( 'component-closest' ),
 	debug = require( 'debug' )( 'calypso:post-editor:media' );
 import { connect } from 'react-redux';
-import { noop, head, some, findIndex, partial, values } from 'lodash';
+import { noop, head, some, findIndex, partial, values, map } from 'lodash';
 
 /**
  * Internal dependencies
  */
 var MediaLibrary = require( 'my-sites/media-library' ),
 	analytics = require( 'lib/analytics' ),
-	PostActions = require( 'lib/posts/actions' ),
 	PostStats = require( 'lib/posts/stats' ),
 	MediaModalSecondaryActions = require( './secondary-actions' ),
 	MediaModalGallery = require( './gallery' ),
 	MediaActions = require( 'lib/media/actions' ),
 	MediaUtils = require( 'lib/media/utils' ),
 	Dialog = require( 'components/dialog' ),
-	markup = require( './markup' ),
 	accept = require( 'lib/accept' );
 import { getMediaModalView } from 'state/ui/media-modal/selectors';
-import { getSelectedSite } from 'state/ui/selectors';
+import { getSite } from 'state/sites/selectors';
 import { resetMediaModalView } from 'state/ui/media-modal/actions';
 import { setEditorMediaModalView } from 'state/ui/editor/actions';
 import { ModalViews } from 'state/ui/media-modal/constants';
+import { deleteMedia } from 'state/media/actions';
 import ImageEditor from 'blocks/image-editor';
 import MediaModalDetail from './detail';
 
@@ -34,7 +33,6 @@ export const EditorMediaModal = React.createClass( {
 		visible: React.PropTypes.bool,
 		mediaLibrarySelectedItems: React.PropTypes.arrayOf( React.PropTypes.object ),
 		onClose: React.PropTypes.func,
-		onInsertMedia: React.PropTypes.func,
 		site: React.PropTypes.object,
 		siteId: React.PropTypes.number,
 		labels: React.PropTypes.object,
@@ -55,11 +53,12 @@ export const EditorMediaModal = React.createClass( {
 			visible: false,
 			mediaLibrarySelectedItems: Object.freeze( [] ),
 			onClose: noop,
-			onInsertMedia: noop,
 			labels: Object.freeze( {} ),
 			setView: noop,
 			resetView: noop,
-			view: ModalViews.LIST
+			view: ModalViews.LIST,
+			imageEditorProps: {},
+			deleteMedia: () => {}
 		};
 	},
 
@@ -87,6 +86,7 @@ export const EditorMediaModal = React.createClass( {
 
 	componentWillUnmount() {
 		this.props.resetView();
+		MediaActions.setLibrarySelectedItems( this.props.site.ID, [] );
 	},
 
 	getDefaultState: function( props ) {
@@ -105,40 +105,18 @@ export const EditorMediaModal = React.createClass( {
 	},
 
 	confirmSelection: function() {
-		var selectedItems = this.props.mediaLibrarySelectedItems,
-			gallerySettings = this.state.gallerySettings,
-			media, stat;
-		const site = this.props.site;
+		const { view, mediaLibrarySelectedItems } = this.props;
 
-		if ( ! this.props.visible ) {
-			return;
+		let value;
+		if ( mediaLibrarySelectedItems.length ) {
+			value = {
+				type: ModalViews.GALLERY === view ? 'gallery' : 'media',
+				items: mediaLibrarySelectedItems,
+				settings: this.state.gallerySettings
+			};
 		}
 
-		if ( ModalViews.GALLERY === this.props.view ) {
-			if ( gallerySettings && 'individual' === gallerySettings.type ) {
-				media = gallerySettings.items.map( item => markup.get( site, item ) ).join( '' );
-			} else {
-				media = MediaUtils.generateGalleryShortcode( gallerySettings );
-			}
-			stat = 'insert_gallery';
-		} else {
-			media = selectedItems.map( item => markup.get( site, item ) ).join( '' );
-			stat = 'insert_item';
-		}
-
-		if ( some( selectedItems, 'transient' ) ) {
-			PostActions.blockSave( 'MEDIA_MODAL_TRANSIENT_INSERT' );
-		}
-
-		if ( media ) {
-			this.props.onInsertMedia( media );
-
-			if ( stat ) {
-				analytics.mc.bumpStat( 'editor_media_actions', stat );
-			}
-		}
-
-		this.props.onClose( selectedItems );
+		this.props.onClose( value );
 	},
 
 	setDetailSelectedIndex: function( index ) {
@@ -172,6 +150,7 @@ export const EditorMediaModal = React.createClass( {
 
 		MediaActions.delete( site.ID, toDelete );
 		analytics.mc.bumpStat( 'editor_media_actions', 'delete_media' );
+		this.props.deleteMedia( site.ID, map( toDelete, 'ID' ) );
 	},
 
 	deleteMedia: function() {
@@ -411,6 +390,7 @@ export const EditorMediaModal = React.createClass( {
 			case ModalViews.IMAGE_EDITOR:
 				const {
 					site,
+					imageEditorProps,
 					mediaLibrarySelectedItems: items
 				} = this.props;
 
@@ -423,6 +403,7 @@ export const EditorMediaModal = React.createClass( {
 						media={ media }
 						onDone={ this.onImageEditorDone }
 						onCancel={ this.onImageEditorCancel }
+						{ ...imageEditorProps }
 					/>
 				);
 				break;
@@ -469,10 +450,11 @@ export default connect(
 		view: getMediaModalView( state ),
 		// [TODO]: Migrate toward dropping incoming site prop, accepting only
 		// siteId and forcing descendant components to access via state
-		site: site || getSelectedSite( state, siteId )
+		site: site || getSite( state, siteId )
 	} ),
 	{
 		setView: setEditorMediaModalView,
-		resetView: resetMediaModalView
+		resetView: resetMediaModalView,
+		deleteMedia
 	}
 )( EditorMediaModal );

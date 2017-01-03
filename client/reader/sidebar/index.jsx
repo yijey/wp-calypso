@@ -103,10 +103,13 @@ export const ReaderSidebar = React.createClass( {
 	},
 
 	highlightNewTag( tag ) {
-		defer( function() {
-			page( '/tag/' + tag.slug );
-			window.scrollTo( 0, 0 );
-		} );
+		const tagUrl = `/tag/${ tag.slug }`;
+		if ( tagUrl !== page.current ) {
+			defer( function() {
+				page( tagUrl );
+				window.scrollTo( 0, 0 );
+			} );
+		}
 	},
 
 	openExpandableMenuForCurrentTagOrList() {
@@ -174,15 +177,6 @@ export const ReaderSidebar = React.createClass( {
 									</a>
 								</li>
 							)
-						}
-
-						{ ! config.isEnabled( 'reader/refresh/stream' ) && (
-						<li className={ ReaderSidebarHelper.itemLinkClass( '/recommendations', this.props.path, { 'sidebar-streams__recommendations': true } ) }>
-							<a href="/recommendations">
-								<Gridicon icon="thumbs-up" size={ 24 } />
-								<span className="menu-link-text">{ this.props.translate( 'Recommendations' ) }</span>
-							</a>
-						</li> )
 						}
 
 						<li className={ ReaderSidebarHelper.itemLinkClass( '/activities/likes', this.props.path, { 'sidebar-activity__likes': true } ) }>

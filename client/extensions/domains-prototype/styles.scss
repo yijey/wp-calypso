@@ -1,7 +1,70 @@
 .header {
 	font-size: 3rem;
+	text-align: center;
+}
+
+.card-row {
+	display: flex;
+	justify-content: space-between;
+
+	> a {
+		margin: 20px 0;
+		padding: 126px 0 0 !important;
+		transition: border-color 0.3s, box-shadow 0.3s;
+		width: 32%;
+
+		> svg {
+			display: none;
+		}
+
+		&:hover {
+			border-color: #00aadc;
+			box-shadow: 0 0 0 2px #78dcfa;
+
+			.card-text {
+				color: #2e4453;
+			}
+		}
+	}
+}
+
+.landing-page {
+	background-image: url( https://s0.wp.com/wp-content/themes/a8c/getdotblog/public/images/ui-illustrations/domain-active.svg );
+	background-position: center 24px;
+	background-repeat: no-repeat;
+	background-size: 100px auto;
+}
+
+.new-site {
+	background-image: url( https://s0.wp.com/wp-content/themes/a8c/getdotblog/public/images/ui-illustrations/domain-notsetup.svg );
+	background-position: center 24px;
+	background-repeat: no-repeat;
+	background-size: auto 75px;
+}
+
+.existing-site {
+	background-image: url( https://s0.wp.com/wp-content/themes/a8c/getdotblog/public/images/ui-illustrations/nameservers.svg );
+	background-position: center 24px;
+	background-repeat: no-repeat;
+	background-size: auto 75px;
+}
+
+.card-text {
+	border-top: 1px solid #e9eff3;
+	color: #4f748e;
+	padding: 12px 24px;
+	transition: color 0.3s;
 }
 
 .card-header {
-	font-size: 2rem;
+	color: #0087be;
+	font-size: 1.7rem;
+}
+
+.secondary-cta {
+	border-top: 1px solid #DDE5EC;
+	margin: 75px auto 0;
+	max-width: 560px;
+	padding-top: 24px;
+	text-align: center;
 }

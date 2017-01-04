@@ -14,6 +14,7 @@ import Card from 'components/card';
 import Checkout from 'my-sites/upgrades/checkout';
 import CheckoutData from 'components/data/checkout';
 import FormTextInputWithAffixes from 'components/forms/form-text-input-with-affixes';
+import LandingPage from './landing-page';
 import Main from 'components/main';
 import Manage from './manage';
 import { navigation, siteSelection } from 'my-sites/controller';
@@ -25,7 +26,6 @@ import SectionHeader from 'components/section-header';
 import { setSection } from 'state/ui/actions';
 import sitesFactory from 'lib/sites-list';
 import SitePicker from 'components/site-selector';
-import styles from './styles';
 import Stylizer, { insertCss } from './stylizer';
 
 /**
@@ -140,15 +140,15 @@ const manage = ( context ) => {
 	render( getManageScreen( domain ), context );
 };
 
+const getLandingPageScreen = ( domain ) => {
+	return (
+		<LandingPage domain={ domain } />
+	);
+}
+
 const landingPage = ( context ) => {
 	const domain = context.params.domainName;
-	render( (
-		<Main>
-			<h2 className={ styles.header }>Set up a landing page for { domain }</h2>
-			<p>I think we can probably just show the customizer here</p>
-			<Button href={ '/domains-prototype/manage/' + domain }>Finish</Button>
-		</Main>
-	), context );
+	render( getLandingPageScreen( domain ), context );
 };
 
 const start = ( context ) => {

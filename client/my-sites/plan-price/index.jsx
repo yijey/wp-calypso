@@ -3,6 +3,7 @@
  */
 import React, { Component, PropTypes } from 'react';
 import classNames from 'classnames';
+import { translate } from 'i18n-calypso';
 
 /**
  * Internal Dependencies
@@ -10,6 +11,27 @@ import classNames from 'classnames';
 import { getCurrencyObject } from 'lib/format-currency';
 
 export default class PlanPrice extends Component {
+
+	getPriceText( price ) {
+		if ( price.integer === '0' ) {
+			return (
+				<span className="plan-price__integer">
+					{ translate( 'Free' ) }
+				</span>
+			);
+		}
+
+		return (
+			<span>
+				<sup className="plan-price__currency-symbol">
+					{ price.symbol }
+				</sup>
+				<span className="plan-price__integer">
+					{ price.integer }
+				</span>
+			</span>
+		);
+	}
 
 	render() {
 		const {
@@ -32,12 +54,7 @@ export default class PlanPrice extends Component {
 
 		return (
 			<h4 className={ classes }>
-				<sup className="plan-price__currency-symbol">
-					{ price.symbol }
-				</sup>
-				<span className="plan-price__integer">
-					{ price.integer }
-				</span>
+				{ this.getPriceText( price ) }
 				<sup className="plan-price__fraction">
 					{ rawPrice > 0 && price.fraction }
 				</sup>

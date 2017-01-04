@@ -168,7 +168,7 @@ class PlanFeaturesHeader extends Component {
 			);
 		}
 
-		if ( discountPrice ) {
+		if ( discountPrice || discountPrice === 0 ) {
 			return (
 				<span className="plan-features__header-price-group">
 					<PlanPrice currencyCode={ currencyCode } rawPrice={ rawPrice } original />

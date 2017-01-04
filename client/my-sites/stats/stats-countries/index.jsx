@@ -52,6 +52,10 @@ export default React.createClass( {
 	},
 
 	getModuleLabel() {
+		if ( this.props.title ) {
+			return this.props.title;
+		}
+
 		if ( ! this.props.summary ) {
 			return this.translate( 'Countries' );
 		}
@@ -98,11 +102,18 @@ export default React.createClass( {
 			);
 		}
 
+		const fileName = ( 'countries-summary-all' === path ) ? [
+			site.slug,
+			'countries-summary-all',
+			dataList.startedAt
+		].join( '_' ) + '.csv' : null;
+
 		return (
 			<div>
 				<SectionHeader label={ this.getModuleLabel() } href={ ! summary ? summaryPageLink : null }>
-					{ this.props.summary
+					{ this.props.summary && data.length
 						? ( <DownloadCsv
+								fileName={ fileName }
 								period={ period }
 								path={ path }
 								site={ site }

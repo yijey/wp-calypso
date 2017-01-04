@@ -149,11 +149,15 @@ module.exports = {
 			siteID: siteId, statType: 'statsFollowers', type: 'email', domain: siteDomain, max: 7 } );
 		const commentFollowersList = new StatsList( {
 			siteID: siteId, statType: 'statsCommentFollowers', domain: siteDomain, max: 7 } );
+		const countriesList = new StatsList( {
+			siteID: siteId, statType: 'statsCountryViews',
+			domain: siteDomain, max: 0, num: -1, summarize: 1 } );
 
 		analytics.pageView.record( basePath, analyticsPageTitle + ' > Insights' );
 
 		renderWithReduxStore(
 			React.createElement( StatsComponent, {
+				countriesList,
 				site: site,
 				followList: followList,
 				commentsList: commentsList,

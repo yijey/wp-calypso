@@ -16,6 +16,7 @@ module.exports = React.createClass( {
 	displayName: 'StatsDownloadCsv',
 
 	propTypes: {
+		fileName: PropTypes.string,
 		site: PropTypes.object.isRequired,
 		path: PropTypes.string.isRequired,
 		period: PropTypes.object.isRequired,
@@ -27,7 +28,7 @@ module.exports = React.createClass( {
 		const { dataList, site, path, period } = this.props;
 		const data = dataList.csvData();
 
-		const fileName = [
+		const fileName = this.props.fileName || [
 			site.slug,
 			path,
 			period.period,

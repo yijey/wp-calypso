@@ -2,6 +2,7 @@
  * External dependencies
  */
 var i18n = require( 'i18n-calypso' );
+import { isArray } from 'lodash';
 
 /**
  * Internal dependencies
@@ -830,38 +831,74 @@ StatsParser.prototype.statsClicks = function( payload ) {
 };
 
 StatsParser.prototype.statsCountryViews = function( payload ) {
-	var response = {},
-		data = [],
-		periodRange = rangeOfPeriod( this.options.period, this.options.date ),
-		startDate = periodRange.startOf.format( 'YYYY-MM-DD' );
+	const countryInfo = payload[ 'country-info' ];
+	if ( ! countryInfo ) {
+		return {};
+	}
 
-	if( payload && payload.days && payload.days[ startDate ] && payload.days[ startDate ].views ) {
+	const response = {
+		data: [],
+	};
 
-		data = payload.days[ startDate ].views.filter( function( viewsObject ) {
-			var country = payload[ 'country-info' ][ viewsObject.country_code ];
-			return country;
-		} ).map( function( viewsObject ) {
-			var country = payload[ 'country-info' ][ viewsObject.country_code ],
-				icon = country.flat_flag_icon.match( /grey\.png/ ) ? null : country.flat_flag_icon;
+	const summary = payload.summary;
 
-			return {
+	if ( summary && isArray( summary.views ) ) {
+		let totalViews = 0;
+		const transformedViews = [];
+
+		summary.views.forEach( ( viewsObject ) => {
+			const viewCount = parseInt( viewsObject.views, 10 );
+			if ( ! viewCount || ! countryInfo[ viewsObject.country_code ] ) {
+				return;
+			}
+			const country = countryInfo[ viewsObject.country_code ];
+			const icon = country.flat_flag_icon.match( /grey\.png/ ) ? null : country.flat_flag_icon;
+
+			transformedViews.push( {
 				label: country.country_full.replace( /’/, "'" ),
 				value: viewsObject.views,
 				region: country.map_region,
 				icon: icon
-			};
+			} );
+			totalViews += viewsObject.views;
 		} );
 
-		if( payload.days[ startDate ].other_views && payload.days[ startDate ].other_views > 0 ) {
-			response.viewAll = true;
+		if ( ! transformedViews.length ) {
+			return response;
 		}
 
-		if( payload.days[ startDate ].total_views ) {
-			response.total = payload.days[ startDate ].total_views;
+		response.data = transformedViews;
+		response.viewAll = true;
+		response.total = totalViews;
+	} else {
+		const periodRange = rangeOfPeriod( this.options.period, this.options.date );
+		const startDate = periodRange.startOf.format( 'YYYY-MM-DD' );
+
+		if ( payload && payload.days && payload.days[ startDate ] && payload.days[ startDate ].views ) {
+			response.data = payload.days[ startDate ].views.filter( function( viewsObject ) {
+				return countryInfo[ viewsObject.country_code ];
+			} ).map( function( viewsObject ) {
+				const country = countryInfo[ viewsObject.country_code ],
+					icon = country.flat_flag_icon.match( /grey\.png/ ) ? null : country.flat_flag_icon;
+
+				return {
+					label: country.country_full.replace( /’/, "'" ),
+					value: viewsObject.views,
+					region: country.map_region,
+					icon: icon
+				};
+			} );
+
+			if ( payload.days[ startDate ].other_views && payload.days[ startDate ].other_views > 0 ) {
+				response.viewAll = true;
+			}
+
+			if ( payload.days[ startDate ].total_views ) {
+				response.total = payload.days[ startDate ].total_views;
+			}
 		}
 	}
 
-	response.data = data;
 	return response;
 };
 

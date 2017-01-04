@@ -23,6 +23,7 @@ import LatestPostSummary from '../post-performance';
 import DomainTip from 'my-sites/domain-tip';
 import Main from 'components/main';
 import StatsFirstView from '../stats-first-view';
+import Countries from '../stats-countries';
 
 export default React.createClass( {
 	displayName: 'StatsInsights',
@@ -30,6 +31,7 @@ export default React.createClass( {
 	propTypes: {
 		commentFollowersList: PropTypes.object.isRequired,
 		commentsList: PropTypes.object.isRequired,
+		countriesList: PropTypes.object.isRequired,
 		emailFollowersList: PropTypes.object.isRequired,
 		followList: PropTypes.object.isRequired,
 		site: React.PropTypes.oneOfType( [
@@ -89,6 +91,14 @@ export default React.createClass( {
 						title={ this.translate( 'Today\'s Stats' ) }
 					/>
 					<AllTime />
+					<Countries
+						title={ this.translate( 'All Recorded Views by Country' ) }
+						key="countries-summary-all"
+						path="countries-summary-all"
+						site={ site }
+						dataList={ this.props.countriesList }
+						period={ {} }
+						summary={ true } />
 					<MostPopular />
 					{ site && <DomainTip siteId={ site.ID } event="stats_insights_domain" /> }
 					<div className="stats-insights__nonperiodic has-recent">

@@ -403,7 +403,7 @@ export function getThemeCustomizeUrl( state, themeId, siteId ) {
 		return getSiteOption( state, siteId, 'admin_url' ) +
 			'customize.php?return=' +
 			encodeURIComponent( window.location ) +
-			( themeId ? '&theme=' + themeId : '' );
+			( '&theme=' + ( themeId || '' ) );
 	}
 
 	const customizeUrl = '/customize/' + getSiteSlug( state, siteId );

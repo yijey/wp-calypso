@@ -38,8 +38,8 @@ const purchase = config.isEnabled( 'upgrades/checkout' )
 		} ),
 		getUrl: getPurchaseUrl,
 		hideForSite: ( state, siteId ) => hasFeature( state, siteId, FEATURE_UNLIMITED_PREMIUM_THEMES ),
-		hideForTheme: ( state, theme, siteId ) =>
-			! isPremium( state, theme.id ) || isActive( state, theme.id, siteId ) || isPurchased( state, theme.id, siteId )
+		hideForTheme: ( state, themeId, siteId ) =>
+			! isPremium( state, themeId ) || isActive( state, themeId, siteId ) || isPurchased( state, themeId, siteId )
 	}
 	: {};
 
@@ -47,10 +47,10 @@ const activate = {
 	label: i18n.translate( 'Activate' ),
 	header: i18n.translate( 'Activate on:', { comment: 'label for selecting a site on which to activate a theme' } ),
 	action: activateTheme,
-	hideForTheme: ( state, theme, siteId ) => (
-		isActive( state, theme.id, siteId ) || (
-			isPremium( state, theme.id ) &&
-			! isPurchased( state, theme.id, siteId ) &&
+	hideForTheme: ( state, themeId, siteId ) => (
+		isActive( state, themeId, siteId ) || (
+			isPremium( state, themeId ) &&
+			! isPurchased( state, themeId, siteId ) &&
 			! hasFeature( state, siteId, FEATURE_UNLIMITED_PREMIUM_THEMES )
 		)
 	)
@@ -62,9 +62,9 @@ const activateOnJetpack = {
 	// Append `-wpcom` suffix to the theme ID so the installAndActivate() will install the theme from WordPress.com, not WordPress.org
 	action: ( themeId, siteId, ...args ) => installAndActivate( themeId + '-wpcom', siteId, ...args ),
 	hideForSite: ( state, siteId ) => ! isJetpackSite( state, siteId ),
-	hideForTheme: ( state, theme, siteId ) => (
-		isActive( state, theme.id, siteId ) || (
-			isPremium( state, theme.id ) &&
+	hideForTheme: ( state, themeId, siteId ) => (
+		isActive( state, themeId, siteId ) || (
+			isPremium( state, themeId ) &&
 			! hasFeature( state, siteId, FEATURE_UNLIMITED_PREMIUM_THEMES ) // Pressable sites included -- they're always on a Business plan
 		)
 	)
@@ -76,7 +76,7 @@ const customize = {
 	icon: 'customize',
 	getUrl: getCustomizeUrl,
 	hideForSite: ( state, siteId ) => ! canCurrentUser( state, siteId, 'edit_theme_options' ),
-	hideForTheme: ( state, theme, siteId ) => ! isActive( state, theme.id, siteId )
+	hideForTheme: ( state, themeId, siteId ) => ! isActive( state, themeId, siteId )
 };
 
 const tryandcustomize = {
@@ -86,7 +86,7 @@ const tryandcustomize = {
 	} ),
 	getUrl: getCustomizeUrl,
 	hideForSite: ( state, siteId ) => ! canCurrentUser( state, siteId, 'edit_theme_options' ),
-	hideForTheme: ( state, theme, siteId ) => isActive( state, theme.id, siteId )
+	hideForTheme: ( state, themeId, siteId ) => isActive( state, themeId, siteId )
 };
 
 // This is a special option that gets its `action` added by `ThemeShowcase` or `ThemeSheet`,
@@ -96,7 +96,7 @@ const preview = {
 		comment: 'label for previewing the theme demo website'
 	} ),
 	hideForSite: ( state, siteId ) => isJetpackSite( state, siteId ),
-	hideForTheme: ( state, theme, siteId ) => isActive( state, theme.id, siteId )
+	hideForTheme: ( state, themeId, siteId ) => isActive( state, themeId, siteId )
 };
 
 const signup = {
@@ -124,7 +124,7 @@ const support = {
 	getUrl: getSupportUrl,
 	// We don't know where support docs for a given theme on a self-hosted WP install are.
 	hideForSite: ( state, siteId ) => isJetpackSite( state, siteId ),
-	hideForTheme: ( state, theme ) => ! isPremium( state, theme.id )
+	hideForTheme: ( state, themeId ) => ! isPremium( state, themeId )
 };
 
 const help = {
@@ -190,9 +190,9 @@ export const connectOptions = connect(
 		let mapAction;
 
 		if ( siteId ) {
-			mapAction = action => ( t ) => action( t.id, siteId, source );
+			mapAction = action => ( t ) => action( t, siteId, source );
 		} else { // Bind only source.
-			mapAction = action => ( t, s ) => action( t.id, s, source );
+			mapAction = action => ( t, s ) => action( t, s, source );
 		}
 
 		return bindActionCreators(

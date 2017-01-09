@@ -48,6 +48,17 @@ const intersperse = ( list, element ) =>
 		.reduce( ( final, next ) => [ ...final, next, element ], [] )
 		.slice( 0, -1 );
 
+/**
+ * @typedef {Object} ReactElement
+ */
+
+/**
+ * Renders a JSDoc param type
+ *
+ * @param {?Boolean} nullable whether or not the parameter can have the value `null`
+ * @param {String} type normalized string representation of JSDoc type
+ * @returns {ReactElement} rendered ParamType React component
+ */
 export default function DocsSelectorsParamType( { nullable, type } ) {
 	/** @type {String[]} **/
 	const types = union(
@@ -60,7 +71,12 @@ export default function DocsSelectorsParamType( { nullable, type } ) {
 			{ intersperse( types, { separator: 'or' } ).map( ( name, index ) => (
 				has( name, 'separator' )
 					? <div key={ index } className="docs-selectors__param-type-separator">{ name.separator }</div>
-					: <div key={ name }>{ describeType( name ) }</div>
+					: (
+						<div key={ name }>
+							{ describeType( name ) }
+							{ false === nullable && <span className="docs-selectors__param-type-non-nullable">(not nullable)</span> }
+						</div>
+					)
 			) ) }
 		</div>
 	);

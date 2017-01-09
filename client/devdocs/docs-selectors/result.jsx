@@ -10,6 +10,38 @@ import classnames from 'classnames';
 import Card from 'components/card';
 import DocsSelectorsParamType from './param-type';
 
+/**
+ * @typedef {Object} JSDocInfo
+ * @property {?String} description first lines of comment
+ * @property {?String} name associated function or variable or property
+ * @property {?JSDocParam[]} params list of input parameters and types
+ * @property {?JSDocParam[]} returns list of possible return types
+ */
+
+/**
+ * @typedef {Object} JSDocParam
+ * @property {?JSDocType} type description of param data type(s)
+ * @property {?String} description description of param
+ * @property {String} name given name of param
+ */
+
+/**
+ * @typedef {Object} JSDocType
+ * @property {String[]} names list of possible param data types
+ */
+
+/**
+ * @typedef {Object} ReactElement
+ */
+
+/**
+ * Renders a detail view of a state selector
+ *
+ * @param {JSDocInfo} jsDocInfo given from the output of JSDoc
+ * @param {Boolean} expanded whether or not detail view is open or closed (summary)
+ * @param {String} [url] link on which to click to expand detail view
+ * @returns {ReactElement} rendered state selector React component
+ */
 export default function DocsSelectorsResult( { jsDocInfo, expanded, url } ) {
 	const {
 		description,
@@ -42,7 +74,7 @@ export default function DocsSelectorsResult( { jsDocInfo, expanded, url } ) {
 										{ param.variable && '...' }
 										{ param.optional && '[' }
 										{ param.name }
-										{ param.hasOwnProperty( 'defaultvalue' ) && ' = ' + param.defaultvalue }
+										{ 'defaultvalue' in param && ' = ' + param.defaultvalue }
 										{ param.optional && ']' }
 									</strong>
 									<p className="docs-selectors__result-arguments-description">{ param.description }</p>

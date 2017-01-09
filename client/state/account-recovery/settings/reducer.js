@@ -18,36 +18,34 @@ import {
 	ACCOUNT_RECOVERY_SETTINGS_DELETE,
 	ACCOUNT_RECOVERY_SETTINGS_DELETE_SUCCESS,
 	ACCOUNT_RECOVERY_SETTINGS_DELETE_FAILED,
+
+	ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION,
+
+	ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE,
+	ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_SUCCESS,
+	ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_FAILED,
 } from 'state/action-types';
 
+const setTargetState = ( value ) => ( state, { target } ) => ( {
+	...state,
+	[ target ]: value,
+} );
+
 const isUpdating = createReducer( {}, {
-	[ ACCOUNT_RECOVERY_SETTINGS_UPDATE ]: ( state, { target } ) => ( {
-		...state,
-		[ target ]: true,
-	} ),
-	[ ACCOUNT_RECOVERY_SETTINGS_UPDATE_SUCCESS ]: ( state, { target } ) => ( {
-		...state,
-		[ target ]: false,
-	} ),
-	[ ACCOUNT_RECOVERY_SETTINGS_UPDATE_FAILED ]: ( state, { target } ) => ( {
-		...state,
-		[ target ]: false,
-	} ),
+	[ ACCOUNT_RECOVERY_SETTINGS_UPDATE ]: setTargetState( true ),
+	[ ACCOUNT_RECOVERY_SETTINGS_UPDATE_SUCCESS ]: setTargetState( false ),
+	[ ACCOUNT_RECOVERY_SETTINGS_UPDATE_FAILED ]: setTargetState( false ),
 } );
 
 const isDeleting = createReducer( {}, {
-	[ ACCOUNT_RECOVERY_SETTINGS_DELETE ]: ( state, { target } ) => ( {
-		...state,
-		[ target ]: true,
-	} ),
-	[ ACCOUNT_RECOVERY_SETTINGS_DELETE_SUCCESS ]: ( state, { target } ) => ( {
-		...state,
-		[ target ]: false,
-	} ),
-	[ ACCOUNT_RECOVERY_SETTINGS_DELETE_FAILED ]: ( state, { target } ) => ( {
-		...state,
-		[ target ]: false,
-	} ),
+	[ ACCOUNT_RECOVERY_SETTINGS_DELETE ]: setTargetState( true ),
+	[ ACCOUNT_RECOVERY_SETTINGS_DELETE_SUCCESS ]: setTargetState( false ),
+	[ ACCOUNT_RECOVERY_SETTINGS_DELETE_FAILED ]: setTargetState( false ),
+} );
+
+const hasSentValidation = createReducer( {}, {
+	[ ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION ]: setTargetState( true ),
+	[ ACCOUNT_RECOVERY_SETTINGS_UPDATE_SUCCESS ]: setTargetState( true ),
 } );
 
 const convertPhoneResponse = ( phoneResponse ) => {
@@ -105,6 +103,14 @@ const phoneValidated = createReducer( false, {
 
 	[ ACCOUNT_RECOVERY_SETTINGS_DELETE_SUCCESS ]: ( state, { target } ) =>
 		'phone' === target ? false : state,
+
+	[ ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_SUCCESS ]: () => true,
+} );
+
+const isValidatingPhone = createReducer( false, {
+	[ ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE ]: () => true,
+	[ ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_SUCCESS ]: () => false,
+	[ ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_FAILED ]: () => false,
 } );
 
 const emailValidated = createReducer( false, {
@@ -129,7 +135,9 @@ export default combineReducers( {
 		email,
 		emailValidated,
 	} ),
+	isReady,
 	isUpdating,
 	isDeleting,
-	isReady,
+	isValidatingPhone,
+	hasSentValidation,
 } );

@@ -29,6 +29,18 @@ import {
 	deleteAccountRecoveryEmail,
 	deleteAccountRecoveryEmailSuccess,
 	deleteAccountRecoveryEmailFailed,
+
+	resendAccountRecoveryEmailValidation,
+	resendAccountRecoveryEmailValidationSuccess,
+	resendAccountRecoveryEmailValidationFailed,
+
+	resendAccountRecoveryPhoneValidation,
+	resendAccountRecoveryPhoneValidationSuccess,
+	resendAccountRecoveryPhoneValidationFailed,
+
+	validateAccountRecoveryPhone,
+	validateAccountRecoveryPhoneSuccess,
+	validateAccountRecoveryPhoneFailed,
 } from '../actions';
 
 import {
@@ -43,6 +55,14 @@ import {
 	ACCOUNT_RECOVERY_SETTINGS_DELETE,
 	ACCOUNT_RECOVERY_SETTINGS_DELETE_SUCCESS,
 	ACCOUNT_RECOVERY_SETTINGS_DELETE_FAILED,
+
+	ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION,
+	ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_SUCCESS,
+	ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_FAILED,
+
+	ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE,
+	ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_SUCCESS,
+	ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_FAILED,
 } from 'state/action-types';
 
 import { dummyData, dummyNewPhone, dummyNewEmail } from './test-data';
@@ -311,5 +331,144 @@ describe( 'account-recovery actions', () => {
 				error: errorResponse,
 			} );
 		} );
+	} );
+
+	describe( '#resendAccountRecoveryEmailValidationSuccess', () => {
+		it( 'should return ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_SUCCESS with target: email', () => {
+			const action = resendAccountRecoveryEmailValidationSuccess();
+			assert.deepEqual( action, {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_SUCCESS,
+				target: 'email',
+			} );
+		} );
+	} );
+
+	describe( '#resendAccountRecoveryEmailValidationFailed', () => {
+		it( 'should return ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_FAILED with target: email', () => {
+			const action = resendAccountRecoveryEmailValidationFailed( errorResponse );
+			assert.deepEqual( action, {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_FAILED,
+				target: 'email',
+				error: errorResponse,
+			} );
+		} );
+	} );
+
+	generateSuccessAndFailedTestsForThunk( {
+		testBaseName: '#resendAccountRecoveryEmailValidation',
+		nockSettings: {
+			method: 'post',
+			endpoint: '/rest/v1.1/me/account-recovery/email/validation/new',
+			successResponse: { success: true },
+			errorResponse: errorResponse,
+		},
+		thunk: () => resendAccountRecoveryEmailValidation()( spy ),
+		preCondition: () =>
+			assert( spy.calledWith( {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION,
+				target: 'email',
+			} ) ),
+		postConditionSuccess: () =>
+			assert( spy.calledWith( {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_SUCCESS,
+				target: 'email',
+			} ) ),
+		postConditionFailed: () =>
+			assert( spy.calledWith( sinon.match( {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_FAILED,
+				target: 'email',
+				error: errorResponse,
+			} ) ) ),
+	} );
+
+	describe( '#resendAccountRecoveryPhoneValidationSuccess', () => {
+		it( 'should return ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_SUCCESS with target: phone', () => {
+			const action = resendAccountRecoveryPhoneValidationSuccess();
+			assert.deepEqual( action, {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_SUCCESS,
+				target: 'phone',
+			} );
+		} );
+	} );
+
+	describe( '#resendAccountRecoveryPhoneValidationFailed', () => {
+		it( 'should return ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_FAILED with target: phone', () => {
+			const action = resendAccountRecoveryPhoneValidationFailed( errorResponse );
+			assert.deepEqual( action, {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_FAILED,
+				target: 'phone',
+				error: errorResponse,
+			} );
+		} );
+	} );
+
+	generateSuccessAndFailedTestsForThunk( {
+		testBaseName: '#resendAccountRecoveryPhoneValidation',
+		nockSettings: {
+			method: 'post',
+			endpoint: '/rest/v1.1/me/account-recovery/phone/validation/new',
+			successResponse: { success: true },
+			errorResponse: errorResponse,
+		},
+		thunk: () => resendAccountRecoveryPhoneValidation()( spy ),
+		preCondition: () =>
+			assert( spy.calledWith( {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION,
+				target: 'phone',
+			} ) ),
+		postConditionSuccess: () =>
+			assert( spy.calledWith( {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_SUCCESS,
+				target: 'phone',
+			} ) ),
+		postConditionFailed: () =>
+			assert( spy.calledWith( sinon.match( {
+				type: ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_FAILED,
+				target: 'phone',
+				error: errorResponse,
+			} ) ) ),
+	} );
+
+	describe( '#validateAccountRecoveryPhoneSuccess', () => {
+		it( 'should return ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_SUCCESS', () => {
+			const action = validateAccountRecoveryPhoneSuccess();
+			assert.deepEqual( action, {
+				type: ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_SUCCESS,
+			} );
+		} );
+	} );
+
+	describe( '#validateAccountRecoveryPhoneFailed', () => {
+		it( 'should return ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_FAILED', () => {
+			const action = validateAccountRecoveryPhoneFailed( errorResponse );
+			assert.deepEqual( action, {
+				type: ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_FAILED,
+				error: errorResponse,
+			} );
+		} );
+	} );
+
+	generateSuccessAndFailedTestsForThunk( {
+		testBaseName: '#validateAccountRecoveryPhone',
+		nockSettings: {
+			method: 'post',
+			endpoint: '/rest/v1.1/me/account-recovery/phone/validation',
+			successResponse: { success: true },
+			errorResponse: errorResponse,
+		},
+		thunk: () => validateAccountRecoveryPhone()( spy ),
+		preCondition: () =>
+			assert( spy.calledWith( {
+				type: ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE,
+			} ) ),
+		postConditionSuccess: () =>
+			assert( spy.calledWith( {
+				type: ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_SUCCESS,
+			} ) ),
+		postConditionFailed: () =>
+			assert( spy.calledWith( sinon.match( {
+				type: ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_FAILED,
+				error: errorResponse,
+			} ) ) ),
 	} );
 } );

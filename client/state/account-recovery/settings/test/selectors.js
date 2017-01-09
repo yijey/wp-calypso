@@ -16,6 +16,13 @@ import {
 	isDeletingAccountRecoveryEmail,
 	isAccountRecoveryEmailActionInProgress,
 	isAccountRecoveryPhoneActionInProgress,
+	isValidatingAccountRecoveryPhone,
+
+	hasSentAccountRecoveryEmailValidation,
+	hasSentAccountRecoveryPhoneValidation,
+
+	shouldPromptAccountRecoveryEmailValidationNotice,
+	shouldPromptAccountRecoveryPhoneValidationNotice,
 
 	getAccountRecoveryEmail,
 	getAccountRecoveryPhone,
@@ -218,6 +225,147 @@ describe( '#account-recovery/settings/selectors', () => {
 
 		it( 'should return true if isDeleting.email is set', () => {
 			assert.isTrue( isAccountRecoveryPhoneActionInProgress( stateDuringDeleting ) );
+		} );
+	} );
+
+	describe( '#hasSentAccountRecoveryEmailValidation', () => {
+		it( 'should return false on absence', () => {
+			const state = {
+				accountRecovery: {
+					settings: {
+						hasSentValidation: {},
+					},
+				},
+			};
+
+			assert.isFalse( hasSentAccountRecoveryEmailValidation( state ) );
+		} );
+
+		it( 'should return hasSentValidation.email', () => {
+			const state = {
+				accountRecovery: {
+					settings: {
+						hasSentValidation: {
+							email: true,
+						},
+					},
+				},
+			};
+
+			assert.isTrue( hasSentAccountRecoveryEmailValidation( state ) );
+		} );
+	} );
+
+	describe( '#hasSentAccountRecoveryPhoneValidation', () => {
+		it( 'should return false on absence', () => {
+			const state = {
+				accountRecovery: {
+					settings: {
+						hasSentValidation: {},
+					},
+				},
+			};
+
+			assert.isFalse( hasSentAccountRecoveryPhoneValidation( state ) );
+		} );
+
+		it( 'should return hasSentValidation.phone', () => {
+			const state = {
+				accountRecovery: {
+					settings: {
+						hasSentValidation: {
+							phone: true,
+						},
+					},
+				},
+			};
+
+			assert.isTrue( hasSentAccountRecoveryPhoneValidation( state ) );
+		} );
+	} );
+
+	describe( '#isValidatingAccountRecoveryPhone', () => {
+		it( 'should return isValidatingPhone', () => {
+			const state = {
+				accountRecovery: {
+					settings: {
+						isValidatingPhone: true,
+					},
+				},
+			};
+
+			assert.isTrue( isValidatingAccountRecoveryPhone( state ) );
+		} );
+	} );
+
+	describe( '#shouldPromptAccountRecoveryEmailValidationNotice', () => {
+		it( 'should prompt if the email exists and is not validated.', () => {
+			const state = {
+				accountRecovery: {
+					settings: {
+						data: {
+							email: 'aaa@example.com',
+							emailValidated: false,
+						},
+						isReady: true,
+						hasSentValidation: {},
+						isUpdating: {},
+						isDeleting: {},
+					},
+				},
+			};
+
+			assert.isTrue( shouldPromptAccountRecoveryEmailValidationNotice( state ) );
+		} );
+
+		it( 'should not prompt if the settings data is not ready.', () => {
+			assert.isFalse( shouldPromptAccountRecoveryEmailValidationNotice( stateBeforeFetching ) );
+		} );
+
+		it( 'should not prompt if isUpdating.email is set.', () => {
+			assert.isFalse( shouldPromptAccountRecoveryEmailValidationNotice( stateDuringUpdating ) );
+		} );
+
+		it( 'should not prompt if isDeleting.email is set.', () => {
+			assert.isFalse( shouldPromptAccountRecoveryEmailValidationNotice( stateDuringDeleting ) );
+		} );
+	} );
+
+	describe( '#shouldPromptAccountRecoveryPhoneValidationNotice', () => {
+		it( 'should prompt if the phone exists and is not validated.', () => {
+			const state = {
+				accountRecovery: {
+					settings: {
+						data: {
+							phone: {
+								countryCode: dummyNewPhone.country_code,
+								countryNumericCode: dummyNewPhone.country_numeric_code,
+								number: dummyNewPhone.number,
+								numberFull: dummyNewPhone.number_full,
+							},
+							phoneValidated: false,
+						},
+						isReady: true,
+						hasSentValidation: {},
+						isUpdating: {},
+						isDeleting: {},
+					},
+				},
+			};
+
+			assert.isTrue( shouldPromptAccountRecoveryPhoneValidationNotice( state ) );
+		} );
+
+		it( 'should not prompt if the settings data is not ready.', () => {
+			assert.isFalse( shouldPromptAccountRecoveryPhoneValidationNotice( stateBeforeFetching ) );
+		} );
+
+		it( 'should not prompt if isUpdating.phone is set.', () => {
+			assert.isFalse( shouldPromptAccountRecoveryPhoneValidationNotice( stateDuringUpdating ) );
+		} );
+
+		it( 'should not prompt if isDeleting.phone is set.', () => {
+			assert.isFalse( shouldPromptAccountRecoveryPhoneValidationNotice( stateDuringDeleting ) );
 		} );
 	} );
 } );

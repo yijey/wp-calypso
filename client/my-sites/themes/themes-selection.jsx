@@ -19,7 +19,8 @@ import {
 	isRequestingThemesForQuery,
 	isThemesLastPageForQuery,
 	isThemeActive,
-	isThemePurchased
+	isThemePurchased,
+	isInstallingTheme
 } from 'state/themes/selectors';
 import config from 'config';
 import { FEATURE_UNLIMITED_PREMIUM_THEMES } from 'lib/plans/constants';
@@ -44,6 +45,7 @@ const ThemesSelection = React.createClass( {
 		isLastPage: PropTypes.bool,
 		isThemeActive: PropTypes.func,
 		isThemePurchased: PropTypes.func,
+		isInstallingTheme: PropTypes.func
 	},
 
 	componentWillReceiveProps( nextProps ) {
@@ -114,6 +116,7 @@ const ThemesSelection = React.createClass( {
 					getActionLabel={ this.props.getActionLabel }
 					isActive={ this.props.isThemeActive }
 					isPurchased={ this.props.isThemePurchased }
+					isInstalling={ this.props.isInstallingTheme }
 					loading={ this.props.isRequesting } />
 			</div>
 		);
@@ -122,9 +125,14 @@ const ThemesSelection = React.createClass( {
 } );
 
 const ConnectedThemesSelection = connect(
-	( state, { search, tier, siteId, page, vertical, filter } ) => {
+	( state, { filter, page, search, tier, vertical, siteId, queryWpcom } ) => {
 		const isJetpack = isJetpackSite( state, siteId );
-		const siteIdOrWpcom = ( siteId && isJetpack ) ? siteId : 'wpcom';
+		const siteIdOrWpcom = ( siteId && isJetpack && ! ( queryWpcom === true ) ) ? siteId : 'wpcom';
+
+		let suffixThemeId = ( themeId ) => themeId;
+		if ( isJetpack && queryWpcom ) {
+			suffixThemeId = ( themeId ) => themeId + '-wpcom';
+		}
 
 		const query = {
 			search,
@@ -140,17 +148,18 @@ const ConnectedThemesSelection = connect(
 			themes: getThemesForQueryIgnoringPage( state, siteIdOrWpcom, query ) || [],
 			isRequesting: isRequestingThemesForQuery( state, siteIdOrWpcom, query ),
 			isLastPage: isThemesLastPageForQuery( state, siteIdOrWpcom, query ),
-			isThemeActive: themeId => isThemeActive( state, themeId, siteId ),
+			isThemeActive: themeId => isThemeActive( state, suffixThemeId( themeId ), siteId ),
 			isThemePurchased: themeId => (
 				// Note: This component assumes that purchase and data is already present in the state tree
 				// (used by the isThemePurchased selector). At the time of implementation there's no caching
 				// in <QuerySitePurchases /> and a parent component is already rendering it. So to avoid
 				// redundant AJAX requests, we're not rendering the query component locally.
-				isThemePurchased( state, themeId, siteId ) ||
+				isThemePurchased( state, suffixThemeId( themeId ), siteId ) ||
 				// The same is true for the `hasFeature` selector, which relies on the presence of
 				// a `<QuerySitePlans />` component in a parent component.
 				hasFeature( state, siteId, FEATURE_UNLIMITED_PREMIUM_THEMES )
-			)
+			),
+			isInstallingTheme: themeId => isInstallingTheme( state, suffixThemeId( themeId ), siteId )
 		};
 	}
 )( ThemesSelection );

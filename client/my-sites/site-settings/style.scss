@@ -158,6 +158,20 @@
 			white-space: nowrap;
 		}
 	}
+
+	.site-icon-setting__icon {
+		@include breakpoint( "<660px") {
+			float: left;
+			margin-right: 8px;
+		}
+	}
+
+	.site-icon-setting__button {
+		@include breakpoint( "<660px") {
+			display: block;
+			margin-bottom: 8px;
+		}
+	}
 }
 
 .site-settings__general-settings {
@@ -173,6 +187,48 @@
 	.site-settings__toggle-label {
 		flex: 0 1 100%;
 		margin-left: 12px;
+	}
+}
+
+.site-settings__discussion-settings {
+	label:first-of-type {
+		font-weight: normal;
+	}
+
+	.form-toggle__label {
+		display: flex;
+		align-items: center;
+	}
+
+	.form-toggle__switch {
+		flex: 1 0 auto;
+	}
+
+	.form-toggle__switch + span {
+		flex: 0 1 100%;
+		margin-left: 12px;
+	}
+
+	hr {
+		margin: 0 -24px 1.5em;
+	}
+
+	.site-settings__other-comment-settings {
+		.form-toggle__label {
+			align-items: flex-start;
+		}
+
+		.form-toggle__switch {
+			margin-top: 5px;
+		}
+
+		.form-toggle__switch + span {
+			line-height: 26px;
+		}
+
+		.form-select {
+			margin-top: 2px;
+		}
 	}
 }
 

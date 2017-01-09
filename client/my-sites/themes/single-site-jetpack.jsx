@@ -27,7 +27,6 @@ const ConnectedThemesSelection = connectOptions(
 	( props ) => {
 		return (
 			<ThemesSelection { ...props }
-				siteId={ null /* Override props.siteId to get themes from WPCOM here */ }
 				getOptions={ function( theme ) {
 					return pickBy(
 						addTracking( props.options ),
@@ -91,7 +90,8 @@ export default connectOptions(
 							/>
 							<ConnectedThemesSelection
 								options={ [
-									'activateOnJetpack'
+									'activateOnJetpack',
+									'tryAndCustomizeOnJetpack'
 								] }
 								search={ search }
 								tier={ tier }
@@ -114,6 +114,7 @@ export default connectOptions(
 									return getScreenshotOption( theme ).label;
 								} }
 								trackScrollPage={ props.trackScrollPage }
+								queryWpcom={ true }
 							/>
 						</div>
 					}

@@ -1,19 +1,21 @@
 /**
  * External dependencies
  */
+const chalk = require( 'chalk' );
+const childProcess = require( 'child_process' );
 const fs = require( 'fs' );
 const path = require( 'path' );
 const express = require( 'express' );
 const Fuse = require( 'fuse.js' );
-const doctrine = require( 'doctrine' );
 const camelCase = require( 'lodash/camelCase' );
-const forEach = require( 'lodash/forEach' );
+const find = require( 'lodash/find' );
+const matchesProperty = require( 'lodash/matchesProperty' );
 
 /**
  * Constants
  */
 
-const REGEXP_DOCBLOCKS = /\/\*\* *\n( *\*.*\n)* *\*\//g;
+const NPM_BIN = path.resolve( __dirname, '../../../node_modules/.bin' );
 const SELECTORS_DIR = path.resolve( __dirname, '../../../client/state/selectors' );
 
 /**
@@ -25,25 +27,42 @@ let prepareFuse;
 
 function parseSelectorFile( file ) {
 	return new Promise( ( resolve, reject ) => {
-		fs.readFile( SELECTORS_DIR + '/' + file, 'utf8', ( error, contents ) => {
-			if ( error ) {
-				return reject( error );
-			}
-
-			const selector = {
-				name: camelCase( path.basename( file, '.js' ) )
-			};
-
-			forEach( contents.match( REGEXP_DOCBLOCKS ), ( docblock ) => {
-				const doc = doctrine.parse( docblock, { unwrap: true } );
-				if ( doc.tags.length > 0 ) {
-					Object.assign( selector, doc );
-					return false;
+		childProcess.exec(
+			`${ path.join( NPM_BIN, 'jsdoc' ) } -X ${ path.join( SELECTORS_DIR, file ) }`,
+			{}, // no options
+			( error, stdout, stderr ) => {
+				if ( stderr ) {
+					return reject( stderr );
 				}
-			} );
 
-			resolve( selector );
-		} );
+				const expectedExport = camelCase( path.basename( file, '.js' ) );
+
+				let ast;
+				try {
+					ast = JSON.parse( stdout );
+				} catch ( e ) {
+					return reject( e );
+				}
+
+				const actualExport = find( ast, matchesProperty( 'alias', expectedExport ) );
+
+				if ( ! actualExport ) {
+					console.warn(
+						chalk.red( '\nWARNING: ' ) +
+						chalk.yellow( 'Could not find expected exported function.\n' ) +
+						chalk.yellow( 'Based on the filename: ' ) +
+						chalk.blue( path.basename( file ) ) +
+						chalk.yellow( '\nWe expected to find a function with ' ) +
+						chalk.blue( '@alias ' + expectedExport ) +
+						chalk.yellow( ' in its JSDoc header\n' )
+					);
+
+					reject( 'Could not find expected selector' );
+				}
+
+				return resolve( actualExport );
+			}
+		);
 	} );
 }
 
@@ -52,7 +71,7 @@ function prime() {
 		return;
 	}
 
-	prepareFuse = new Promise( ( resolve ) => {
+	prepareFuse = new Promise( ( resolve, reject ) => {
 		fs.readdir( SELECTORS_DIR, ( error, files ) => {
 			if ( error ) {
 				files = [];
@@ -76,7 +95,7 @@ function prime() {
 					threshold: 0.4,
 					distance: 20
 				} ) );
-			} );
+			} ).catch( () => reject( 'Parse failure' ) );
 		} );
 	} ).then( ( fuse ) => {
 		prepareFuse = Promise.resolve( fuse );

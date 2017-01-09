@@ -6,6 +6,8 @@ import { get } from 'lodash';
 /**
  * Returns the sharing buttons for the specified site ID
  *
+ * @alias getSharingButtons
+ *
  * @param  {Object}  state  Global state tree
  * @param  {Number}  siteId Site ID
  * @return {Object}        Sharing Buttons

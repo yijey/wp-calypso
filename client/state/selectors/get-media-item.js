@@ -6,6 +6,8 @@ import { get } from 'lodash';
 /**
  * Returns a media object by site ID, media ID, or null if not known
  *
+ * @alias getMediaItem
+ *
  * @param  {Object}  state   Global state tree
  * @param  {Number}  siteId  Site ID
  * @param  {Number}  mediaId Media ID

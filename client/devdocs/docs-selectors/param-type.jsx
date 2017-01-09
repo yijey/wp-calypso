@@ -2,30 +2,50 @@
  * External dependencies
  */
 import React, { PropTypes } from 'react';
-import { get } from 'lodash';
+import { get, union } from 'lodash';
 
-/**
- * Matches an expression type
- *
- * @type {RegExp}
- */
-const REGEXP_EXPRESSION_TYPE = /(.*)Type$/;
+const ARRAY_TYPE_PATTERN = /^Array[.]<([^>]+)>/;
+const OBJECT_TYPE_PATTERN = /^Object[.]<([^,]+), ([^>]+)>/;
 
-export default function DocsSelectorsParamType( { expression, name, type } ) {
+const describeType = name => {
+	const arrayInfo = name.match( ARRAY_TYPE_PATTERN );
+	if ( arrayInfo ) {
+		const [ /* match */, type ] = arrayInfo;
+		return `${ type }[]`;
+	}
+
+	const objectInfo = name.match( OBJECT_TYPE_PATTERN );
+	if ( objectInfo ) {
+		const [ /* match */, keyType, valueType ] = objectInfo;
+		return `{ ${ keyType }: ${ valueType } }`;
+	}
+
+	return name;
+};
+
+export default function DocsSelectorsParamType( { nullable, type } ) {
+	const types = union(
+		get( type, 'names', [] ),
+		nullable ? [ 'null' ] : [],
+	);
+
 	return (
 		<div className="docs-selectors__param-type">
-			<code>{ get( expression, 'name', name ) }</code>
-			{ expression && REGEXP_EXPRESSION_TYPE.test( type ) && (
-				<span>({ type.match( REGEXP_EXPRESSION_TYPE )[ 1 ] })</span>
-			) }
+			{ types.map( ( name, index ) => {
+				return (
+					<div key={ name }>
+						{ index > 0 && (
+							<div className="docs-selectors__param-type-separator">or</div>
+						) }
+						{ describeType( name ) }
+					</div>
+				);
+			} ) }
 		</div>
 	);
 }
 
 DocsSelectorsParamType.propTypes = {
-	expression: PropTypes.shape( {
-		name: PropTypes.string
-	} ),
-	name: PropTypes.string,
-	type: PropTypes.string
+	nullable: PropTypes.bool,
+	type: PropTypes.shape( { names: PropTypes.arrayOf( PropTypes.string ) } ),
 };

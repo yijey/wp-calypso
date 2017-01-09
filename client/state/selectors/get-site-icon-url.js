@@ -13,6 +13,8 @@ import { getSiteIconId, getMediaUrl } from './';
  * Returns a URL to the site's current site icon, or null if no icon exists or
  * if site is not known
  *
+ * @alias getSiteIconUrl
+ *
  * @param  {Object}  state  Global state tree
  * @param  {Number}  siteId Site ID
  * @return {?String}        URL of site icon, if known and exists

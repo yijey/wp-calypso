@@ -6,6 +6,8 @@ import { getRawSite } from 'state/sites/selectors';
 /**
  * Returns true if the site is private
  *
+ * @alias isPrivateSite
+ *
  * @param {Object} state Global state tree
  * @param {Object} siteId Site ID
  * @return {Boolean} True if site is private

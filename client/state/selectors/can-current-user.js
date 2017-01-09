@@ -9,6 +9,7 @@ import { isValidCapability } from 'state/current-user/selectors';
  * cannot be determined (if the site is not currently known, or if specifying
  * an invalid capability).
  *
+ * @alias canCurrentUser
  * @see https://codex.wordpress.org/Function_Reference/current_user_can
  *
  * @param  {Object}   state      Global state tree

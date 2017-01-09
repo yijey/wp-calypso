@@ -7,6 +7,7 @@ import { get } from 'lodash';
  * Returns true if currently requesting post likes for the specified site ID, post ID or
  * false otherwise.
  *
+ * @alias isRequestingPostLikes
  * @param  {Object}  state  Global state tree
  * @param  {Number}  siteId Site ID
  * @param  {Number}  postId Post ID

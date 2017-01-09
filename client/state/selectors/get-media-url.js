@@ -7,6 +7,8 @@ import { getMediaItem } from './';
 /**
  * Returns the URL for a media item, or null if not known
  *
+ * @alias getMediaUrl
+ *
  * @param  {Object}  state   Global state tree
  * @param  {Number}  siteId  Site ID
  * @param  {Number}  mediaId Media ID

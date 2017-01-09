@@ -6,6 +6,8 @@ import { get } from 'lodash';
 /**
  * Returns the total of post likes for a given site ID, post ID.
  *
+ * @alias countPostLikes
+ *
  * @param  {Object}  state  Global state tree
  * @param  {Number}  siteId Site ID
  * @param  {Number}  postId Post ID

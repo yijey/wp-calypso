@@ -49,6 +49,7 @@ export function add( a, b ) {
  * @param {Object} state App state atom
  * @param {String} [song='Take the A Train']
  * @returns {Boolean} whether or not the given song is currently selected
+ */
 export function isMyFavoriteSongSelected( state, song ) {
 	return false;
 }

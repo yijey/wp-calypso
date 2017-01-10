@@ -135,7 +135,6 @@ const RegisterDomainStep = React.createClass( {
 
 		return {
 			clickedExampleSuggestion: false,
-			dotBlogNotice: true,
 			lastQuery: suggestion,
 			lastDomainSearched: null,
 			lastDomainError: null,
@@ -216,10 +215,6 @@ const RegisterDomainStep = React.createClass( {
 		return ! this.props.defaultSuggestions && ! this.props.defaultSuggestionsError;
 	},
 
-	dismissDotBlogNotice() {
-		this.setState( { dotBlogNotice: false } );
-	},
-
 	render: function() {
 		const queryObject = getQueryObject( this.props );
 		return (
@@ -240,18 +235,6 @@ const RegisterDomainStep = React.createClass( {
 							maxLength={ 60 }
 						/>
 					</div>
-				{
-					this.state.dotBlogNotice && ! this.props.isSignupStep &&
-					<Notice
-						text={ this.props.translate(
-							'New! {{strong}}.blog{{/strong}} domains are now available for registration.',
-							{ components: { strong: <strong /> } }
-						) }
-						status={ 'is-info' }
-						showDismiss={ true }
-						onDismissClick={ this.dismissDotBlogNotice }
-					/>
-				}
 				{
 					this.state.notice &&
 					<Notice text={ this.state.notice } status={ `is-${ this.state.noticeSeverity }` } showDismiss={ false } />
@@ -589,7 +572,7 @@ const RegisterDomainStep = React.createClass( {
 				break;
 
 			case 'not_mappable_forbidden_domain':
-				message = translate( 'Only the owner of the domain can map it\'s subdomains.' );
+				message = translate( 'Only the owner of the domain can map its subdomains.' );
 				break;
 
 			case 'not_mappable_invalid_tld':

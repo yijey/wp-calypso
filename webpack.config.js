@@ -208,6 +208,10 @@ if ( config.isEnabled( 'webpack/persistent-caching' ) ) {
 
 webpackConfig.module.loaders = [ jsLoader ].concat( webpackConfig.module.loaders );
 
+if ( CALYPSO_ENV === 'production' ) {
+	webpackConfig.plugins.push( new webpack.optimize.UglifyJsPlugin() );
+}
+
 module.exports = webpackConfig;
 
 /* eslint-enable no-var */

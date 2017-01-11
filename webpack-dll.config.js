@@ -45,7 +45,8 @@ module.exports = {
 				NODE_ENV: JSON.stringify( bundleEnv )
 			}
 		} ),
-		new webpack.optimize.OccurenceOrderPlugin()
+		new webpack.optimize.OccurenceOrderPlugin(),
+		new webpack.optimize.UglifyJsPlugin()
 	],
 	module: {
 		loaders: [

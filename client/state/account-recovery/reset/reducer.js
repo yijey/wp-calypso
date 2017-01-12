@@ -17,7 +17,7 @@ import {
 const isRequesting = ( state = false, action ) => get( {
 	[ ACCOUNT_RECOVERY_RESET_OPTIONS_REQUEST ]: true,
 	[ ACCOUNT_RECOVERY_RESET_OPTIONS_RECEIVE ]: false,
-	[ ACCOUNT_RECOVERY_RESET_OPTIONS_ERROR ]: true,
+	[ ACCOUNT_RECOVERY_RESET_OPTIONS_ERROR ]: false,
 }, action.type, state );
 
 const error = ( state = null, action ) => get( {

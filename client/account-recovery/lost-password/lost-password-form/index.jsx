@@ -5,6 +5,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 import { identity, noop } from 'lodash';
+import page from 'page';
 
 /**
  * Internal dependencies
@@ -22,15 +23,11 @@ export class LostPasswordFormComponent extends Component {
 		super( ...arguments );
 
 		this.state = {
-			isSubmitting: false,
 			userLogin: '',
 		};
 	}
 
 	submitForm = () => {
-		this.setState( { isSubmitting: true } );
-
-		//This is only here to test the redux action and will be replaced in a future PR
 		this.props.fetchResetOptionsByLogin( this.state.userLogin );
 	};
 
@@ -40,14 +37,15 @@ export class LostPasswordFormComponent extends Component {
 
 	componentWillReceiveProps( nextProps ) {
 		if ( nextProps.resetOptions ) {
-			this.setState( { isSubmitting: false } );
+			page.redirect( '/account-recovery/reset-password' );
 		}
 	}
 
 	render() {
-		const { translate } = this.props;
-		const { isSubmitting, userLogin } = this.state;
-		const isPrimaryButtonDisabled = ! userLogin || isSubmitting;
+		const { translate, resetOptions } = this.props;
+		const { userLogin } = this.state;
+		const { isRequesting } = resetOptions;
+		const isPrimaryButtonDisabled = ! userLogin || isRequesting;
 
 		return (
 			<div>
@@ -86,7 +84,7 @@ export class LostPasswordFormComponent extends Component {
 							className="lost-password-form__user-login-input"
 							onChange={ this.onUserLoginChanged }
 							value={ userLogin }
-							disabled={ isSubmitting } />
+							disabled={ isRequesting } />
 					</FormLabel>
 					<a href="/account-recovery/forgot-username" className="lost-password-form__forgot-username-link">
 						{ translate( 'Forgot your username?' ) }

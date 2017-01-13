@@ -11,7 +11,7 @@ const config = require( './server/config' );
 
 const bundleEnv = config( 'env' );
 
-module.exports = {
+const webpackConfig = {
 	entry: {
 		vendor: [
 			'classnames',
@@ -27,6 +27,7 @@ module.exports = {
 			'wpcom',
 		]
 	},
+	devtool: 'source-map',
 	output: {
 		path: path.join( __dirname, 'public' ),
 		publicPath: '/calypso/',
@@ -45,8 +46,8 @@ module.exports = {
 				NODE_ENV: JSON.stringify( bundleEnv )
 			}
 		} ),
-		new webpack.optimize.OccurenceOrderPlugin(),
-		new webpack.optimize.UglifyJsPlugin()
+		new webpack.optimize.OccurenceOrderPlugin()
+
 	],
 	module: {
 		loaders: [
@@ -73,3 +74,24 @@ module.exports = {
 		root: path.resolve( __dirname, 'client' )
 	}
 };
+
+if ( bundleEnv === 'production' ) {
+	webpackConfig.plugins.push( new webpack.optimize.UglifyJsPlugin( {
+		minimize: true,
+		compress: {
+			warnings: false,
+			conditionals: true,
+			unused: true,
+			comparisons: true,
+			sequences: true,
+			dead_code: true,
+			evaluate: true,
+			if_return: true,
+			join_vars: true,
+			negate_iife: false
+		},
+		sourceMap: true
+	} ) );
+}
+
+module.exports = webpackConfig;

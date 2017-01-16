@@ -38,7 +38,7 @@ class SiteSelectorAddSite extends Component {
 
 	getAddNewSiteUrl() {
 		if ( sites.getJetpack().length ) {
-			return config( 'signup_url' ) + '/new/?ref=calypso-selector';
+			return '/jetpack/new/?ref=calypso-selector';
 		}
 		return config( 'signup_url' ) + '?ref=calypso-selector';
 	}

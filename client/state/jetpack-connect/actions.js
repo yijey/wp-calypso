@@ -83,7 +83,6 @@ export default {
 			if ( _fetching[ url ] ) {
 				return;
 			}
-
 			if ( isUrlOnSites ) {
 				dispatch( {
 					type: JETPACK_CONNECT_CHECK_URL,

@@ -50,8 +50,12 @@ const JetpackConnectMain = React.createClass( {
 
 	componentWillMount() {
 		if ( this.props.url ) {
-			this.setState({ currentUrl: this.props.url, initialUrl: this.props.url } );
-			this.checkUrl( this.props.url );
+			let url = this.props.url;
+			if ( url && url.substr( 0, 4 ) !== 'http' ) {
+				url = 'http://' + url;
+			}
+			this.setState( { currentUrl: untrailingslashit( url ), initialUrl: url } );
+			this.checkUrl( url );
 		}
 	},
 
@@ -72,7 +76,6 @@ const JetpackConnectMain = React.createClass( {
 		this.props.recordTracksEvent( 'calypso_jpc_url_view', {
 			jpc_from: from
 		} );
-
 	},
 
 	getInitialState() {
@@ -84,7 +87,6 @@ const JetpackConnectMain = React.createClass( {
 
 	dismissUrl() {
 		this.props.dismissUrl( this.state.currentUrl );
-		this.setState( { initialUrl: null } );
 	},
 
 	isCurrentUrlFetched() {
@@ -114,7 +116,7 @@ const JetpackConnectMain = React.createClass( {
 	},
 
 	checkUrl( url ) {
-		this.props.checkUrl(
+		return this.props.checkUrl(
 			url,
 			!! this.props.getJetpackSiteByUrl( url ),
 			this.props.type
@@ -128,7 +130,7 @@ const JetpackConnectMain = React.createClass( {
 		if ( this.props.isRequestingSites ) {
 			this.waitingForSites = true;
 		} else {
-			checkUrl( this.state.currentUrl );
+			this.checkUrl( this.state.currentUrl );
 		}
 	},
 
@@ -172,11 +174,7 @@ const JetpackConnectMain = React.createClass( {
 
 		if ( this.waitingForSites && ! this.props.isRequestingSites ) {
 			this.waitingForSites = false;
-			this.props.checkUrl(
-				this.state.currentUrl,
-				!! this.props.getJetpackSiteByUrl( this.state.currentUrl ),
-				this.props.type
-			);
+			this.checkUrl( this.state.currentUrl );
 		}
 	},
 
@@ -234,10 +232,6 @@ const JetpackConnectMain = React.createClass( {
 		}
 
 		return false;
-	},
-
-	clearUrl() {
-		this.dismissUrl();
 	},
 
 	handleOnClickTos() {
@@ -385,7 +379,7 @@ const JetpackConnectMain = React.createClass( {
 
 	renderBackButton() {
 		return (
-			<Button compact borderless className="jetpack-connect__back-button" onClick={ this.clearUrl }>
+			<Button compact borderless className="jetpack-connect__back-button" onClick={ this.dismissUrl }>
 				<Gridicon icon="arrow-left" size={ 18 } />
 				{ this.translate( 'Back' ) }
 			</Button>

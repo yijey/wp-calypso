@@ -1,0 +1,55 @@
+.jetpack-new-site {
+	max-width: 100%;
+	text-align: center;
+	margin-bottom: 24px;
+}
+
+.jetpack-new-site__content {
+	align-items: stretch;
+	display: flex;
+	justify-content: center;
+}
+
+.jetpack-new-site__jetpack-site,
+.jetpack-new-site__wpcom-site {
+	display: inline-block;
+	margin: 0px;
+	width: 320px;
+}
+
+.jetpack-new-site__card-title {
+	font-weight: bold;
+}
+
+.jetpack-new-site__jetpack-site {
+	.jetpack-connect__connect-button-card {
+		background: transparent;
+	}
+
+	.jetpack-connect__site-address-container  {
+		position: relative;
+
+		.gridicon {
+			position: absolute;
+			top: 8px;
+			left: 8px;
+			color: lighten( $gray, 20% );
+		}
+
+		.form-text-input {
+			padding-left: 40px;
+		}
+
+		.spinner {
+			position: absolute;
+			right: 8px;
+			top: 10px;
+		}
+	}
+
+	.button {
+		width: 100%;
+		margin-top: 16px;
+		word-wrap: nowrap;
+	}
+}

@@ -12,6 +12,7 @@ import i18n from 'i18n-calypso';
  * Internal Dependencies
  */
 import JetpackConnect from './index';
+import JetpackNewSite from './new-site/index';
 import JetpackConnectAuthorizeForm from './authorize-form';
 import { setSection } from 'state/ui/actions';
 import { renderWithReduxStore } from 'lib/react-helpers';
@@ -43,6 +44,19 @@ const removeSidebar = ( context ) => {
 	} ) );
 };
 
+const jetpackNewSiteSelector = ( context ) => {
+	removeSidebar( context );
+	renderWithReduxStore(
+		React.createElement( JetpackNewSite, {
+			path: context.path,
+			context: context,
+			locale: context.params.locale
+		} ),
+		document.getElementById( 'primary' ),
+		context.store
+	);
+}
+
 const jetpackConnectFirstStep = ( context, type ) => {
 	removeSidebar( context );
 
@@ -54,7 +68,8 @@ const jetpackConnectFirstStep = ( context, type ) => {
 			context: context,
 			type: type,
 			userModule: userModule,
-			locale: context.params.locale
+			locale: context.params.locale,
+			url: context.query.url
 		} ),
 		document.getElementById( 'primary' ),
 		context.store
@@ -137,6 +152,11 @@ export default {
 		analytics.pageView.record( analyticsBasePath, analyticsPageTitle );
 
 		jetpackConnectFirstStep( context, 'premium' );
+	},
+
+	newSite( context ) {
+		analytics.pageView.record( '/jetpack/new', 'Add a new site (Jetpack)' );
+		jetpackNewSiteSelector( context );
 	},
 
 	pro( context ) {

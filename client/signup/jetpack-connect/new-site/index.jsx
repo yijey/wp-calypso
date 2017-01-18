@@ -15,6 +15,9 @@ import config from 'config';
 import { recordTracksEvent } from 'state/analytics/actions';
 import SiteURLInput from '../site-url-input';
 
+import WordPressLogo from './wordpress-logo';
+import JetpackLogo from './jetpack-logo';
+
 const JetpackNewSite = React.createClass( {
 	displayName: 'JetpackNewSite',
 
@@ -46,6 +49,7 @@ const JetpackNewSite = React.createClass( {
 				</div>
 				<div className="jetpack-new-site__content">
 					<Card className="jetpack-new-site__wpcom-site">
+						<WordPressLogo />
 						<h3 className="jetpack-new-site__card-title">
 							{ this.translate( 'Create a new shiny WordPress.com site' ) }
 						</h3>
@@ -59,6 +63,7 @@ const JetpackNewSite = React.createClass( {
 						</div>
 					</Card>
 					<Card className="jetpack-new-site__jetpack-site">
+						<JetpackLogo />
 						<h3 className="jetpack-new-site__card-title">
 							{ this.translate( 'Add an existing WordPress site with Jetpack' ) }
 						</h3>

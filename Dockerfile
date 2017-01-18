@@ -34,7 +34,7 @@ ENV     NODE_PATH /calypso/server:/calypso/client
 COPY    ./package.json /calypso/package.json
 COPY    ./npm-shrinkwrap.json /calypso/npm-shrinkwrap.json
 # Sometimes "npm install" fails the first time when the cache is empty, so we retry once if it failed
-RUN     npm install --production || npm install --production
+RUN     npm install || npm install
 
 COPY     . /calypso
 
@@ -46,4 +46,4 @@ RUN     CALYPSO_ENV=wpcalypso make build-wpcalypso && \
           chown -R nobody /calypso
 
 USER    nobody
-CMD     NODE_ENV=production node build/bundle-$CALYPSO_ENV.js
+CMD     node build/bundle-$CALYPSO_ENV.js

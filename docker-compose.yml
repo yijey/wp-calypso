@@ -1,9 +1,10 @@
 version: '2'
 services:
   calypso:
-    image: node:6.9.4
+    image: withinboredom/wp-calypso:add_dockerized-development-experiment
     extra_hosts:
       - 'calypso.localhost:0.0.0.0'
+    user: root
     environment:
       CALYPSO_ENV: 'development'
       NODE_ENV: 'development'

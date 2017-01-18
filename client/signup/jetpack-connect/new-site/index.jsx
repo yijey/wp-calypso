@@ -39,33 +39,31 @@ const JetpackNewSite = React.createClass( {
 		return (
 			<div className="jetpack-new-site">
 				<div className="jetpack-new-site__header">
-					<div className="jetpack-new-site__header-title">{ this.translate( 'Add a New Site' ) }</div>
+					<h2 className="jetpack-new-site__header-title">{ this.translate( 'Add a New Site' ) }</h2>
 					<div className="jetpack-new-site__header-text">{ this.translate(
-						'Lorem ipsum blah blah blah'
+						'Create a new shiny site on WordPress.com — you’ll be able to pick a visual theme and customize it to your liking. Optionally, you can connect your existing self-hosted WordPress site through Jetpack to benefit from dozens of WordPress.com exclusive features.'
 					) } </div>
 				</div>
 				<div className="jetpack-new-site__content">
 					<Card className="jetpack-new-site__wpcom-site">
-						<div className="jetpack-new-site__card-title">
+						<h3 className="jetpack-new-site__card-title">
 							{ this.translate( 'Create a new shiny WordPress.com site' ) }
-						</div>
+						</h3>
 						<div className="jetpack-new-site__card-description">
-							{ this.translate( 'Start telling your history ' +
-								'blahblah blah blah ' +
-								'blah blah'
-							) }
+						<p>
+							{ this.translate( 'Start telling your story in just 2 minutes. Pick a visual theme and a domain — we’ll take care of the entire setup. If you need additional help we’ve got you covered with 24-7 hour support.' ) }
+						</p>
 						</div>
-						<Button href={ this.getNewWpcomSiteUrl() }>{ this.translate( 'Start Now' ) }</Button>
+						<div className="jetpack-new-site__button-holder">
+							<Button className="button is-primary" href={ this.getNewWpcomSiteUrl() }>{ this.translate( 'Start Now' ) }</Button>
+						</div>
 					</Card>
 					<Card className="jetpack-new-site__jetpack-site">
-						<div className="jetpack-new-site__card-title">
-							{ this.translate( 'Connect My Site' ) }
-						</div>
+						<h3 className="jetpack-new-site__card-title">
+							{ this.translate( 'Add an existing WordPress site with Jetpack' ) }
+						</h3>
 						<div className="jetpack-new-site__card-description">
-							{ this.translate( 'We\'ll be using the Jetpack plugin to ' +
-								'blahblah blah blah ' +
-								'blah blah'
-							) }
+							{ this.translate( 'We’ll be using the Jetpack plugin to connect your site to WordPress.com.' ) }
 						</div>
 						<SiteURLInput ref="siteUrlInputRef"
 							onTosClick={ this.handleOnClickTos }

@@ -1,16 +1,16 @@
 /**
  * External dependencies
  */
-var ReactDom = require( 'react-dom' ),
-	React = require( 'react' );
+import { render } from 'react-dom';
+import React from 'react';
 
 /**
  * Internal dependencies
  */
-var AcceptDialog = require( './dialog' );
+import AcceptDialog from './dialog';
 
 module.exports = function( message, callback, confirmButtonText, cancelButtonText ) {
-	var wrapper = document.createElement( 'div' );
+	let wrapper = document.createElement( 'div' );
 	document.body.appendChild( wrapper );
 
 	function onClose( result ) {
@@ -24,7 +24,7 @@ module.exports = function( message, callback, confirmButtonText, cancelButtonTex
 		}
 	}
 
-	ReactDom.render(
+	render(
 		<AcceptDialog message={ message }
 			onClose={ onClose }
 			confirmButtonText={ confirmButtonText }

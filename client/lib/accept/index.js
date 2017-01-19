@@ -25,12 +25,10 @@ module.exports = function( message, callback, confirmButtonText, cancelButtonTex
 	}
 
 	ReactDom.render(
-		React.createElement( AcceptDialog, {
-			message: message,
-			onClose: onClose,
-			confirmButtonText: confirmButtonText,
-			cancelButtonText: cancelButtonText,
-		} ),
+		<AcceptDialog message={ message }
+			onClose={ onClose }
+			confirmButtonText={ confirmButtonText }
+			cancelButtonText={ cancelButtonText } />,
 		wrapper
 	);
 };

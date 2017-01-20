@@ -15,7 +15,6 @@ import sitesFactory from 'lib/sites-list';
 import route from 'lib/route';
 import analytics from 'lib/analytics';
 import titlecase from 'to-title-case';
-import { setDocumentHeadTitle as setTitle } from 'state/document-head/actions';
 import { renderWithReduxStore } from 'lib/react-helpers';
 import { savePreference } from 'state/preferences/actions';
 import { getCurrentLayoutFocus } from 'state/ui/layout-focus/selectors';
@@ -111,9 +110,6 @@ module.exports = {
 		let momentSiteZone = i18n.moment();
 		const StatsComponent = Insights;
 
-		// FIXME: Auto-converted from the Flux setTitle action. Please use <DocumentHead> instead.
-		context.store.dispatch( setTitle( i18n.translate( 'Stats', { textOnly: true } ) ) );
-
 		let site = sites.getSite( siteId );
 		if ( ! site ) {
 			site = sites.getSite( parseInt( siteId, 10 ) );
@@ -180,9 +176,6 @@ module.exports = {
 
 		window.scrollTo( 0, 0 );
 
-		// FIXME: Auto-converted from the Flux setTitle action. Please use <DocumentHead> instead.
-		context.store.dispatch( setTitle( i18n.translate( 'Stats', { textOnly: true } ) ) );
-
 		const activeFilter = find( filters(), ( filter ) => {
 			return context.pathname === filter.path || ( filter.altPaths && -1 !== filter.altPaths.indexOf( context.pathname ) );
 		} );
@@ -239,9 +232,6 @@ module.exports = {
 		let chartQuantity = 10;
 		let siteComponent;
 
-		// FIXME: Auto-converted from the Flux setTitle action. Please use <DocumentHead> instead.
-		context.store.dispatch( setTitle( i18n.translate( 'Stats', { textOnly: true } ) ) );
-
 		let currentSite = sites.getSite( siteId );
 		if ( ! currentSite ) {
 			currentSite = sites.getSite( parseInt( siteId, 10 ) );
@@ -263,11 +253,6 @@ module.exports = {
 				} else {
 					next();
 				}
-			}
-
-			if ( currentSite && currentSite.domain ) {
-				// FIXME: Auto-converted from the Flux setTitle action. Please use <DocumentHead> instead.
-				context.store.dispatch( setTitle( i18n.translate( 'Stats', { textOnly: true } ) ) );
 			}
 
 			if ( currentSite && 'object' === typeof currentSite.options && 'undefined' !== typeof currentSite.options.gmt_offset ) {

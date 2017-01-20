@@ -8,6 +8,7 @@ import get from 'lodash/get';
 /**
  * Internal dependencies
  */
+import DocumentHead from 'components/data/document-head';
 import StatsNavigation from '../stats-navigation';
 import SidebarNavigation from 'my-sites/sidebar-navigation';
 import AllTime from 'my-sites/stats/all-time/';
@@ -50,7 +51,6 @@ export default React.createClass( {
 
 		const moduleStrings = statsStrings();
 
-
 		let momentSiteZone = i18n.moment();
 
 		const gmtOffset = get( site.options, 'gmt_offset', null );
@@ -69,11 +69,12 @@ export default React.createClass( {
 					statType="statsTags" />
 			);
 		}
-
+/*		<DocumentHead title="Home" link={ links } meta={ metas } unreadCount={ count } />*/
 		// TODO: should be refactored into separate components
 		/* eslint-disable wpcalypso/jsx-classname-namespace */
 		return (
 			<Main wideLayout={ true }>
+				<DocumentHead title={ i18n.translate( 'Stats', { textOnly: true } ) } />
 				<StatsFirstView />
 				<SidebarNavigation />
 				<StatsNavigation section="insights" site={ site } />

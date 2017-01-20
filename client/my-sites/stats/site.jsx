@@ -8,6 +8,8 @@ import debugFactory from 'debug';
 /**
  * Internal dependencies
  */
+import i18n from 'i18n-calypso';
+import DocumentHead from 'components/data/document-head';
 import StatsPeriodNavigation from './stats-period-navigation';
 import Main from 'components/main';
 import StatsNavigation from './stats-navigation';
@@ -142,6 +144,7 @@ module.exports = React.createClass( {
 
 		return (
 			<Main wideLayout={ true }>
+				<DocumentHead title={ i18n.translate( 'Stats', { textOnly: true } ) } />
 				<StatsFirstView />
 				<SidebarNavigation />
 				<StatsNavigation

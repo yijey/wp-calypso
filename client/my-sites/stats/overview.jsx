@@ -6,7 +6,9 @@ import React, { PropTypes } from 'react';
 /**
  * Internal dependencies
  */
+import i18n from 'i18n-calypso';
 import observe from 'lib/mixins/data-observe';
+import DocumentHead from 'components/data/document-head';
 import SidebarNavigation from 'my-sites/sidebar-navigation';
 import SiteOverview from './stats-site-overview';
 import SiteOverviewPlaceholder from './stats-overview-placeholder';
@@ -92,6 +94,7 @@ export default React.createClass( {
 
 		return (
 			<Main wideLayout={ true }>
+				<DocumentHead title={ i18n.translate( 'Stats', { textOnly: true } ) } />
 				<StatsFirstView />
 				<SidebarNavigation />
 				<StatsNavigation section={ this.props.period } />

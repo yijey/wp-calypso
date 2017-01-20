@@ -11,7 +11,9 @@ import { localize } from 'i18n-calypso';
 /**
  * Internal dependencies
  */
+import i18n from 'i18n-calypso';
 import observe from 'lib/mixins/data-observe';
+import DocumentHead from 'components/data/document-head';
 import HeaderCake from 'components/header-cake';
 import StatsModule from '../stats-module';
 import StatsConnectedModule from '../stats-module/connected-list';
@@ -215,6 +217,7 @@ const StatsSummary = React.createClass( {
 
 		return (
 			<Main wideLayout={ true }>
+				<DocumentHead title={ i18n.translate( 'Stats', { textOnly: true } ) } />
 				<StatsFirstView />
 				<div id="my-stats-content">
 					<HeaderCake onClick={ this.goBack }>

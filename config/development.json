@@ -58,6 +58,7 @@
 		"jetpack/google-analytics": true,
 		"jetpack/sync-panel": true,
 		"jetpack/api-cache": true,
+		"jetpack/activity-log": true,
 		"keyboard-shortcuts": true,
 		"happychat": true,
 		"mailing-lists/unsubscribe": true,

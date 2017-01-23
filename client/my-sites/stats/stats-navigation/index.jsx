@@ -31,7 +31,7 @@ class StatsNavigation extends Component {
 			week: translate( 'Weeks' ),
 			month: translate( 'Months' ),
 			year: translate( 'Years' ),
-			activity: translate( 'Activity' ),
+			activity: translate( 'Activity' )
 		};
 
 		const ActivityTab = config.isEnabled( 'jetpack/activity-log' )

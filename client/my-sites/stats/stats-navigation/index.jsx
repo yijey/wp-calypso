@@ -11,6 +11,7 @@ import SectionNav from 'components/section-nav';
 import NavTabs from 'components/section-nav/tabs';
 import NavItem from 'components/section-nav/item';
 import FollowersCount from 'blocks/followers-count';
+import config from 'config';
 
 class StatsNavigation extends Component {
 	static propTypes = {
@@ -29,9 +30,15 @@ class StatsNavigation extends Component {
 			day: translate( 'Days' ),
 			week: translate( 'Weeks' ),
 			month: translate( 'Months' ),
-			year: translate( 'Years' )
+			year: translate( 'Years' ),
+			activity: translate( 'Activity' ),
 		};
 
+		const ActivityTab = config.isEnabled( 'jetpack/activity-log' )
+			? <NavItem path={ '/stats/activity' + siteFragment } selected={ section === 'activity' }>
+				{ sectionTitles.activity }
+			</NavItem>
+			: null;
 
 		return (
 			<SectionNav selectedText={ sectionTitles[ section ] }>
@@ -51,6 +58,7 @@ class StatsNavigation extends Component {
 					<NavItem path={ '/stats/year' + siteFragment } selected={ section === 'year' }>
 						{ sectionTitles.year }
 					</NavItem>
+					{ ActivityTab }
 				</NavTabs>
 				<FollowersCount />
 			</SectionNav>

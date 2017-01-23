@@ -85,7 +85,7 @@ class ActivityLogItem extends Component {
 		return (
 			<div className="activity-log-item__content">
 				<div className="activity-log-item__content-title">{ title }</div>
-				{ subTitle && <div className="activity-item__sub-title">{ subTitle }</div> }
+				{ subTitle && <div className="activity-log-item__sub-title">{ subTitle }</div> }
 			</div>
 		);
 	}
@@ -126,6 +126,6 @@ class ActivityLogItem extends Component {
 			</div>
 		);
 	}
-};
+}
 
 export default localize( ActivityLogItem );

@@ -32,7 +32,8 @@
 	color: $gray;
 	text-align:center;
 	text-transform: uppercase;
-	margin-left: -16px;
+	margin-left: -20px;
+	width: 20px;
 	background: $gray-light;
 }
 
@@ -60,13 +61,9 @@
 	flex-basis: 25%;
 }
 
-.activity-log-item__actor-icon {
+.activity-log-item__actor .gravatar {
 	float: left;
 	margin-right: 16px;
-}
-
-.activity-log-item__actor-icon {
-	float: left;
 }
 
 .activity-log-item__actor-name {
@@ -75,13 +72,14 @@
 
 .activity-log-item__actor-role {
 	text-transform: uppercase;
-	font-size: 80%;
+	font-size: 12px;
 	color: $gray;
 }
 
 .activity-log-item__content {
 	flex-basis: 50%;
 }
+
 .activity-log-item__content-title {
 	font-size: 14px;
 }

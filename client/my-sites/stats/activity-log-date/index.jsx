@@ -17,11 +17,10 @@ const ActivityLogDate = React.createClass( {
 			logs
 		} = this.props;
 
-
 		return (
 			<div className="activity-log-date">
 				<FoldableCard
-					header={ <div><div>Jan, 01, 1999</div><div><small> { logs.length } Events</small></div></div> }
+					header={ <div><div className="activity-log-date__day">Jan, 01, 1999</div><div className="activity-log-date__events"> { logs.length } Events</div></div> }
 					summary={ <Button className="button">Rewind</Button> }
 					expandedSummary={ <Button className="button">Rewind</Button> }
 					clickableHeader={ true }

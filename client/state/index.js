@@ -7,6 +7,7 @@ import { createStore, applyMiddleware, combineReducers, compose } from 'redux';
 /**
  * Internal dependencies
  */
+import activityLog from './activity-log/reducer';
 import sitesSync from './sites/enhancer';
 import noticesMiddleware from './notices/middleware';
 import application from './application/reducer';
@@ -62,6 +63,7 @@ import wordads from './wordads/reducer';
  * Module variables
  */
 export const reducer = combineReducers( {
+	activityLog,
 	application,
 	accountRecovery,
 	automatedTransfer,

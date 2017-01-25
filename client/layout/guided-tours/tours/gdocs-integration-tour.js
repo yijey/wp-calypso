@@ -42,7 +42,7 @@ export const GDocsIntegrationTour = makeTour(
 				} )
 			}</p>
 			<ButtonRow>
-				<Quit subtle>{ translate( 'Thanks, got it.' ) }</Quit>
+				<Quit subtle>{ translate( 'Thanks, got it!' ) }</Quit>
 			</ButtonRow>
 		</Step>
 	</Tour>

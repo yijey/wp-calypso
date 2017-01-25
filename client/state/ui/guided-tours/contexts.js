@@ -1,6 +1,7 @@
 /**
  * Internal dependencies
  */
+import { EDITOR_PASTE_EVENT_FROM_GDOCS } from 'state/action-types';
 import config from 'config';
 import { abtest } from 'lib/abtest';
 import {
@@ -130,6 +131,16 @@ export const isAbTestInVariant = ( testName, variant ) => () =>
 export const hasSelectedSiteDefaultSiteTitle = state => {
 	const siteId = getSelectedSiteId( state );
 	return siteId ? hasDefaultSiteTitle( state, siteId ) : false;
+};
+
+/**
+ * Returns true if user has just pasted something from Google Docs.
+ *
+ * @param {Object} state Global state tree
+ * @return {Boolean} True if user has just pasted something from Google Docs, false otherwise.
+ */
+export const hasUserPastedFromGoogleDocs = state => {
+	return getLastAction( state ).type === EDITOR_PASTE_EVENT_FROM_GDOCS;
 };
 
 /**

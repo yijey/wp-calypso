@@ -36,7 +36,7 @@ const actions = require( 'lib/posts/actions' ),
 import { getSelectedSiteId } from 'state/ui/selectors';
 import { setEditorLastDraft, resetEditorLastDraft } from 'state/ui/editor/last-draft/actions';
 import { isEditorDraftsVisible, getEditorPostId, getEditorPath } from 'state/ui/editor/selectors';
-import { toggleEditorDraftsVisible } from 'state/ui/editor/actions';
+import { toggleEditorDraftsVisible, pasteEventFromGoogleDocs } from 'state/ui/editor/actions';
 import { receivePost, savePostSuccess } from 'state/posts/actions';
 import { getPostEdits, isEditedPostDirty } from 'state/posts/selectors';
 import EditorDocumentHead from 'post-editor/editor-document-head';
@@ -434,14 +434,7 @@ export const PostEditor = React.createClass( {
 
 	onPasteEvent: function( e ) {
 		if ( this.hasTextBeenCopiedFromGoogleDocs( e ) ) {
-			this.setState( {
-				notice: {
-					status: 'is-info',
-					message: 'copy-from-gdocs',
-					action: 'copy-from-gdocs-action',
-					link: 'https://apps.wordpress.com/'
-				}
-			} );
+			this.props.pasteEventFromGoogleDocs();
 		}
 	},
 
@@ -817,6 +810,7 @@ export default connect(
 	},
 	( dispatch ) => {
 		return bindActionCreators( {
+			pasteEventFromGoogleDocs,
 			toggleDrafts: toggleEditorDraftsVisible,
 			setEditorLastDraft,
 			resetEditorLastDraft,

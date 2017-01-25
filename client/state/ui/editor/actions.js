@@ -1,7 +1,12 @@
 /**
  * Internal dependencies
  */
-import { EDITOR_SHOW_DRAFTS_TOGGLE, EDITOR_START, EDITOR_STOP } from 'state/action-types';
+import {
+	EDITOR_PASTE_EVENT_FROM_GDOCS,
+	EDITOR_SHOW_DRAFTS_TOGGLE,
+	EDITOR_START,
+	EDITOR_STOP,
+} from 'state/action-types';
 import { ModalViews } from 'state/ui/media-modal/constants';
 import { setMediaModalView } from 'state/ui/media-modal/actions';
 import { withAnalytics, bumpStat } from 'state/analytics/actions';
@@ -59,6 +64,18 @@ export function stopEditingPost( siteId, postId ) {
 export function toggleEditorDraftsVisible() {
 	return {
 		type: EDITOR_SHOW_DRAFTS_TOGGLE
+	};
+}
+
+/**
+ * Returns an action object to be used in signalling that the user has pasted
+ * some text from Google Docs.
+ *
+ * @return {Object} Action object
+ */
+export function pasteEventFromGoogleDocs() {
+	return {
+		type: EDITOR_PASTE_EVENT_FROM_GDOCS
 	};
 }
 

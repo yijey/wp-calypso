@@ -36,6 +36,7 @@ const ActivityLogDate = React.createClass( {
 							user={ log.user }
 							actionText={ log.actionText }
 							status={ log.status }
+							className={ log.className }
 							key={ 'activity-log' + index } />
 					} ) }
 				</FoldableCard>

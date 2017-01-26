@@ -423,12 +423,7 @@ export const PostEditor = React.createClass( {
 		// Some browsers, as Firefox, return a DOMStringList instead, see
 		// https://developer.mozilla.org/en-US/docs/Web/API/DOMStringList
 		const orgTypes = e.clipboardData.types;
-		let types = [];
-		if ( orgTypes.contains ) {
-			types = Array.from( orgTypes );
-		} else {
-			types = orgTypes;
-		}
+		const types = orgTypes.contains ? Array.from( orgTypes ) : orgTypes;
 		return ( Array.isArray( types ) && types.some( this.isGoogleDocType ) );
 	},
 

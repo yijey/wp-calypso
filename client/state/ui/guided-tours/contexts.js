@@ -140,7 +140,8 @@ export const hasSelectedSiteDefaultSiteTitle = state => {
  * @return {Boolean} True if user has just pasted something from Google Docs, false otherwise.
  */
 export const hasUserPastedFromGoogleDocs = state => {
-	return getLastAction( state ).type === EDITOR_PASTE_EVENT_FROM_GDOCS;
+	const action = getLastAction( state ) || false;
+	return action && ( action.type === EDITOR_PASTE_EVENT_FROM_GDOCS );
 };
 
 /**

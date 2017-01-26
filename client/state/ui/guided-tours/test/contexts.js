@@ -8,9 +8,10 @@ import { expect } from 'chai';
  */
 import useMockery from 'test/helpers/use-mockery';
 import useFakeDom from 'test/helpers/use-fake-dom';
+import { EDITOR_PASTE_EVENT_FROM_GDOCS } from 'state/action-types';
 
 describe( 'selectors', () => {
-	let hasUserRegisteredBefore;
+	let hasUserRegisteredBefore, hasUserPastedFromGoogleDocs;
 
 	useFakeDom();
 
@@ -21,6 +22,7 @@ describe( 'selectors', () => {
 
 		const contexts = require( '../contexts' );
 		hasUserRegisteredBefore = contexts.hasUserRegisteredBefore;
+		hasUserPastedFromGoogleDocs = contexts.hasUserPastedFromGoogleDocs;
 	} );
 
 	describe( '#hasUserRegisteredBefore', () => {
@@ -56,4 +58,39 @@ describe( 'selectors', () => {
 			expect( hasUserRegisteredBefore( cutoff )( newUser ) ).to.be.false;
 		} );
 	} );
+
+	describe( '#hasUserPastedFromGoogleDocs', () => {
+		it( 'should return false when no actions', () => {
+			const state = {
+				ui: {
+					actionLog: []
+				}
+			};
+			expect( hasUserPastedFromGoogleDocs( state ) ).to.be.false;
+		});
+
+		it( 'should return false when last action is not the paste event', () => {
+			const state = {
+				ui: {
+					actionLog: [
+						{ type: EDITOR_PASTE_EVENT_FROM_GDOCS},
+						{ type: 'NO_PASTE_EVENT'}
+					]
+				}
+			};
+			expect( hasUserPastedFromGoogleDocs( state ) ).to.be.false;
+		} );
+
+		it( 'should return true when last action is the paste event', () => {
+			const state = {
+				ui: {
+					actionLog: [
+						{ type: 'NO_PASTE_EVENT'},
+						{ type: EDITOR_PASTE_EVENT_FROM_GDOCS},
+					]
+				}
+			};
+			expect( hasUserPastedFromGoogleDocs( state ) ).to.be.true;
+		});
+	})
 } );

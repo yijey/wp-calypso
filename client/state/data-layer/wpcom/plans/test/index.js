@@ -2,30 +2,30 @@
  * External dependencies
  */
 import { expect } from 'chai';
+import sinon from 'sinon';
 
 /**
  * Internal dependencies
  */
 import useNock from 'test/helpers/use-nock';
-import { useSandbox } from 'test/helpers/use-sinon';
 import {
 	plansReceiveAction,
 } from 'state/plans/actions';
+
+import {
+	PLANS_REQUEST_SUCCESS,
+	PLANS_RECEIVE,
+} from 'state/action-types';
 
 import {
 	requestPlans,
 } from '../';
 
 import {
-	ACTION_PLANS_REQUEST_SUCCESS,
 	WPCOM_RESPONSE as wpcomResponse,
 } from 'state/plans/test/fixture';
 
 describe( 'wpcom-api', () => {
-	let dispatch;
-
-	useSandbox( sandbox => ( dispatch = sandbox.spy() ) );
-
 	describe( 'plans request', () => {
 		useNock( nock => (
 			nock( 'https://public-api.wordpress.com:443' )
@@ -34,21 +34,27 @@ describe( 'wpcom-api', () => {
 				.reply( 200, wpcomResponse )
 		) );
 
-		it( 'should dispatch SUCCESS action when request completes', () => {
-			return requestPlans( { dispatch } )
-				.then( () => (
-					expect( dispatch ).to.have.been.calledWith( ACTION_PLANS_REQUEST_SUCCESS )
-				) );
+		it( 'should dispatch SUCCESS action when request completes', ( done ) => {
+			const dispatch = sinon.spy( action => {
+				if ( action.type === PLANS_REQUEST_SUCCESS ) {
+					done();
+				}
+			} );
+
+			requestPlans( { dispatch } );
 		} );
 
-		it( 'should dispatch RECEIVE action when request completes', () => {
+		it( 'should dispatch RECEIVE action when request completes', ( done ) => {
 			const plans = wpcomResponse;
 			const actionResponse = plansReceiveAction( plans );
+			const dispatch = sinon.spy( action => {
+				if ( action.type === PLANS_RECEIVE ) {
+					expect( dispatch ).to.have.been.calledWith( actionResponse );
+					done();
+				}
+			} );
 
-			return requestPlans( { dispatch } )
-				.then( () => (
-					expect( dispatch ).to.have.been.calledWith( actionResponse )
-				) );
+			requestPlans( { dispatch } );
 		} );
 	} );
 } );

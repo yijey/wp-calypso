@@ -96,12 +96,12 @@ const apiFailure = error => {
  * @param {Object} store Redux store
  * @param {Function} store.dispatch action dispatcher
  * @param {number} siteId Site for which eligibility information is requested
- * @returns {Promise} response promise from API fetch
  */
-export const fetchEligibility = ( { dispatch }, { siteId } ) =>
+export const fetchEligibility = ( { dispatch }, { siteId } ) => {
 	wpcom.req.get( `/sites/${ siteId }/automated-transfers/eligibility` )
 		.then( apiResponse( dispatch, siteId ) )
 		.catch( apiFailure );
+};
 
 export default {
 	[ AUTOMATED_TRANSFER_ELIGIBILITY_REQUEST ]: [ fetchEligibility ],

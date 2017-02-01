@@ -4,6 +4,7 @@
 import React from 'react';
 import classNames from 'classnames';
 import get from 'lodash/get';
+import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
@@ -11,9 +12,7 @@ import get from 'lodash/get';
 import SectionHeader from 'components/section-header';
 import Button from 'components/button';
 import ButtonGroup from 'components/button-group';
-import Gridicon from 'components/gridicon';
 import Tooltip from 'components/tooltip';
-import config from 'config';
 
 export default React.createClass( {
 	displayName: 'PeopleListSectionHeader',
@@ -28,7 +27,7 @@ export default React.createClass( {
 	getInitialState() {
 		return {
 			addPeopleTooltip: false
-		}
+		};
 	},
 
 	getDefaultProps() {
@@ -58,9 +57,7 @@ export default React.createClass( {
 			return wpAdminUrl + 'user-new.php';
 		}
 
-		return config.isEnabled( 'manage/add-people' )
-			? '/people/new/' + siteSlug
-			: wpAdminUrl + 'users.php?page=wpcom-invite-users';
+		return '/people/new/' + siteSlug;
 	},
 
 	render() {

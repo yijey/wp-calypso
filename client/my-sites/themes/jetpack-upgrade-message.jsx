@@ -13,7 +13,9 @@ import JetpackManageErrorPage from 'my-sites/jetpack-manage-error-page';
 
 const JetpackUpgradeMessage = React.createClass( {
 	propTypes: {
-		site: PropTypes.object
+		site: PropTypes.shape( {
+			options: PropTypes.shape( { admin_url: PropTypes.string.isRequired } ).isRequired
+		} ).isRequired
 	},
 
 	render() {
@@ -22,7 +24,7 @@ const JetpackUpgradeMessage = React.createClass( {
 				<SidebarNavigation />
 				<JetpackManageErrorPage
 					template="updateJetpack"
-					site={ this.props.site }
+					siteId={ this.props.site.ID }
 					version="3.7"
 					secondaryAction={ this.props.translate( 'Open Site Theme Browser' ) }
 					secondaryActionURL={ this.props.site.options.admin_url + 'themes.php' }

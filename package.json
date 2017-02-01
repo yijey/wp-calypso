@@ -61,6 +61,7 @@
     "flux": "2.1.1",
     "fuse.js": "2.6.1",
     "get-video-id": "2.1.0",
+    "gridicons": "1.0.0",
     "hard-source-webpack-plugin": "0.0.42",
     "he": "0.5.0",
     "html-loader": "0.4.0",
@@ -90,6 +91,7 @@
     "phone": "git+https://github.com/Automattic/node-phone.git#1.0.8",
     "photon": "2.0.0",
     "postcss-cli": "2.5.1",
+    "prismjs": "^1.6.0",
     "q": "1.0.1",
     "qrcode.react": "0.6.1",
     "qs": "4.0.0",
@@ -104,9 +106,9 @@
     "react-docgen": "2.13.0",
     "react-dom": "15.4.0",
     "react-masonry-component": "4.2.2",
+    "react-modal": "1.6.5",
     "react-pure-render": "1.0.2",
     "react-redux": "4.4.5",
-    "react-tap-event-plugin": "2.0.1",
     "react-virtualized": "8.8.1",
     "redux": "3.0.4",
     "redux-thunk": "1.0.0",
@@ -138,8 +140,8 @@
     "wpcom-xhr-request": "1.0.0"
   },
   "engines": {
-    "node": "6.9.1",
-    "npm": "3.10.8"
+    "node": "6.9.4",
+    "npm": "3.10.10"
   },
   "scripts": {
     "test": "npm run test-client && npm run test-server && npm run test-test",
@@ -186,6 +188,7 @@
     "socket.io": "1.4.5",
     "stylelint": "^6.5.1",
     "supertest": "2.0.0",
+    "webpack-bundle-analyzer": "2.2.1",
     "webpack-dashboard": "0.2.0",
     "webpack-dev-server": "1.11.0"
   }

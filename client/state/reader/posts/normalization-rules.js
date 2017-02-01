@@ -1,12 +1,11 @@
 /**
  * External Dependencies
  */
-import { filter, find, flow, forEach } from 'lodash';
+import { filter, flow } from 'lodash';
 
 /**
  * Internal Dependencies
  */
-import resizeImageUrl from 'lib/resize-image-url';
 import DISPLAY_TYPES from './display-types';
 
 /**
@@ -31,37 +30,23 @@ import keepValidImages from 'lib/post-normalizer/rule-keep-valid-images';
 import waitForImagesToLoad from 'lib/post-normalizer/rule-wait-for-images-to-load';
 import pickCanonicalMedia from 'lib/post-normalizer/rule-pick-canonical-media';
 import removeElementsBySelector from 'lib/post-normalizer/rule-content-remove-elements-by-selector';
+import addDiscoverProperties from 'lib/post-normalizer/rule-add-discover-properties';
 
 /**
  * Module vars
  */
 export const
 	READER_CONTENT_WIDTH = 720,
-	DISCOVER_FULL_BLEED_WIDTH = 1082,
-	PHOTO_ONLY_MIN_WIDTH = 480,
-	DISCOVER_BLOG_ID = 53424024,
+	PHOTO_ONLY_MIN_WIDTH = 440,
 	GALLERY_MIN_IMAGES = 4,
 	GALLERY_MIN_IMAGE_WIDTH = 350;
 
-function discoverFullBleedImages( post, dom ) {
-	if ( post.site_ID === DISCOVER_BLOG_ID ) {
-		const images = dom.querySelectorAll( '.fullbleed img, img.fullbleed' );
-		forEach( images, function( image ) {
-			const newSrc = resizeImageUrl( image.src, { w: DISCOVER_FULL_BLEED_WIDTH } );
-			const oldImageObject = find( post.content_images, { src: image.src } );
-			oldImageObject.src = newSrc;
-			image.src = newSrc;
-		} );
-	}
-	return post;
-}
-
 function getCharacterCount( post ) {
-	if ( ! post || ! post.better_excerpt_no_html ) {
+	if ( ! post || ! post.content_no_html ) {
 		return 0;
 	}
 
-	return post.better_excerpt_no_html.length;
+	return post.content_no_html.length;
 }
 
 export function imageIsBigEnoughForGallery( image ) {
@@ -75,16 +60,18 @@ const hasShortContent = post => getCharacterCount( post ) <= 100;
  * @param  {object}   post     A post to classify
  * @return {object}            The classified post
  */
-function classifyPost( post ) {
+export function classifyPost( post ) {
 	const canonicalImage = post.canonical_image;
+	const imagesForGallery = filter( post.content_images, imageIsBigEnoughForGallery );
 	let displayType = DISPLAY_TYPES.UNCLASSIFIED,
 		canonicalAspect;
 
-	if ( post.canonical_media &&
-			post.canonical_media.mediaType === 'image' &&
-			( ! post.content_images || post.content_images.length < GALLERY_MIN_IMAGES ) &&
-			post.canonical_media.width >= PHOTO_ONLY_MIN_WIDTH &&
-			hasShortContent( post ) ) {
+	if ( imagesForGallery.length >= GALLERY_MIN_IMAGES ) {
+		displayType ^= DISPLAY_TYPES.GALLERY;
+	} else if ( post.canonical_media &&
+				post.canonical_media.mediaType === 'image' &&
+				post.canonical_media.width >= PHOTO_ONLY_MIN_WIDTH &&
+				hasShortContent( post ) ) {
 		displayType ^= DISPLAY_TYPES.PHOTO_ONLY;
 	}
 
@@ -111,10 +98,6 @@ function classifyPost( post ) {
 		displayType ^= DISPLAY_TYPES.FEATURED_VIDEO;
 	}
 
-	if ( post.content_images && filter( post.content_images, imageIsBigEnoughForGallery ).length >= GALLERY_MIN_IMAGES ) {
-		displayType ^= DISPLAY_TYPES.GALLERY;
-	}
-
 	if ( post.tags && post.tags[ 'p2-xpost' ] ) {
 		displayType ^= DISPLAY_TYPES.X_POST;
 	}
@@ -139,13 +122,13 @@ const fastPostNormalizationRules = flow( [
 		disableAutoPlayOnEmbeds,
 		disableAutoPlayOnMedia,
 		detectMedia,
-		discoverFullBleedImages,
 		detectPolls,
 	] ),
 	createBetterExcerpt,
 	pickCanonicalImage,
 	pickCanonicalMedia,
 	classifyPost,
+	addDiscoverProperties,
 ] );
 
 export function runFastRules( post ) {

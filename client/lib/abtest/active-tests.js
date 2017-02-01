@@ -111,12 +111,51 @@ module.exports = {
 	},
 
 	userFirstSignup: {
-		datestamp: '20161223',
+		datestamp: '20160124',
 		variations: {
-			userLast: 99,
-			userFirst: 1,
+			userLast: 80,
+			userFirst: 20,
 		},
 		defaultVariation: 'userLast',
 		allowExistingUsers: false,
 	},
+
+	premiumSquaredPlansWording: {
+		datestamp: '20170111',
+		variations: {
+			withoutMarketingCopy: 50,
+			withMarketingCopy: 50
+		},
+		defaultVariation: 'withoutMarketingCopy',
+		allowExistingUsers: true
+	},
+
+	jetpackPlansTabs: {
+		datestamp: '20170117',
+		variations: {
+			tabs: 50,
+			noTabs: 50
+		},
+		defaultVariation: 'noTabs'
+	},
+
+	domainContactNewPhoneInput: {
+		datestamp: '20170123',
+		variations: {
+			disabled: 50,
+			enabled: 50
+		},
+		defaultVariation: 'disabled',
+		allowExistingUsers: true
+	},
+
+	boostedPostSurvey: {
+		datestamp: '20170127',
+		variations: {
+			disabled: 90,
+			enabled: 10
+		},
+		defaultVariation: 'disabled',
+		allowExistingUsers: true
+	}
 };

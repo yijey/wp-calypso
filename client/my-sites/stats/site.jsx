@@ -8,6 +8,7 @@ import debugFactory from 'debug';
 /**
  * Internal dependencies
  */
+import StatsPeriodNavigation from './stats-period-navigation';
 import Main from 'components/main';
 import StatsNavigation from './stats-navigation';
 import SidebarNavigation from 'my-sites/sidebar-navigation';
@@ -99,35 +100,45 @@ module.exports = React.createClass( {
 		const site = this.props.sites.getSite( this.props.siteId );
 		const charts = this.props.charts();
 		const queryDate = this.props.date.format( 'YYYY-MM-DD' );
-		const period = this.props.period.period;
+		const { period, endOf } = this.props.period;
 		const moduleStrings = statsStrings();
-		let nonPeriodicModules;
 		let videoList;
 		let podcastList;
+
+		const query = {
+			period: period,
+			date: endOf.format( 'YYYY-MM-DD' )
+		};
 
 		debug( 'Rendering site stats component', this.props );
 
 		if ( site ) {
 			// Video plays, and tags and categories are not supported in JetPack Stats
 			if ( ! site.jetpack ) {
-				videoList = <StatsModule
-					path={ 'videoplays' }
-					moduleStrings={ moduleStrings.videoplays }
-					site={ site }
-					dataList={ this.props.videoPlaysList }
-					period={ this.props.period }
-					date={ queryDate }
-					beforeNavigate={ this.updateScrollPosition } />;
+				videoList = (
+					<StatsModule
+						path="videoplays"
+						moduleStrings={ moduleStrings.videoplays }
+						period={ this.props.period }
+						date={ queryDate }
+						query={ query }
+						statType="statsVideoPlays"
+						showSummaryLink
+					/>
+				);
 			}
 			if ( config.isEnabled( 'manage/stats/podcasts' ) && site.options.podcasting_archive ) {
-				podcastList = <StatsModule
-					path={ 'podcastdownloads' }
-					moduleStrings={ moduleStrings.podcastdownloads }
-					site={ site }
-					dataList={ this.props.podcastDownloadsList }
-					period={ this.props.period }
-					date={ queryDate }
-					beforeNavigate={ this.updateScrollPosition } />;
+				podcastList = (
+					<StatsModule
+						path="podcastdownloads"
+						moduleStrings={ moduleStrings.podcastdownloads }
+						period={ this.props.period }
+						date={ queryDate }
+						query={ query }
+						statType="statsPodcastDownloads"
+						showSummaryLink
+					/>
+				);
 			}
 		}
 
@@ -135,79 +146,78 @@ module.exports = React.createClass( {
 			<Main wideLayout={ true }>
 				<StatsFirstView />
 				<SidebarNavigation />
-				<StatsNavigation
-					section={ period }
-					site={ site } />
+				<StatsNavigation section={ period } />
 				<div id="my-stats-content">
 					<ChartTabs
-						visitsList={ this.props.visitsList }
-						activeTabVisitsList={ this.props.activeTabVisitsList }
 						barClick={ this.barClick }
 						switchTab={ this.switchChart }
 						charts={ charts }
 						queryDate={ queryDate }
 						period={ this.props.period }
 						chartTab={ this.state.chartTab } />
-					<DatePicker
-						period={ period }
-						date={ this.state.chartDate } />
+					<StatsPeriodNavigation
+						date={ this.props.date }
+						period={ this.props.period.period }
+						url={ `/stats/${ this.props.period.period }/${ site.slug }` }
+					>
+						<DatePicker
+							period={ this.props.period.period }
+							date={ this.props.date } />
+					</StatsPeriodNavigation>
 					<div className="stats__module-list is-events">
 						<div className="stats__module-column">
 							<StatsModule
-								path={ 'posts' }
+								path="posts"
 								moduleStrings={ moduleStrings.posts }
-								site={ site }
-								dataList={ this.props.postsPagesList }
 								period={ this.props.period }
+								query={ query }
 								date={ queryDate }
-								beforeNavigate={ this.updateScrollPosition } />
+								statType="statsTopPosts"
+								showSummaryLink />
 							<StatsModule
-								path={ 'referrers' }
+								path="referrers"
 								moduleStrings={ moduleStrings.referrers }
-								site={ site }
-								dataList={ this.props.referrersList }
 								period={ this.props.period }
+								query={ query }
 								date={ queryDate }
-								beforeNavigate={ this.updateScrollPosition } />
+								statType="statsReferrers"
+								showSummaryLink />
 							<StatsModule
-								path={ 'clicks' }
+								path="clicks"
 								moduleStrings={ moduleStrings.clicks }
-								site={ site }
-								dataList={ this.props.clicksList }
 								period={ this.props.period }
+								query={ query }
 								date={ queryDate }
-								beforeNavigate={ this.updateScrollPosition } />
+								statType="statsClicks"
+								showSummaryLink />
 							<StatsModule
-								path={ 'authors' }
+								path="authors"
 								moduleStrings={ moduleStrings.authors }
-								site={ site }
-								dataList={ this.props.authorsList }
 								period={ this.props.period }
 								date={ queryDate }
-								followList={ this.props.followList }
+								query={ query }
+								statType="statsTopAuthors"
 								className="stats__author-views"
-								beforeNavigate={ this.updateScrollPosition } />
+								showSummaryLink />
 						</div>
 						<div className="stats__module-column">
 							<Countries
-								path={ 'countries' }
-								site={ site }
-								dataList={ this.props.countriesList }
+								path="countries"
 								period={ this.props.period }
-								date={ queryDate } />
+								query={ query }
+								summary={ false } />
 							<StatsModule
-								path={ 'searchterms' }
+								path="searchterms"
 								moduleStrings={ moduleStrings.search }
-								site={ site }
-								dataList={ this.props.searchTermsList }
 								period={ this.props.period }
 								date={ queryDate }
-								beforeNavigate={ this.updateScrollPosition } />
+								query={ query }
+								statType="statsSearchTerms"
+								showSummaryLink />
 							{ videoList }
 							{ podcastList }
 						</div>
 					</div>
-					{ nonPeriodicModules }
 				</div>
 			</Main>
 		);

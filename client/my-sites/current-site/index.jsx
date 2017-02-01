@@ -15,13 +15,15 @@ const AllSites = require( 'my-sites/all-sites' ),
 	Button = require( 'components/button' ),
 	Card = require( 'components/card' ),
 	Site = require( 'blocks/site' ),
-	Gridicon = require( 'components/gridicon' ),
+	Gridicon = require( 'gridicons' ),
 	UpgradesActions = require( 'lib/upgrades/actions' ),
 	DomainsStore = require( 'lib/domains/store' ),
 	DomainWarnings = require( 'my-sites/upgrades/components/domain-warnings' );
 
 import SiteNotice from './notice';
 import { setLayoutFocus } from 'state/ui/layout-focus/actions';
+import { getSelectedSite, getSelectedSiteId } from 'state/ui/selectors';
+import { isJetpackSite } from 'state/sites/selectors';
 
 const CurrentSite = React.createClass( {
 	displayName: 'CurrentSite',
@@ -34,15 +36,16 @@ const CurrentSite = React.createClass( {
 		sites: React.PropTypes.object.isRequired,
 		siteCount: React.PropTypes.number.isRequired,
 		setLayoutFocus: React.PropTypes.func.isRequired,
+		selectedSiteId: React.PropTypes.number,
+		selectedSite: React.PropTypes.object,
+		isJetpack: React.PropTypes.bool
 	},
 
 	componentWillMount() {
-		const selectedSite = this.getSelectedSite();
-
-		if ( selectedSite && ! selectedSite.jetpack ) {
-			UpgradesActions.fetchDomains( selectedSite.ID );
+		const { selectedSiteId, isJetpack } = this.props;
+		if ( selectedSiteId && ! isJetpack ) {
+			UpgradesActions.fetchDomains( selectedSiteId );
 		}
-		this.prevSelectedSite = selectedSite;
 
 		DomainsStore.on( 'change', this.handleStoreChange );
 	},
@@ -57,13 +60,11 @@ const CurrentSite = React.createClass( {
 		};
 	},
 
-	componentWillUpdate() {
-		const selectedSite = this.getSelectedSite();
-
-		if ( selectedSite && this.prevSelectedSite !== selectedSite && ! selectedSite.jetpack ) {
-			UpgradesActions.fetchDomains( selectedSite.ID );
+	componentDidUpdate( prevProps ) {
+		const { selectedSiteId, isJetpack } = this.props;
+		if ( selectedSiteId && ! isJetpack && selectedSiteId !== prevProps.selectedSiteId ) {
+			UpgradesActions.fetchDomains( selectedSiteId );
 		}
-		this.prevSelectedSite = selectedSite;
 	},
 
 	handleStoreChange: function() {
@@ -78,22 +79,20 @@ const CurrentSite = React.createClass( {
 		analytics.ga.recordEvent( 'Sidebar', 'Clicked Switch Site' );
 	},
 
-	getSelectedSite: function() {
-		if ( this.props.sites.get().length === 1 ) {
-			return this.props.sites.getPrimary();
+	getDomainWarnings: function() {
+		const { selectedSiteId, selectedSite: site } = this.props;
+
+		if ( ! selectedSiteId ) {
+			return null;
 		}
 
-		return this.props.sites.getSelectedSite();
-	},
-
-	getDomainWarnings: function() {
-		const domainStore = this.state.domainsStore.getBySite( this.getSelectedSite().ID ),
-			domains = domainStore && domainStore.list || [];
+		const domainStore = this.state.domainsStore.getBySite( selectedSiteId );
+		const domains = domainStore && domainStore.list || [];
 
 		return (
 			<DomainWarnings
 				isCompact
-				selectedSite={ this.getSelectedSite() }
+				selectedSite={ site }
 				domains={ domains }
 				ruleWhiteList={ [
 					'unverifiedDomainsCanManage',
@@ -104,7 +103,8 @@ const CurrentSite = React.createClass( {
 					'expiringDomainsCannotManage',
 					'wrongNSMappedDomains',
 					'pendingGappsTosAcceptanceDomains'
-				] } />
+				] }
+			/>
 		);
 	},
 
@@ -114,7 +114,7 @@ const CurrentSite = React.createClass( {
 	},
 
 	render: function() {
-		let site;
+		const { selectedSite, isJetpack } = this.props;
 
 		if ( ! this.props.sites.initialized ) {
 			return (
@@ -134,12 +134,6 @@ const CurrentSite = React.createClass( {
 			);
 		}
 
-		if ( this.props.sites.selected ) {
-			site = this.props.sites.getSelectedSite();
-		} else {
-			site = this.props.sites.getPrimary();
-		}
-
 		return (
 			<Card className="current-site">
 				{ this.props.siteCount > 1 &&
@@ -150,22 +144,34 @@ const CurrentSite = React.createClass( {
 						</Button>
 					</span>
 				}
-				{ this.props.sites.selected
+				{ selectedSite
 					? <Site
-						site={ site }
+						site={ selectedSite }
 						homeLink={ true }
 						externalLink={ true }
-						onClick={ this.previewSite }
 						onSelect={ this.previewSite }
 						tipTarget="site-card-preview" />
 					: <AllSites sites={ this.props.sites.get() } />
 				}
-				{ ! site.jetpack && this.getDomainWarnings() }
-				<SiteNotice site={ site } />
+				{ ! isJetpack && this.getDomainWarnings() }
+				<SiteNotice site={ selectedSite } />
 			</Card>
 		);
 	}
 } );
 
 // TODO: make this pure when sites can be retrieved from the Redux state
-module.exports = connect( null, { setLayoutFocus }, null, { pure: false } )( CurrentSite );
+module.exports = connect(
+	( state ) => {
+		const selectedSiteId = getSelectedSiteId( state );
+
+		return {
+			selectedSiteId,
+			selectedSite: getSelectedSite( state ),
+			isJetpack: isJetpackSite( state, selectedSiteId )
+		};
+	},
+	{ setLayoutFocus },
+	null,
+	{ pure: false }
+)( CurrentSite );

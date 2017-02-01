@@ -35,7 +35,9 @@ class ReaderPostCardAdapter extends React.Component {
 				}
 			};
 		}
-		this.props.handleClick && this.props.handleClick( referredPost || postToOpen );
+		this.props.handleClick && this.props.handleClick( {
+			post: referredPost || postToOpen
+		} );
 	}
 
 	onCommentClick = () => {
@@ -43,7 +45,10 @@ class ReaderPostCardAdapter extends React.Component {
 		recordGaEvent( 'Clicked Post Comment Button' );
 		recordTrackForPost( 'calypso_reader_post_comments_button_clicked', this.props.post );
 
-		this.props.handleClick && this.props.handleClick( this.props.post, { comments: true } );
+		this.props.handleClick && this.props.handleClick( {
+			post: this.props.post,
+			comments: true
+		} );
 	}
 
 	// take what the stream hands to a card and adapt it
@@ -54,7 +59,6 @@ class ReaderPostCardAdapter extends React.Component {
 			site_ID: siteId,
 			is_external: isExternal
 		} = this.props.post;
-		const _isDiscoverPost = isDiscoverPost( this.props.post );
 
 		// only query the site if the feed id is missing. feed queries end up fetching site info
 		// via a meta query, so we don't need both.
@@ -68,8 +72,6 @@ class ReaderPostCardAdapter extends React.Component {
 				onCommentClick={ this.onCommentClick }
 				isSelected={ this.props.isSelected }
 				showPrimaryFollowButton={ this.props.showPrimaryFollowButtonOnCards }
-				showEntireExcerpt={ _isDiscoverPost }
-				useBetterExcerpt={ ! _isDiscoverPost }
 				followSource={ this.props.followSource }
 				showSiteName={ this.props.showSiteName }>
 				{ feedId && <QueryReaderFeed feedId={ feedId } includeMeta={ false } /> }

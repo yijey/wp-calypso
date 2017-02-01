@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { map, property, delay } from 'lodash';
+import { filter, map, property, delay } from 'lodash';
 import debugFactory from 'debug';
 import page from 'page';
 
@@ -19,7 +19,7 @@ import {
 	THEME_ACTIVATE_REQUEST_FAILURE,
 	THEME_BACK_PATH_SET,
 	THEME_CLEAR_ACTIVATED,
-	THEME_DELETE_REQUEST,
+	THEME_DELETE,
 	THEME_DELETE_SUCCESS,
 	THEME_DELETE_FAILURE,
 	THEME_INSTALL,
@@ -52,11 +52,20 @@ import {
 import { getTheme, getActiveTheme, getLastThemeQuery, getThemeCustomizeUrl } from './selectors';
 import {
 	getThemeIdFromStylesheet,
-	filterThemesForJetpack,
+	isThemeMatchingQuery,
+	isThemeFromWpcom,
 	normalizeJetpackTheme,
 	normalizeWpcomTheme,
 	normalizeWporgTheme
 } from './utils';
+import {
+	getSiteTitle,
+	hasJetpackSiteJetpackThemesExtendedFeatures,
+	isJetpackSite
+} from 'state/sites/selectors';
+import i18n from 'i18n-calypso';
+import accept from 'lib/accept';
+import config from 'config';
 
 const debug = debugFactory( 'calypso:themes:actions' ); //eslint-disable-line no-unused-vars
 
@@ -104,7 +113,7 @@ export function receiveThemes( themes, siteId ) {
  * @return {Function}             Action thunk
  */
 export function requestThemes( siteId, query = {} ) {
-	return ( dispatch ) => {
+	return ( dispatch, getState ) => {
 		const startTime = new Date().getTime();
 		let siteIdToQuery, queryWithApiVersion;
 
@@ -127,9 +136,22 @@ export function requestThemes( siteId, query = {} ) {
 			let filteredThemes;
 			if ( siteId !== 'wpcom' ) {
 				themes = map( rawThemes, normalizeJetpackTheme );
-				// A Jetpack site's themes endpoint ignores the query, returning an unfiltered list of all installed themes instead,
-				// So we have to filter on the client side instead.
-				filteredThemes = filterThemesForJetpack( themes, query );
+
+				// A Jetpack site's themes endpoint ignores the query,
+				// returning an unfiltered list of all installed themes instead.
+				// So we have to filter on the client side.
+				// Also if Jetpack plugin has Themes Extended Features,
+				// we filter out -wpcom suffixed themes because we will show them in
+				// second list that is specific to WorpPress.com themes.
+				const keepWpcom = ! config.isEnabled( 'manage/themes/upload' ) ||
+					! hasJetpackSiteJetpackThemesExtendedFeatures( getState(), siteId );
+
+				filteredThemes = filter(
+					themes,
+					theme => isThemeMatchingQuery( query, theme ) && ( keepWpcom || ! isThemeFromWpcom( theme.id ) )
+				);
+				// The Jetpack specific endpoint doesn't return the number of `found` themes, so we calculate it ourselves.
+				found = filteredThemes.length;
 			} else {
 				themes = map( rawThemes, normalizeWpcomTheme );
 				filteredThemes = themes;
@@ -144,7 +166,7 @@ export function requestThemes( siteId, query = {} ) {
 						tier: query.tier,
 						response_time_in_ms: responseTime,
 						result_count: found,
-						results_first_page: filteredThemes.map( property( 'id' ) )
+						results_first_page: filteredThemes.map( property( 'id' ) ).join()
 					}
 				);
 				dispatch( trackShowcaseSearch );
@@ -261,7 +283,7 @@ export function requestTheme( themeId, siteId ) {
  * @return {Function}        Redux thunk with request action
  */
 export function requestActiveTheme( siteId ) {
-	return dispatch => {
+	return ( dispatch, getState ) => {
 		dispatch( {
 			type: ACTIVE_THEME_REQUEST,
 			siteId,
@@ -270,12 +292,14 @@ export function requestActiveTheme( siteId ) {
 		return wpcom.undocumented().activeTheme( siteId )
 			.then( theme => {
 				debug( 'Received current theme', theme );
+				// We want to store the theme object in the appropriate Redux subtree -- either 'wpcom'
+				// for WPCOM sites, or siteId for Jetpack sites.
+				const siteIdOrWpcom = isJetpackSite( getState(), siteId ) ? siteId : 'wpcom';
+				dispatch( receiveTheme( theme, siteIdOrWpcom ) );
 				dispatch( {
 					type: ACTIVE_THEME_REQUEST_SUCCESS,
 					siteId,
-					themeId: theme.id,
-					themeName: theme.name,
-					themeCost: theme.cost
+					theme
 				} );
 			} ).catch( error => {
 				dispatch( {
@@ -534,16 +558,17 @@ export function clearThemeUpload( siteId ) {
  *
  * @param {Number} siteId -- the site to transfer
  * @param {File} file -- theme zip to upload
+ * @param {String} plugin -- plugin slug
  *
  * @returns {Promise} for testing purposes only
  */
-export function initiateThemeTransfer( siteId, file ) {
+export function initiateThemeTransfer( siteId, file, plugin ) {
 	return dispatch => {
 		dispatch( {
 			type: THEME_TRANSFER_INITIATE_REQUEST,
 			siteId,
 		} );
-		return wpcom.undocumented().initiateTransfer( siteId, null, file, ( event ) => {
+		return wpcom.undocumented().initiateTransfer( siteId, plugin, file, ( event ) => {
 			dispatch( {
 				type: THEME_TRANSFER_INITIATE_PROGRESS,
 				siteId,
@@ -645,16 +670,17 @@ export function pollThemeTransferStatus( siteId, transferId, interval = 3000, ti
 export function deleteTheme( themeId, siteId ) {
 	return dispatch => {
 		dispatch( {
-			type: THEME_DELETE_REQUEST,
+			type: THEME_DELETE,
 			themeId,
 			siteId,
 		} );
 		return wpcom.undocumented().deleteThemeFromJetpack( siteId, themeId )
-			.then( () => {
+			.then( ( theme ) => {
 				dispatch( {
 					type: THEME_DELETE_SUCCESS,
 					themeId,
 					siteId,
+					themeName: theme.name,
 				} );
 			} )
 			.catch( error => {
@@ -665,5 +691,35 @@ export function deleteTheme( themeId, siteId ) {
 					error
 				} );
 			} );
+	};
+}
+
+/**
+ * Shows dialog asking user to confirm delete of theme
+ * from jetpack site. Deletes theme if user confirms.
+ *
+ * @param {String} themeId -- Theme to delete
+ * @param {Number} siteId -- Site to delete theme from
+ *
+ * @return {Function} Action thunk
+ */
+export function confirmDelete( themeId, siteId ) {
+	return ( dispatch, getState ) => {
+		const { name: themeName } = getTheme( getState(), siteId, themeId );
+		const siteTitle = getSiteTitle( getState(), siteId );
+		accept(
+			i18n.translate(
+				'Are you sure you want to delete %(themeName)s from %(siteTitle)s?',
+				{ args: { themeName, siteTitle }, context: 'Themes: theme delete confirmation dialog' }
+			),
+			( accepted ) => {
+				accepted && dispatch( deleteTheme( themeId, siteId ) );
+			},
+			i18n.translate(
+				'Delete %(themeName)s',
+				{ args: { themeName }, context: 'Themes: theme delete dialog confirm button' }
+			),
+			i18n.translate( 'Back', { context: 'Theme: theme delete dialog back button' } )
+		);
 	};
 }

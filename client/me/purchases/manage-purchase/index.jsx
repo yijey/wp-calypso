@@ -19,7 +19,7 @@ import {
 	creditCardExpiresBeforeSubscription,
 	getName,
 	hasPaymentMethod,
-	hasPrivateRegistration,
+	hasPrivacyProtection,
 	isCancelable,
 	isExpired,
 	isExpiring,
@@ -157,10 +157,45 @@ const ManagePurchase = React.createClass( {
 		);
 	},
 
+	getExpiringText( purchase ) {
+		if ( purchase.expiryStatus === 'manualRenew' ) {
+			return this.translate( '%(purchaseName)s will expire and be removed from your site %(expiry)s. ' +
+				'Please, add a credit card if you want it to autorenew. ',
+				{
+					args: {
+						purchaseName: getName( purchase ),
+						expiry: this.moment( purchase.expiryMoment ).fromNow()
+					}
+				}
+			);
+		}
+		if ( isMonthly( purchase.productSlug ) ) {
+			const expiryMoment = this.moment( purchase.expiryMoment );
+			const daysToExpiry = this.moment( expiryMoment.diff( this.moment() ) ).format( 'D' );
+
+			return this.translate( '%(purchaseName)s will expire and be removed from your site %(expiry)s days. ',
+				{
+					args: {
+						purchaseName: getName( purchase ),
+						expiry: daysToExpiry
+					}
+				}
+			);
+		}
+
+		return this.translate( '%(purchaseName)s will expire and be removed from your site %(expiry)s.',
+			{
+				args: {
+					purchaseName: getName( purchase ),
+					expiry: this.moment( purchase.expiryMoment ).fromNow()
+				}
+			}
+		);
+	},
+
 	renderPurchaseExpiringNotice() {
 		const purchase = getPurchase( this.props );
 		let noticeStatus = 'is-info';
-
 		if ( ! isExpiring( purchase ) ) {
 			return null;
 		}
@@ -174,14 +209,7 @@ const ManagePurchase = React.createClass( {
 				className="manage-purchase__purchase-expiring-notice"
 				showDismiss={ false }
 				status={ noticeStatus }
-				text={ this.translate( '%(purchaseName)s will expire and be removed from your site %(expiry)s.',
-					{
-						args: {
-							purchaseName: getName( purchase ),
-							expiry: this.moment( purchase.expiryMoment ).fromNow()
-						}
-					}
-				) }>
+				text={ this.getExpiringText( purchase ) }>
 				{ this.renderRenewNoticeAction() }
 			</Notice>
 		);
@@ -247,7 +275,7 @@ const ManagePurchase = React.createClass( {
 			{ product_slug: purchase.productSlug }
 		);
 
-		if ( hasPrivateRegistration( purchase ) ) {
+		if ( hasPrivacyProtection( purchase ) ) {
 			const privacyItem = cartItems.getRenewalItemFromCartItem( cartItems.domainPrivacyProtection( {
 				domain: purchase.meta
 			} ), {
@@ -280,7 +308,7 @@ const ManagePurchase = React.createClass( {
 			period = productSlug && isMonthly( productSlug ) ? this.translate( 'month' ) : this.translate( 'year' );
 
 		if ( isOneTimePurchase( purchase ) ) {
-			return this.translate( '%(currencySymbol)s%(amount)d %(currencyCode)s {{period}}(one-time){{/period}}', {
+			return this.translate( '%(currencySymbol)s%(amount)f %(currencyCode)s {{period}}(one-time){{/period}}', {
 				args: { amount, currencyCode, currencySymbol },
 				components: {
 					period: <span className="manage-purchase__time-period" />
@@ -292,7 +320,7 @@ const ManagePurchase = React.createClass( {
 			return this.translate( 'Free with Plan' );
 		}
 
-		return this.translate( '%(currencySymbol)s%(amount)d %(currencyCode)s {{period}}/ %(period)s{{/period}}', {
+		return this.translate( '%(currencySymbol)s%(amount)f %(currencyCode)s {{period}}/ %(period)s{{/period}}', {
 			args: {
 				amount,
 				currencyCode,
@@ -558,17 +586,17 @@ const ManagePurchase = React.createClass( {
 		);
 	},
 
-	renderCancelPrivateRegistration() {
+	renderCancelPrivacyProtection() {
 		const purchase = getPurchase( this.props ),
 			{ id } = purchase;
 
-		if ( isExpired( purchase ) || ! hasPrivateRegistration( purchase ) || ! getSelectedSite( this.props ) ) {
+		if ( isExpired( purchase ) || ! hasPrivacyProtection( purchase ) || ! getSelectedSite( this.props ) ) {
 			return null;
 		}
 
 		return (
-			<CompactCard href={ paths.cancelPrivateRegistration( this.props.selectedSite.slug, id ) }>
-				{ this.translate( 'Cancel Private Registration' ) }
+			<CompactCard href={ paths.cancelPrivacyProtection( this.props.selectedSite.slug, id ) }>
+				{ this.translate( 'Cancel Privacy Protection' ) }
 			</CompactCard>
 		);
 	},
@@ -589,7 +617,7 @@ const ManagePurchase = React.createClass( {
 			expiredRenewNotice,
 			editPaymentMethodNavItem,
 			cancelPurchaseNavItem,
-			cancelPrivateRegistrationNavItem,
+			cancelPrivacyProtectionNavItem,
 			contactSupportToRenewMessage;
 
 		if ( isDataLoading( this.props ) ) {
@@ -617,7 +645,7 @@ const ManagePurchase = React.createClass( {
 			expiredRenewNotice = this.renderExpiredRenewNotice();
 			editPaymentMethodNavItem = this.renderEditPaymentMethodNavItem();
 			cancelPurchaseNavItem = this.renderCancelPurchaseNavItem();
-			cancelPrivateRegistrationNavItem = this.renderCancelPrivateRegistration();
+			cancelPrivacyProtectionNavItem = this.renderCancelPrivacyProtection();
 		}
 
 		return (
@@ -656,7 +684,7 @@ const ManagePurchase = React.createClass( {
 				{ expiredRenewNotice }
 				{ editPaymentMethodNavItem }
 				{ cancelPurchaseNavItem }
-				{ cancelPrivateRegistrationNavItem }
+				{ cancelPrivacyProtectionNavItem }
 
 				<RemovePurchase
 					hasLoadedSites={ this.props.hasLoadedSites }

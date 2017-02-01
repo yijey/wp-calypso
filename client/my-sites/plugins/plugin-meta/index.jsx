@@ -7,6 +7,7 @@ import i18n from 'i18n-calypso';
 import some from 'lodash/some';
 import get from 'lodash/get';
 import { includes } from 'lodash';
+import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
@@ -15,7 +16,6 @@ import analytics from 'lib/analytics';
 import Button from 'components/button';
 import Card from 'components/card';
 import Count from 'components/count';
-import Gridicon from 'components/gridicon';
 import NoticeAction from 'components/notice/notice-action';
 import ExternalLink from 'components/external-link';
 import Notice from 'components/notice';
@@ -166,11 +166,12 @@ export default React.createClass( {
 		}
 
 		if ( this.props.selectedSite && ! this.props.selectedSite.jetpack ) {
-			return <WpcomPluginInstallButton
-						disabled={ ! this.hasBusinessPlan() }
-						plugin={ this.props.plugin }
-						site={ this.props.selectedSite }
-			/>;
+			return (
+				<WpcomPluginInstallButton
+					disabled={ ! this.hasBusinessPlan() }
+					plugin={ this.props.plugin }
+				/>
+			);
 		}
 	},
 
@@ -356,7 +357,7 @@ export default React.createClass( {
 					}
 				</Card>
 
-				{ config.isEnabled( 'automated-transfer' ) && this.hasBusinessPlan() &&
+				{ config.isEnabled( 'automated-transfer' ) && this.hasBusinessPlan() && ! get( this.props.selectedSite, 'jetpack' ) &&
 					<PluginAutomatedTransfer plugin={ this.props.plugin } />
 				}
 

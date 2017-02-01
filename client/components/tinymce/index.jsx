@@ -40,6 +40,8 @@ import afterTheDeadlinePlugin from './plugins/after-the-deadline/plugin';
 import wptextpatternPlugin from './plugins/wptextpattern/plugin';
 import toolbarPinPlugin from './plugins/toolbar-pin/plugin';
 import insertMenuPlugin from './plugins/insert-menu/plugin';
+import embedReversalPlugin from './plugins/embed-reversal/plugin';
+import EditorHtmlToolbar from 'post-editor/editor-html-toolbar';
 
 [
 	wpcomPlugin,
@@ -60,7 +62,8 @@ import insertMenuPlugin from './plugins/insert-menu/plugin';
 	contactFormPlugin,
 	afterTheDeadlinePlugin,
 	wptextpatternPlugin,
-	toolbarPinPlugin
+	toolbarPinPlugin,
+	embedReversalPlugin
 ].forEach( ( initializePlugin ) => initializePlugin() );
 
 /**
@@ -125,6 +128,7 @@ const PLUGINS = [
 	'wpcom/toolbarpin',
 	'wpcom/contactform',
 	'wpcom/sourcecode',
+	'wpcom/embedreversal'
 ];
 
 if ( config.isEnabled( 'post-editor/insert-menu' ) ) {
@@ -271,6 +275,7 @@ module.exports = React.createClass( {
 			keep_styles: false,
 			wpeditimage_html5_captions: true,
 			redux_store: this.context.store,
+			textarea: this.refs.text,
 
 			// Limit the preview styles in the menu/toolbar
 			preview_styles: 'font-family font-size font-weight font-style text-decoration text-transform',
@@ -435,6 +440,14 @@ module.exports = React.createClass( {
 		this.setState( { content: content }, this.doAutosizeUpdate );
 	},
 
+	onToolbarChangeContent: function( content ) {
+		if ( this.props.onTextEditorChange ) {
+			this.props.onTextEditorChange( content );
+		}
+
+		this.setState( { content }, this.doAutosizeUpdate );
+	},
+
 	localize: function() {
 		const userData = user.get();
 		let i18nStrings = i18n;
@@ -454,20 +467,29 @@ module.exports = React.createClass( {
 	},
 
 	render: function() {
+		const { mode } = this.props;
 		const className = classnames( {
 			tinymce: true,
-			'is-visible': this.props.mode === 'html'
+			'is-visible': mode === 'html'
 		} );
 
 		return (
-			<textarea
-				ref="text"
-				className={ className }
-				id={ this._id }
-				onChange={ this.onTextAreaChange }
-				tabIndex={ this.props.tabIndex }
-				value={ this.state.content }
-			/>
+			<div>
+				{ mode === 'html' &&
+					<EditorHtmlToolbar
+						content={ this.refs.text }
+						onToolbarChangeContent={ this.onToolbarChangeContent }
+					/>
+				}
+				<textarea
+					ref="text"
+					className={ className }
+					id={ this._id }
+					onChange={ this.onTextAreaChange }
+					tabIndex={ this.props.tabIndex }
+					value={ this.state.content }
+				/>
+			</div>
 		);
 	}
 } );

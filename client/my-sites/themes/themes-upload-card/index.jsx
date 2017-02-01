@@ -2,13 +2,14 @@
  * External dependencies
  */
 import React, { PropTypes } from 'react';
+import classNames from 'classnames';
+import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
  */
 import SectionHeader from 'components/section-header';
 import Button from 'components/button';
-import Gridicon from 'components/gridicon';
 import { localize } from 'i18n-calypso';
 import { trackClick } from '../helpers';
 
@@ -20,19 +21,19 @@ class ThemeUploadCard extends React.Component {
 		count: PropTypes.number,
 	};
 
-	constructor( props ) {
-		super( props );
-	}
-
 	trackClick = () => trackClick( 'upload theme' );
 
 	render() {
 		const { translate } = this.props;
 
+		const uploadClassName = classNames( 'themes-upload-card', {
+			'is-placeholder': this.props.count === null,
+		} );
+
 		return (
-			<div className="themes-upload-card">
+			<div className={ uploadClassName }>
 				<SectionHeader
-					label={ this.props.label }
+					label={ this.props.label || translate( 'WordPress.com themes' ) }
 					count={ this.props.count }
 				>
 					{ this.props.href &&

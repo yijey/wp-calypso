@@ -1,16 +1,11 @@
 /**
  * External dependencies
  */
-const connect = require( 'react-redux' ).connect,
-	forEach = require( 'lodash/forEach' ),
-	find = require( 'lodash/find' ),
-	i18n = require( 'i18n-calypso' ),
-	isEmpty = require( 'lodash/isEmpty' ),
-	isEqual = require( 'lodash/isEqual' ),
-	page = require( 'page' ),
-	React = require( 'react' ),
-	reduce = require( 'lodash/reduce' ),
-	startsWith = require( 'lodash/startsWith' );
+import { connect } from 'react-redux';
+import { flatten, find, isEmpty, isEqual, reduce, startsWith } from 'lodash';
+import i18n from 'i18n-calypso';
+import page from 'page';
+import React from 'react';
 
 /**
  * Internal dependencies
@@ -48,6 +43,10 @@ import {
 	getSelectedSiteId,
 	getSelectedSiteSlug,
 } from 'state/ui/selectors';
+import {
+	getSiteOption
+} from 'state/sites/selectors';
+import { domainManagementList } from 'my-sites/upgrades/paths';
 
 const Checkout = React.createClass( {
 	mixins: [ observe( 'sites', 'productsList' ) ],
@@ -167,18 +166,15 @@ const Checkout = React.createClass( {
 		return true;
 	},
 
-	getPurchasesFromReceipt: function() {
-		const purchases = this.props.transaction.step.data.purchases;
-
-		let flatPurchases = [];
-
-		// purchases are of the format { [siteId]: [ { product_id: ... } ] },
-		// so we need to flatten them to get a list of purchases
-		forEach( purchases, sitePurchases => {
-			flatPurchases = flatPurchases.concat( sitePurchases );
-		} );
-
-		return flatPurchases;
+	/**
+	 * Purchases are of the format { [siteId]: [ { productId: ... } ] }
+	 * so we need to flatten them to get a list of purchases
+	 *
+	 * @param {Object} purchases keyed by siteId { [siteId]: [ { productId: ... } ] }
+	 * @returns {Array} of product objects [ { productId: ... }, ... ]
+	 */
+	flattenPurchases: function( purchases ) {
+		return flatten( Object.values( purchases ) );
 	},
 
 	getCheckoutCompleteRedirectPath: function() {
@@ -187,13 +183,19 @@ const Checkout = React.createClass( {
 			renewalItem,
 			receiptId = ':receiptId';
 
-		const { selectedSiteId, selectedSiteSlug } = this.props;
+		const {
+			cart,
+			isDomainOnly,
+			selectedSite,
+			selectedSiteId,
+			selectedSiteSlug
+		} = this.props;
 		const receipt = this.props.transaction.step.data;
 
 		this.props.clearPurchases();
 
-		if ( cartItems.hasRenewalItem( this.props.cart ) ) {
-			renewalItem = cartItems.getRenewalItems( this.props.cart )[ 0 ];
+		if ( cartItems.hasRenewalItem( cart ) ) {
+			renewalItem = cartItems.getRenewalItems( cart )[ 0 ];
 			// group all purchases into an array
 			purchasedProducts = reduce( receipt && receipt.purchases || {}, function( result, value ) {
 				return result.concat( value );
@@ -234,12 +236,15 @@ const Checkout = React.createClass( {
 			}
 
 			return purchasePaths.managePurchase( renewalItem.extra.purchaseDomain, renewalItem.extra.purchaseId );
-		} else if ( cartItems.hasFreeTrial( this.props.cart ) ) {
+		} else if ( cartItems.hasFreeTrial( cart ) ) {
 			this.props.clearSitePlans( selectedSiteId );
 
 			return selectedSiteSlug
 				? `/plans/${ selectedSiteSlug }/thank-you`
 				: '/checkout/thank-you/plans';
+		} else if ( isDomainOnly && cartItems.hasDomainRegistration( cart ) && ! cartItems.hasPlan( cart ) ) {
+			// TODO: Use purchased domain name once it is possible to set it as a primary domain when site is created.
+			return domainManagementList( selectedSite.slug );
 		}
 
 		if ( receipt && receipt.receipt_id ) {
@@ -247,7 +252,8 @@ const Checkout = React.createClass( {
 
 			this.props.fetchReceiptCompleted( receiptId, {
 				receiptId: receiptId,
-				purchases: this.getPurchasesFromReceipt()
+				purchases: this.flattenPurchases( this.props.transaction.step.data.purchases ),
+				failedPurchases: this.flattenPurchases( this.props.transaction.step.data.failed_purchases ),
 			} );
 		}
 
@@ -320,12 +326,17 @@ const Checkout = React.createClass( {
 } );
 
 module.exports = connect(
-	state => ( {
-		cards: getStoredCards( state ),
-		selectedSite: getSelectedSite( state ),
-		selectedSiteId: getSelectedSiteId( state ),
-		selectedSiteSlug: getSelectedSiteSlug( state ),
-	} ),
+	state => {
+		const selectedSiteId = getSelectedSiteId( state );
+
+		return {
+			cards: getStoredCards( state ),
+			isDomainOnly: getSiteOption( state, selectedSiteId, 'is_domain_only' ),
+			selectedSite: getSelectedSite( state ),
+			selectedSiteId,
+			selectedSiteSlug: getSelectedSiteSlug( state ),
+		};
+	},
 	{
 		clearPurchases,
 		clearSitePlans,

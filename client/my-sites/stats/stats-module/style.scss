@@ -2,6 +2,12 @@
 @import 'placeholder';
 @import 'expand';
 
+.stats-module {
+	.upgrade-nudge.card {
+		margin: 16px;
+	}
+}
+
 // Select Dropdown
 .stats-module__select-dropdown-wrapper {
 	padding: 16px;
@@ -511,4 +517,17 @@ ul.module-header-actions {
 		width: 60px; // 2
 		@include long-content-fade( $color: $white, $size: 15% );
 	}
+}
+
+.stats-module__all-time-nav{
+	.stats-section-title {
+		margin: 0 16px 16px 16px;
+	}
+}
+
+.stats-module__footer-actions {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
 }

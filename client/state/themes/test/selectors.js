@@ -28,6 +28,7 @@ import {
 	getActiveTheme,
 	isRequestingActiveTheme,
 	isWporgTheme,
+	isWpcomTheme,
 	isThemeActive,
 	isActivatingTheme,
 	hasActivatedTheme,
@@ -1095,7 +1096,7 @@ describe( 'themes selectors', () => {
 			expect( helpUrl ).to.equal( '/theme/mood/support/example.wordpress.com' );
 		} );
 
-		it( 'given a theme and Jetpack site ID, should return null', () => {
+		it( 'given a theme and Jetpack site ID, should return the help url', () => {
 			const helpUrl = getThemeHelpUrl(
 				{
 					sites: {
@@ -1117,7 +1118,7 @@ describe( 'themes selectors', () => {
 				},
 				77203074
 			);
-			expect( helpUrl ).to.be.null;
+			expect( helpUrl ).to.be.equal( '/theme/twentysixteen/support/example.net' );
 		} );
 	} );
 
@@ -1431,7 +1432,10 @@ describe( 'themes selectors', () => {
 					themes: {
 						activeThemes: {
 							2916284: 'twentysixteen'
-						}
+						},
+						queries: {
+							wpcom: new ThemeQueryManager( {} ),
+						},
 					}
 				},
 			);
@@ -1445,7 +1449,10 @@ describe( 'themes selectors', () => {
 					themes: {
 						activeThemes: {
 							2916284: 'twentysixteen'
-						}
+						},
+						queries: {
+							wpcom: new ThemeQueryManager( {} ),
+						},
 					}
 				}, 'mood'
 			);
@@ -1459,6 +1466,14 @@ describe( 'themes selectors', () => {
 					themes: {
 						activeThemes: {
 							2916284: 'twentysixteen'
+						},
+						queries: {
+							wpcom: new ThemeQueryManager( {} ),
+						},
+					},
+					sites: {
+						items: {
+							2916284: { ID: 2916284, jetpack: false }
 						}
 					}
 				},
@@ -1475,9 +1490,41 @@ describe( 'themes selectors', () => {
 					themes: {
 						activeThemes: {
 							2916284: 'mood'
+						},
+						queries: {
+							wpcom: new ThemeQueryManager( {} ),
+						},
+					},
+					sites: {
+						items: {
+							2916284: { ID: 2916284, jetpack: false }
 						}
 					}
 				}, 'mood', 2916284
+			);
+
+			expect( isActive ).to.be.true;
+		} );
+
+		it( 'given a wpcom theme and a jetpack site on which it is active, should return true', () => {
+			const isActive = isThemeActive(
+				{
+					themes: {
+						activeThemes: {
+							77203074: 'karuna-wpcom'
+						},
+						queries: {
+							wpcom: new ThemeQueryManager( {
+								items: { karuna: { id: 'karuna' } }
+							} ),
+						}
+					},
+					sites: {
+						items: {
+							77203074: { ID: 77203074, URL: 'https://example.net', jetpack: true }
+						}
+					}
+				}, 'karuna', 77203074
 			);
 
 			expect( isActive ).to.be.true;
@@ -1594,11 +1641,50 @@ describe( 'themes selectors', () => {
 				{
 					themes: {
 						themeInstalls: {
-							2916284: true
+							2916284: {
+								karuna: true
+							}
+						},
+						queries: {
+							wpcom: new ThemeQueryManager( {} ),
+						},
+					},
+					sites: {
+						items: {
+							2916284: { ID: 2916284, jetpack: false }
 						}
 					}
 				},
+				'karuna',
 				2916284
+			);
+
+			expect( installing ).to.be.true;
+		} );
+
+		it( 'given a jetpack site and wpcom theme, should return true if theme is currently being installed', () => {
+			const installing = isInstallingTheme(
+				{
+					themes: {
+						themeInstalls: {
+							77203074: {
+								'karuna-wpcom': true
+							}
+						},
+						queries: {
+							wpcom: new ThemeQueryManager( {
+								items: { karuna: { id: 'karuna' } }
+							} ),
+						}
+					},
+					sites: {
+						items: {
+							77203074: { ID: 77203074, URL: 'https://example.net', jetpack: true }
+						}
+					}
+				},
+				'karuna',
+				77203074
 			);
 
 			expect( installing ).to.be.true;
@@ -1641,6 +1727,56 @@ describe( 'themes selectors', () => {
 			}, 'twentyseventeen' );
 
 			expect( isWporg ).to.be.true;
+		} );
+	} );
+
+	describe( '#isWpcomTheme()', () => {
+		it( 'should return false if theme is not found on WordPress.com', () => {
+			const isWpcom = isWpcomTheme( {
+				themes: {
+					queries: {
+					}
+				}
+			}, 'twentyseventeen' );
+
+			expect( isWpcom ).to.be.false;
+		} );
+
+		it( 'should return false if theme is no theme id supplied', () => {
+			const isWpcom = isWpcomTheme( {
+				themes: {
+					queries: {
+					}
+				}
+			} );
+
+			expect( isWpcom ).to.be.false;
+		} );
+
+		it( 'should return true if theme is found on WordPress.com', () => {
+			const wpcomTheme = {
+				id: 'twentyseventeen',
+				name: 'Twenty Seventeen',
+				author: 'wordpressdotorg',
+				demo_uri: 'https://wp-themes.com/twentyseventeen',
+				download: 'http://downloads.wordpress.org/theme/twentyseventeen.1.1.zip',
+				taxonomies: {
+					theme_feature: {
+						'custom-header': 'Custom Header'
+					}
+				}
+			};
+			const isWpcom = isWpcomTheme( {
+				themes: {
+					queries: {
+						wpcom: new ThemeQueryManager( {
+							items: { twentyseventeen: wpcomTheme }
+						} ),
+					}
+				}
+			}, 'twentyseventeen' );
+
+			expect( isWpcom ).to.be.true;
 		} );
 	} );
 

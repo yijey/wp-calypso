@@ -10,9 +10,9 @@ var React = require( 'react' ),
  * Internal dependencies
  */
 var CompactCard = require( 'components/card/compact' ),
-	Gridicon = require( 'components/gridicon' ),
+	Gridicon = require( 'gridicons' ),
 	NoticeAction = require( 'components/notice/notice-action' ),
-	SiteIcon = require( 'components/site-icon' ),
+	SiteIcon = require( 'blocks/site-icon' ),
 	PostRelativeTimeStatus = require( 'my-sites/post-relative-time-status' ),
 	PopoverMenu = require( 'components/popover/menu' ),
 	PopoverMenuItem = require( 'components/popover/menu-item' ),

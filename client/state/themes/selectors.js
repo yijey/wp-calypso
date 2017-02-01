@@ -27,6 +27,26 @@ import {
 import { DEFAULT_THEME_QUERY } from './constants';
 
 /**
+ * When wpcom themes are installed on Jetpack sites, the
+ * theme id is suffixed with -wpcom. Some operations require
+ * the use of this suffixed ID. This util function add the
+ * suffix if the theme is a wpcom theme and the site is Jetpack.
+ * or not, given siteId and ThemeId.
+ *
+ * @param {Object} state	Global state tree
+ * @param {String} themeId	Theme ID
+ * @param {Number} siteId	Site ID
+ * @return {String} 		Potentially suffixed theme ID
+ */
+const getSuffixedThemeId = ( state, themeId, siteId ) => {
+	const siteIsJetpack = siteId && isJetpackSite( state, siteId );
+	if ( siteIsJetpack && isWpcomTheme( state, themeId ) ) {
+		return `${ themeId }-wpcom`;
+	}
+	return themeId;
+};
+
+/**
  * Returns a theme object by site ID, theme ID pair.
  *
  * @param  {Object}  state   Global state tree
@@ -45,6 +65,11 @@ export const getTheme = createSelector(
 		if ( siteId === 'wpcom' || siteId === 'wporg' ) {
 			return theme;
 		}
+
+		if ( ! theme ) {
+			return null;
+		}
+
 		// We're dealing with a Jetpack site. If we have theme info obtained from the
 		// WordPress.org API, merge it.
 		const wporgTheme = getTheme( state, 'wporg', themeId );
@@ -298,6 +323,17 @@ export function isWporgTheme( state, themeId ) {
 }
 
 /**
+ * Whether a theme is present on WordPress.com.
+ *
+ * @param  {Object}  state   Global state tree
+ * @param  {Number}  themeId Theme ID
+ * @return {Boolean}         Whether theme available on WordPress.com
+ */
+export function isWpcomTheme( state, themeId ) {
+	return !! getTheme( state, 'wpcom', themeId );
+}
+
+/**
  * Returns the URL for a given theme's details sheet.
  *
  * @param  {Object}  state  Global state tree
@@ -336,7 +372,7 @@ export function getThemeDetailsUrl( state, theme, siteId ) {
  * @return {?String}        Theme setup instructions URL
  */
 export function getThemeSupportUrl( state, theme, siteId ) {
-	if ( isJetpackSite( state, siteId ) || ! theme || ! isThemePremium( state, theme.id ) ) {
+	if ( ! theme || ! isThemePremium( state, theme.id ) ) {
 		return null;
 	}
 
@@ -358,7 +394,7 @@ export function getThemeSupportUrl( state, theme, siteId ) {
  * @return {?String}        Theme support page URL
  */
 export function getThemeHelpUrl( state, theme, siteId ) {
-	if ( ! theme || isJetpackSite( state, siteId ) ) {
+	if ( ! theme ) {
 		return null;
 	}
 
@@ -403,7 +439,7 @@ export function getThemeCustomizeUrl( state, theme, siteId ) {
 		return getSiteOption( state, siteId, 'admin_url' ) +
 			'customize.php?return=' +
 			encodeURIComponent( window.location ) +
-			( theme ? '&theme=' + theme.id : '' );
+			( theme ? '&theme=' + getSuffixedThemeId( state, theme.id, siteId ) : '' );
 	}
 
 	const customizeUrl = '/customize/' + getSiteSlug( state, siteId );
@@ -487,7 +523,7 @@ export function getActiveTheme( state, siteId ) {
  * @return {Boolean}         True if the theme is active on the site
  */
 export function isThemeActive( state, themeId, siteId ) {
-	return getActiveTheme( state, siteId ) === themeId;
+	return getActiveTheme( state, siteId ) === getSuffixedThemeId( state, themeId, siteId );
 }
 
 /**
@@ -516,11 +552,13 @@ export function hasActivatedTheme( state, siteId ) {
  * Whether the theme is currently being installed on the (Jetpack) site.
  *
  * @param  {Object}  state   Global state tree
+ * @param  {String}  themeId Theme ID for which we check installing state
  * @param  {Number}  siteId  Site ID
  * @return {Boolean}         True if theme installation is ongoing
  */
-export function isInstallingTheme( state, siteId ) {
-	return get( state.themes.themeInstalls, siteId, false );
+export function isInstallingTheme( state, themeId, siteId ) {
+	const suffixedThemeId = getSuffixedThemeId( state, themeId, siteId );
+	return get( state.themes.themeInstalls, [ siteId, suffixedThemeId ], false );
 }
 
 /**

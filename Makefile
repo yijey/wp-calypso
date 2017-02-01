@@ -125,7 +125,7 @@ eslint-branch: node_modules/eslint node_modules/eslint-plugin-react node_modules
 
 # Skip files that are auto-generated
 mixedindentlint: node_modules/mixedindentlint
-	@echo "$(JS_FILES)\n$(SASS_FILES)" | xargs $(NODE_BIN)/mixedindentlint --ignore-comments --exclude="client/config/index.js" --exclude="client/components/gridicon/index.jsx"
+	@echo "$(JS_FILES)\n$(SASS_FILES)" | xargs $(NODE_BIN)/mixedindentlint --ignore-comments --exclude="client/config/index.js"
 
 # keep track of the current CALYPSO_ENV so that it can be used as a
 # prerequisite for other rules
@@ -180,7 +180,7 @@ build-wpcalypso: server/devdocs/proptypes-index.json server/devdocs/components-u
 build-horizon build-stage build-production: build-server build-dll $(CLIENT_CONFIG_FILE) build-css
 	@$(BUNDLER)
 
-build-desktop build-desktop-mac-app-store: build-server $(CLIENT_CONFIG_FILE) build-css
+build-desktop: build-server $(CLIENT_CONFIG_FILE) build-css
 	@$(BUNDLER)
 
 # the `clean` rule deletes all the files created from `make build`, but not
@@ -217,9 +217,18 @@ shrinkwrap: node-version
 	@$(NPM) install --no-optional # remove this when this is fixed in npm 3
 	@shonkwrap --dev
 
+analyze-bundles: node_modules
+	@rm -f stats.json
+	@WEBPACK_OUTPUT_JSON=1 CALYPSO_ENV=production $(MAKE) build
+	@$(NODE_BIN)/webpack-bundle-analyzer stats.json public -p 9898
+
+urn:
+	@printf "⚱\n\n";
+	@$(MAKE) run;
+
 # rule that can be used as a prerequisite for other rules to force them to always run
 FORCE:
 
-.PHONY: build build-development build-server build-dll build-desktop build-desktop-mac-app-store build-horizon build-stage build-production build-wpcalypso
+.PHONY: build build-development build-server build-dll build-desktop build-horizon build-stage build-production build-wpcalypso
 .PHONY: run install test clean distclean translate route node-version
-.PHONY: githooks githooks-commit githooks-push
+.PHONY: githooks githooks-commit githooks-push analyze-bundles urn

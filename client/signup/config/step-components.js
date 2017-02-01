@@ -8,10 +8,11 @@ var config = require( 'config' ),
 	GetDotBlogPlansStepComponent = require( 'signup/steps/get-dot-blog-plans' ),
 	PlansStepComponent = require( 'signup/steps/plans' ),
 	SiteComponent = require( 'signup/steps/site' ),
+	SiteOrDomainComponent = require( 'signup/steps/site-or-domain' ),
 	SiteTitleComponent = require( 'signup/steps/site-title' ),
 	SurveyStepComponent = require( 'signup/steps/survey' ),
-	ThemeSelectionComponent = require( 'signup/steps/theme-selection' ),
-	UserSignupComponent = require( 'signup/steps/user' );
+	ThemeSelectionComponent = require( 'signup/steps/theme-selection' );
+import UserSignupComponent from 'signup/steps/user';
 
 module.exports = {
 	'design-type': DesignTypeComponent,
@@ -25,10 +26,12 @@ module.exports = {
 	'get-dot-blog-themes': ThemeSelectionComponent,
 	plans: PlansStepComponent,
 	site: SiteComponent,
+	'site-or-domain': SiteOrDomainComponent,
 	'site-title': SiteTitleComponent,
 	survey: SurveyStepComponent,
 	'survey-user': UserSignupComponent,
 	test: config( 'env' ) === 'development' ? require( 'signup/steps/test-step' ) : undefined,
 	themes: ThemeSelectionComponent,
+	'themes-site-selected': ThemeSelectionComponent,
 	user: UserSignupComponent
 };

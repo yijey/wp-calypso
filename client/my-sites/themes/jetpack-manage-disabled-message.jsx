@@ -19,7 +19,7 @@ const JetpackManageDisabledMessage = React.createClass( {
 
 	propTypes: {
 		site: PropTypes.shape( {
-			getRemoteManagementURL: PropTypes.func.isRequired,
+			ID: PropTypes.number.isRequired,
 			options: PropTypes.shape( { admin_url: PropTypes.string.isRequired } ).isRequired
 		} ).isRequired
 	},
@@ -62,7 +62,7 @@ const JetpackManageDisabledMessage = React.createClass( {
 				<JetpackManageErrorPage
 					template="optInManage"
 					title={ this.props.translate( 'Looking to manage this site\'s themes?' ) }
-					site={ this.props.site }
+					siteId={ this.props.site.ID }
 					section="themes"
 					secondaryAction={ this.props.translate( 'Open Site Theme Browser' ) }
 					secondaryActionURL={ this.props.site.options.admin_url + 'themes.php' }

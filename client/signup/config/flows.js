@@ -207,28 +207,30 @@ const flows = {
 		lastModified: '2016-11-14'
 	},
 
-	userfirst: {
-		steps: [ 'user' ],
-		destination: '/start/userfirst-secondary',
+	'user-first': {
+		steps: [ 'user', 'design-type', 'themes', 'domains', 'plans' ],
+		destination: getSiteDestination,
 		description: 'User-first signup flow',
-		lastModified: '2016-12-23',
-		autoContinue: true,
-	},
-
-	'userfirst-secondary': {
-		steps: [ 'design-type', 'themes', 'domains', 'plans' ],
-		destination: getSiteDestination,
-		description: 'Secondary flow for User First signup',
-		lastModified: '2016-12-23'
-	},
-
-	'domain-first': {
-		steps: [ 'domain-only', 'user' ],
-		destination: getSiteDestination,
-		description: 'An experimental approach for WordPress.com/domains',
-		lastModified: '2017-01-03'
+		lastModified: '2016-01-18',
 	},
 };
+
+if ( config.isEnabled( 'signup/domain-first-flow' ) ) {
+	flows[ 'domain-first' ] = {
+		steps: [ 'domain-only', 'site-or-domain', 'themes', 'plans', 'user' ],
+		destination: getSiteDestination,
+		description: 'An experimental approach for WordPress.com/domains',
+		lastModified: '2017-01-16'
+	};
+
+	flows[ 'site-selected' ] = {
+		steps: [ 'themes-site-selected' ],
+		destination: getSiteDestination,
+		providesDependenciesInQuery: [ 'siteSlug' ],
+		description: 'A flow to test updating an existing site with `Signup`',
+		lastModified: '2017-01-19'
+	};
+}
 
 if ( config( 'env' ) === 'development' ) {
 	flows[ 'test-plans' ] = {
@@ -271,15 +273,7 @@ function filterFlowName( flowName ) {
 	 */
 	if ( ! user.get() ) {
 		if ( includes( defaultFlows, flowName ) && abtest( 'userFirstSignup' ) === 'userFirst' ) {
-			return 'userfirst';
-		}
-
-		/**
-		 * Users should not be able to reach `userfirst-secondary` without being logged in, since
-		 * it doesn't contain the `user` step to register a user and site respectively.
- 		 */
-		if ( flowName === 'userfirst-secondary' ) {
-			return 'userfirst';
+			return 'user-first';
 		}
 	}
 

@@ -172,9 +172,13 @@
 			margin-bottom: 8px;
 		}
 	}
+
+	.site-settings__child-settings {
+		margin-left: 36px;
+	}
 }
 
-.site-settings__general-settings {
+.site-settings__general-settings, .site-settings__writing-settings {
 	.form-toggle__label {
 		display: flex;
 		align-items: center;
@@ -187,6 +191,10 @@
 	.site-settings__toggle-label {
 		flex: 0 1 100%;
 		margin-left: 12px;
+	}
+
+	hr {
+		margin: 0 -24px 1.5em;
 	}
 }
 
@@ -301,46 +309,6 @@
 
 .site-settings__custom-post-type-fieldset .feature-example__gradient {
 	background: linear-gradient( to bottom, rgba( $white, 0.4 ), rgba( $white, 1 ) );
-}
-
-.press-this {
-	/* press this isn't functional on a touch device */
-	.touch & {
-		display: none;
-	}
-
-	p.pressthis {
-		margin: 20px 0;
-
-		a,
-		a:hover,
-		a:focus,
-		a:active {
-			display: inline-block;
-			position: relative;
-			cursor: move;
-			padding: 10px;
-			font-style: normal;
-			line-height: 16px;
-			font-size: 14px;
-			text-decoration: none;
-			color: #333;
-			background: lighten( $gray, 30% );
-			border-radius: 3px;
-			border: 1px solid lighten( $gray, 20% );
-		}
-
-		a span {
-			display: inline-block;
-			margin: 0 10px 0 0;
-			font-family: $sans;
-
-			&:before {
-				color: #777;
-				font-family: Noticons;
-			}
-		}
-	}
 }
 
 #settings-reading-relatedposts-preview .form-label {

@@ -7,14 +7,18 @@ var React = require( 'react' );
  * Internal dependencies
  */
 var DomainSuggestion = require( 'components/domains/domain-suggestion' ),
-	Gridicon = require( 'components/gridicon' ),
+	Gridicon = require( 'gridicons' ),
 	DomainSuggestionFlag = require( 'components/domains/domain-suggestion-flag' ),
 	{ shouldBundleDomainWithPlan, getDomainPriceRule, hasDomainInCart } = require( 'lib/cart-values/cart-items' );
 
 const DomainRegistrationSuggestion = React.createClass( {
 	propTypes: {
 		cart: React.PropTypes.object,
-		suggestion: React.PropTypes.object.isRequired,
+		suggestion: React.PropTypes.shape( {
+			domain_name: React.PropTypes.string.isRequired,
+			product_slug: React.PropTypes.string,
+			cost: React.PropTypes.string
+		} ).isRequired,
 		onButtonClick: React.PropTypes.func.isRequired,
 		domainsWithPlansOnly: React.PropTypes.bool.isRequired,
 		selectedSite: React.PropTypes.object

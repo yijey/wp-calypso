@@ -127,6 +127,7 @@ function startEditingPostCopy( siteId, postToCopyId, context ) {
 			'metadata',
 			'post_thumbnail',
 			'terms',
+			'title',
 			'type'
 		);
 		postAttributes.tags = map( postToCopy.tags, 'name' );
@@ -135,7 +136,7 @@ function startEditingPostCopy( siteId, postToCopyId, context ) {
 		actions.startEditingNew( siteId, {
 			content: postToCopy.content,
 			title: postToCopy.title,
-			type: 'post',
+			type: postToCopy.type,
 		} );
 		context.store.dispatch( editPost( siteId, null, postAttributes ) );
 		actions.edit( postAttributes );
@@ -207,16 +208,24 @@ module.exports = {
 		//    have permission to view the site)
 		//  - Sites are initialized _and_ fetched, but the selected site has
 		//    not yet been selected, so is not available in global state yet
+		let unsubscribe;
 		function startEditingOnSiteSelected() {
 			const siteId = getSelectedSiteId( context.store.getState() );
-
-			if ( siteId ) {
-				startEditing( siteId );
-			} else {
-				sites.once( 'change', startEditingOnSiteSelected );
+			if ( ! siteId ) {
+				return false;
 			}
+
+			if ( unsubscribe ) {
+				unsubscribe();
+			}
+
+			startEditing( siteId );
+			return true;
 		}
-		startEditingOnSiteSelected();
+
+		if ( ! startEditingOnSiteSelected() ) {
+			unsubscribe = context.store.subscribe( startEditingOnSiteSelected );
+		}
 
 		renderEditor( context, postType );
 	},

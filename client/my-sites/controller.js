@@ -6,6 +6,7 @@ import ReactDom from 'react-dom';
 import React from 'react';
 import i18n from 'i18n-calypso';
 import { uniq } from 'lodash';
+import startsWith from 'lodash/startsWith';
 
 /**
  * Internal Dependencies
@@ -13,6 +14,7 @@ import { uniq } from 'lodash';
 import userFactory from 'lib/user';
 import sitesFactory from 'lib/sites-list';
 import { receiveSite } from 'state/sites/actions';
+import { getSite } from 'state/sites/selectors';
 import {
 	setSelectedSiteId,
 	setSection,
@@ -25,17 +27,19 @@ import route from 'lib/route';
 import notices from 'notices';
 import config from 'config';
 import analytics from 'lib/analytics';
-import siteStatsStickyTabActions from 'lib/site-stats-sticky-tab/actions';
 import utils from 'lib/site/utils';
-import trackScrollPage from 'lib/track-scroll-page';
 import { setLayoutFocus } from 'state/ui/layout-focus/actions';
 import { renderWithReduxStore } from 'lib/react-helpers';
+import isDomainOnlySite from 'state/selectors/is-domain-only-site';
+import { domainManagementList } from 'my-sites/upgrades/paths';
+import SitesComponent from 'my-sites/sites';
 
 /**
  * Module vars
  */
 const user = userFactory();
 const sites = sitesFactory();
+const sitesPageTitleForAnalytics = 'Sites';
 
 /*
  * The main navigation of My Sites consists of a component with
@@ -109,13 +113,79 @@ function renderNoVisibleSites( context ) {
 	);
 }
 
+function isPathAllowedForDomainOnlySite( pathname, domainName ) {
+	const urlPrefixesWhiteListForDomainOnlySite = [
+		domainManagementList( domainName ),
+		'/checkout/',
+	];
+
+	return urlPrefixesWhiteListForDomainOnlySite.some( path => startsWith( pathname, path ) );
+}
+
+function onSelectedSiteAvailable( context ) {
+	const selectedSite = sites.getSelectedSite();
+	const state = context.store.getState();
+
+	// Currently, sites are only made available in Redux state by the receive
+	// here (i.e. only selected sites). If a site is already known in state,
+	// avoid receiving since we risk overriding changes made more recently.
+	if ( ! getSite( state, selectedSite.ID ) ) {
+		context.store.dispatch( receiveSite( selectedSite ) );
+	}
+
+	context.store.dispatch( setSelectedSiteId( selectedSite.ID ) );
+
+	if ( isDomainOnlySite( state, selectedSite.ID ) &&
+		! isPathAllowedForDomainOnlySite( context.pathname, selectedSite.slug ) ) {
+		page.redirect( domainManagementList( selectedSite.slug ) );
+		return false;
+	}
+
+	// Update recent sites preference
+	if ( hasReceivedRemotePreferences( state ) ) {
+		const recentSites = getPreference( state, 'recentSites' );
+		if ( selectedSite.ID !== recentSites[ 0 ] ) {
+			context.store.dispatch( savePreference( 'recentSites', uniq( [
+				selectedSite.ID,
+				...recentSites
+			] ).slice( 0, 3 ) ) );
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Returns the site-picker react element.
+ *
+ * @param {object} context -- Middleware context
+ * @returns {object} A site-picker React element
+ */
+function createSitesComponent( context ) {
+	const basePath = route.sectionify( context.path );
+	const path = context.prevPath ? route.sectionify( context.prevPath ) : '/stats';
+
+	// This path sets the URL to be visited once a site is selected
+	const sourcePath = ( basePath === '/sites' ) ? path : basePath;
+
+	analytics.pageView.record( basePath, sitesPageTitleForAnalytics );
+
+	return (
+		<SitesComponent
+			sites={ sites }
+			path={ context.path }
+			sourcePath={ sourcePath }
+			user={ user }
+			getSiteSelectionHeaderText={ context.getSiteSelectionHeaderText } />
+	);
+}
+
 module.exports = {
 	/*
 	 * Set up site selection based on last URL param and/or handle no-sites error cases
 	 */
 	siteSelection( context, next ) {
 		const siteID = route.getSiteFragment( context.path );
-		const analyticsPageTitle = 'Sites';
 		const basePath = route.sectionify( context.path );
 		const currentUser = user.get();
 		const hasOneSite = currentUser.visible_site_count === 1;
@@ -133,14 +203,14 @@ module.exports = {
 
 		if ( currentUser && currentUser.site_count === 0 ) {
 			renderEmptySites( context );
-			return analytics.pageView.record( basePath, analyticsPageTitle + ' > No Sites' );
+			return analytics.pageView.record( basePath, sitesPageTitleForAnalytics + ' > No Sites' );
 		}
 
 		if ( currentUser && currentUser.visible_site_count === 0 ) {
 			renderNoVisibleSites( context );
 			return analytics
 				.pageView
-				.record( basePath, `${ analyticsPageTitle } > All Sites Hidden` );
+				.record( basePath, `${ sitesPageTitleForAnalytics } > All Sites Hidden` );
 		}
 
 		// Ignore the user account settings page
@@ -162,33 +232,19 @@ module.exports = {
 		if ( ! siteID ) {
 			sites.selectAll();
 			context.store.dispatch( setAllSitesSelected() );
-			siteStatsStickyTabActions.saveFilterAndSlug( false, '' );
 			return next();
 		}
-
-		const onSelectedSiteAvailable = () => {
-			const selectedSite = sites.getSelectedSite();
-			siteStatsStickyTabActions.saveFilterAndSlug( false, selectedSite.slug );
-			context.store.dispatch( receiveSite( selectedSite ) );
-			context.store.dispatch( setSelectedSiteId( selectedSite.ID ) );
-
-			// Update recent sites preference
-			const state = context.store.getState();
-			if ( hasReceivedRemotePreferences( state ) ) {
-				const recentSites = getPreference( state, 'recentSites' );
-				if ( selectedSite.ID !== recentSites[ 0 ] ) {
-					context.store.dispatch( savePreference( 'recentSites', uniq( [
-						selectedSite.ID,
-						...recentSites
-					] ).slice( 0, 3 ) ) );
-				}
-			}
-		};
 
 		// If there's a valid site from the url path
 		// set site visibility to just that site on the picker
 		if ( sites.select( siteID ) ) {
-			onSelectedSiteAvailable();
+			const selectionComplete = onSelectedSiteAvailable( context );
+
+			// if there was a redirect, we should terminate processing of next routes
+			// and let the redirect proceed
+			if ( ! selectionComplete ) {
+				return;
+			}
 		} else {
 			// if sites has fresh data and siteID is invalid
 			// redirect to allSitesPath
@@ -201,7 +257,7 @@ module.exports = {
 				// if sites have loaded, but siteID is invalid, redirect to allSitesPath
 				if ( sites.select( siteID ) ) {
 					sites.initialized = true;
-					onSelectedSiteAvailable();
+					onSelectedSiteAvailable( context );
 					if ( waitingNotice ) {
 						notices.removeNotice( waitingNotice );
 					}
@@ -249,7 +305,7 @@ module.exports = {
 	},
 
 	fetchJetpackSettings( context, next ) {
-		var siteFragment = route.getSiteFragment( context.path );
+		const siteFragment = route.getSiteFragment( context.path );
 
 		next();
 
@@ -295,7 +351,7 @@ module.exports = {
 				<Main>
 					<JetpackManageErrorPage
 						template="noDomainsOnJetpack"
-						site={ sites.getSelectedSite() }
+						siteId={ sites.getSelectedSite().ID }
 					/>
 				</Main>
 			), document.getElementById( 'primary' ), context.store );
@@ -307,13 +363,12 @@ module.exports = {
 	},
 
 	sites( context ) {
-		const SitesComponent = require( 'my-sites/sites' );
-		const analyticsPageTitle = 'Sites';
-		const basePath = route.sectionify( context.path );
-		const path = context.prevPath ? route.sectionify( context.prevPath ) : '/stats';
-
 		if ( context.query.verified === '1' ) {
-			notices.success( i18n.translate( "Email verified! Now that you've confirmed your email address you can publish posts on your blog." ) );
+			notices.success(
+				i18n.translate(
+					"Email verified! Now that you've confirmed your email address you can publish posts on your blog."
+				)
+			);
 		}
 		/**
 		 * Sites is rendered on #primary but it doesn't expect a sidebar to exist
@@ -321,27 +376,32 @@ module.exports = {
 		removeSidebar( context );
 		context.store.dispatch( setLayoutFocus( 'content' ) );
 
-		// This path sets the URL to be visited once a site is selected
-		const sourcePath = ( basePath === '/sites' ) ? path : basePath;
-
-		analytics.pageView.record( basePath, analyticsPageTitle );
-
 		renderWithReduxStore(
-			React.createElement( SitesComponent, {
-				sites,
-				path: context.path,
-				sourcePath,
-				user,
-				getSiteSelectionHeaderText: context.getSiteSelectionHeaderText,
-				trackScrollPage: trackScrollPage.bind(
-					null,
-					basePath,
-					analyticsPageTitle,
-					'Sites'
-				)
-			} ),
+			createSitesComponent( context ),
 			document.getElementById( 'primary' ),
 			context.store
 		);
-	}
+	},
+
+	/**
+	 * Middleware that adds the site selector screen to the layout
+	 * without rendering the layout. For use with isomorphic routing
+	 * @see {@link https://github.com/Automattic/wp-calypso/blob/master/docs/isomorphic-routing.md }
+	 *
+	 * To show the site selector screen using traditional multi-tree
+	 * layout, use the sites() middleware above.
+	 *
+	 * @param {object} context -- Middleware context
+	 * @param {function} next -- Call next middleware in chain
+	 */
+	makeSites( context, next ) {
+		context.store.dispatch( setLayoutFocus( 'content' ) );
+		context.store.dispatch( setSection( {
+			group: 'sites',
+			secondary: false
+		} ) );
+
+		context.primary = createSitesComponent( context );
+		next();
+	},
 };

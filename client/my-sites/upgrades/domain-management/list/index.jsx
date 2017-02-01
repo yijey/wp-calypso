@@ -6,6 +6,7 @@ import React from 'react';
 import times from 'lodash/times';
 import findIndex from 'lodash/findIndex';
 import { connect } from 'react-redux';
+import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
@@ -13,6 +14,7 @@ import { connect } from 'react-redux';
 import analyticsMixin from 'lib/mixins/analytics';
 import config from 'config';
 import DomainWarnings from 'my-sites/upgrades/components/domain-warnings';
+import DomainOnly from './domain-only';
 import ListItem from './item';
 import ListItemPlaceholder from './item-placeholder';
 import Main from 'components/main';
@@ -21,7 +23,6 @@ import SectionHeader from 'components/section-header';
 import Button from 'components/button';
 import UpgradesNavigation from 'my-sites/upgrades/navigation';
 import SidebarNavigation from 'my-sites/sidebar-navigation';
-import Gridicon from 'components/gridicon';
 import { setPrimaryDomain } from 'lib/upgrades/actions/domain-management';
 import DomainListNotice from './domain-list-notice';
 import {
@@ -35,6 +36,7 @@ import NoticeAction from 'components/notice/notice-action';
 import { hasDomainCredit } from 'state/sites/plans/selectors';
 import TrackComponentView from 'lib/analytics/track-component-view';
 import { recordTracksEvent } from 'state/analytics/actions';
+import { isDomainOnlySite } from 'state/selectors';
 import { isPlanFeaturesEnabled } from 'lib/plans';
 import DomainToPlanNudge from 'blocks/domain-to-plan-nudge';
 
@@ -87,11 +89,21 @@ export const List = React.createClass( {
 	},
 
 	render() {
-		const headerText = this.translate( 'Domains', { context: 'A navigation label.' } );
-
 		if ( ! this.props.domains ) {
 			return null;
 		}
+
+		if ( this.props.isDomainOnly ) {
+			return (
+				<Main>
+					<SidebarNavigation />
+					<DomainOnly
+						domainName={ this.props.selectedSite.domain } />
+				</Main>
+			);
+		}
+
+		const headerText = this.translate( 'Domains', { context: 'A navigation label.' } );
 
 		return (
 			<Main wideLayout={ isPlanFeaturesEnabled() }>
@@ -338,8 +350,11 @@ export const List = React.createClass( {
 } );
 
 export default connect( ( state, ownProps ) => {
+	const siteId = ownProps.selectedSite.ID;
+
 	return {
-		hasDomainCredit: !! ownProps.selectedSite && hasDomainCredit( state, ownProps.selectedSite.ID )
+		hasDomainCredit: !! ownProps.selectedSite && hasDomainCredit( state, siteId ),
+		isDomainOnly: isDomainOnlySite( state, siteId ),
 	};
 }, ( dispatch ) => {
 	return {

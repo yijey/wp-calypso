@@ -3,6 +3,7 @@
  */
 import React from 'react';
 import { pickBy } from 'lodash';
+import { connect } from 'react-redux';
 
 /**
  * Internal dependencies
@@ -19,9 +20,10 @@ import QuerySitePlans from 'components/data/query-site-plans';
 import QuerySitePurchases from 'components/data/query-site-purchases';
 import ThemeShowcase from './theme-showcase';
 import ThemesSelection from './themes-selection';
-import ThemeUploadCard from './themes-upload-card';
 import { addTracking } from './helpers';
-import { translate } from 'i18n-calypso';
+import { hasFeature } from 'state/sites/plans/selectors';
+import { hasJetpackSiteJetpackThemesExtendedFeatures } from 'state/sites/selectors';
+import { FEATURE_UNLIMITED_PREMIUM_THEMES } from 'lib/plans/constants';
 
 const ConnectedThemesSelection = connectOptions(
 	( props ) => {
@@ -37,7 +39,7 @@ const ConnectedThemesSelection = connectOptions(
 	}
 );
 
-export default connectOptions(
+const ConnectedSingleSiteJetpack = connectOptions(
 	( props ) => {
 		const {
 			analyticsPath,
@@ -46,7 +48,7 @@ export default connectOptions(
 			search,
 			site,
 			siteId,
-			tier,
+			wpcomTier,
 			filter,
 			vertical
 		} = props;
@@ -83,21 +85,24 @@ export default connectOptions(
 					<ThanksModal
 						site={ site }
 						source={ 'list' } />
-					{ config.isEnabled( 'manage/themes/upload' ) &&
+					{ config.isEnabled( 'manage/themes/upload' ) && props.showWpcomThemesList &&
 						<div>
-							<ThemeUploadCard
-								label={ translate( 'WordPress.com themes' ) }
-							/>
 							<ConnectedThemesSelection
 								options={ [
 									'activateOnJetpack',
-									'tryAndCustomizeOnJetpack'
+									'tryAndCustomizeOnJetpack',
+									'customize',
+									'separator',
+									'info',
+									'support',
+									'help',
 								] }
 								search={ search }
-								tier={ tier }
+								tier={ wpcomTier }
 								filter={ filter }
 								vertical={ vertical }
-								siteId = { siteId /* This is for the options in the '...' menu only */ }
+								siteId={ siteId /* This is for the options in the '...' menu only */ }
+								showUploadButton={ false }
 								getScreenshotUrl={ function( theme ) {
 									if ( ! getScreenshotOption( theme ).getUrl ) {
 										return null;
@@ -123,3 +128,12 @@ export default connectOptions(
 		);
 	}
 );
+
+export default connect(
+	( state, { siteId, tier } ) => {
+		return {
+			wpcomTier: hasFeature( state, siteId, FEATURE_UNLIMITED_PREMIUM_THEMES ) ? tier : 'free',
+			showWpcomThemesList: hasJetpackSiteJetpackThemesExtendedFeatures( state, siteId )
+		};
+	}
+)( ConnectedSingleSiteJetpack );

@@ -26,6 +26,7 @@ import PostSchedule from 'components/post-schedule/docs/example';
 import PostSelector from 'my-sites/post-selector/docs/example';
 import Sites from 'lib/sites-list/docs/example';
 import SitesDropdown from 'components/sites-dropdown/docs/example';
+import SiteIcon from 'blocks/site-icon/docs/example';
 import Theme from 'components/theme/docs/example';
 import HappinessSupport from 'components/happiness-support/docs/example';
 import ThemesListExample from 'components/themes-list/docs/example';
@@ -52,6 +53,7 @@ import ImageEditor from 'blocks/image-editor/docs/example';
 import ReaderPostCard from 'blocks/reader-post-card/docs/example';
 import ReaderPostOptionsMenu from 'blocks/reader-post-options-menu/docs/example';
 import DailyPostButton from 'blocks/daily-post-button/docs/example';
+import PostLikes from 'blocks/post-likes/docs/example';
 
 export default React.createClass( {
 
@@ -102,6 +104,7 @@ export default React.createClass( {
 					<PostSelector />
 					<Sites />
 					<SitesDropdown />
+					<SiteIcon />
 					<Theme />
 					<ThemesListExample />
 					<UpgradeNudge />
@@ -124,6 +127,7 @@ export default React.createClass( {
 					<ReaderAvatar />
 					<ReaderPostOptionsMenu />
 					<DailyPostButton />
+					<PostLikes />
 				</Collection>
 			</Main>
 		);

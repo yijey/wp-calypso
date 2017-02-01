@@ -21,7 +21,8 @@ import { localize } from 'i18n-calypso';
  */
 import wpcom from 'lib/wp';
 import Notice from 'components/notice';
-import { getFixedDomainSearch, canRegister, getTld } from 'lib/domains';
+import { getFixedDomainSearch, checkDomainAvailability } from 'lib/domains';
+import { getAvailabilityNotice } from 'lib/domains/registration/availability-messages';
 import SearchCard from 'components/search-card';
 import DomainRegistrationSuggestion from 'components/domains/domain-registration-suggestion';
 import DomainMappingSuggestion from 'components/domains/domain-mapping-suggestion';
@@ -35,7 +36,6 @@ import {
 	getDomainsSuggestions,
 	getDomainsSuggestionsError
 } from 'state/domains/suggestions/selectors';
-import support from 'lib/url/support';
 
 const domains = wpcom.domains();
 
@@ -114,12 +114,19 @@ const RegisterDomainStep = React.createClass( {
 		surveyVertical: React.PropTypes.string,
 		includeWordPressDotCom: React.PropTypes.bool,
 		includeDotBlogSubdomain: React.PropTypes.bool,
+		showExampleSuggestions: React.PropTypes.bool,
+		onSave: React.PropTypes.func,
+		onAddMapping: React.PropTypes.func,
+		onAddDomain: React.PropTypes.func
 	},
 
 	getDefaultProps: function() {
 		return {
 			onDomainsAvailabilityChange: noop,
-			analyticsSection: 'domains'
+			analyticsSection: 'domains',
+			onSave: noop,
+			onAddMapping: noop,
+			onAddDomain: noop
 		};
 	},
 
@@ -128,7 +135,6 @@ const RegisterDomainStep = React.createClass( {
 
 		return {
 			clickedExampleSuggestion: false,
-			dotBlogNotice: true,
 			lastQuery: suggestion,
 			lastDomainSearched: null,
 			lastDomainError: null,
@@ -139,6 +145,11 @@ const RegisterDomainStep = React.createClass( {
 	},
 
 	componentWillReceiveProps( nextProps ) {
+		// Reset state on site change
+		if ( nextProps.selectedSite && nextProps.selectedSite.slug !== ( this.props.selectedSite || {} ).slug ) {
+			this.setState( this.getInitialState() );
+		}
+
 		if ( this.props.defaultSuggestionsError === nextProps.defaultSuggestionsError ||
 			( ! this.props.defaultSuggestionsError && ! nextProps.defaultSuggestionsError ) ) {
 			return;
@@ -187,7 +198,6 @@ const RegisterDomainStep = React.createClass( {
 
 	componentDidUpdate: function( prevProps ) {
 		if ( this.props.selectedSite && this.props.selectedSite.domain !== prevProps.selectedSite.domain ) {
-			this.setState( this.getInitialState() );
 			this.focusSearchCard();
 		}
 	},
@@ -205,55 +215,34 @@ const RegisterDomainStep = React.createClass( {
 		return ! this.props.defaultSuggestions && ! this.props.defaultSuggestionsError;
 	},
 
-	dismissDotBlogNotice() {
-		this.setState( { dotBlogNotice: false } );
-	},
-
-	dotBlogNotice() {
-		return this.state.dotBlogNotice && ! this.props.isSignupStep &&
-			<Notice
-				text={ this.props.translate(
-					'New! {{strong}}.blog{{/strong}} domains are now available for registration.',
-					{ components: { strong: <strong /> } }
-				) }
-				status={ 'is-info' }
-				showDismiss={ true }
-				onDismissClick={ this.dismissDotBlogNotice }
-			/>;
-	},
-
 	render: function() {
+		const queryObject = getQueryObject( this.props );
 		return (
 			<div className="register-domain-step">
-				{ this.searchForm() }
-				{ this.dotBlogNotice() }
-				{ this.notices() }
+					<div className="register-domain-step__search">
+						<SearchCard
+							ref="searchCard"
+							additionalClasses={ this.state.clickedExampleSuggestion ? 'is-refocused' : undefined }
+							initialValue={ this.state.lastQuery }
+							onSearch={ this.onSearch }
+							onSearchChange={ this.onSearchChange }
+							onBlur={ this.save }
+							placeholder={ this.props.translate( 'Enter a domain or keyword', { textOnly: true } ) }
+							autoFocus={ true }
+							delaySearch={ true }
+							delayTimeout={ 1000 }
+							dir="ltr"
+							maxLength={ 60 }
+						/>
+					</div>
+				{
+					this.state.notice &&
+					<Notice text={ this.state.notice } status={ `is-${ this.state.noticeSeverity }` } showDismiss={ false } />
+				}
 				{ this.content() }
-				{ this.queryDomainsSuggestions() }
+				{ queryObject && <QueryDomainsSuggestions { ...queryObject } /> }
 			</div>
 		);
-	},
-
-	queryDomainsSuggestions() {
-		const queryObject = getQueryObject( this.props );
-		if ( ! queryObject ) {
-			return null;
-		}
-		const { query, quantity, vendor, includeSubdomain } = queryObject;
-		return (
-			<QueryDomainsSuggestions
-				query={ query }
-				quantity={ quantity }
-				vendor={ vendor }
-				includeSubdomain={ includeSubdomain }
-			/>
-		);
-	},
-
-	notices: function() {
-		if ( this.state.notice ) {
-			return <Notice text={ this.state.notice } status={ `is-${ this.state.noticeSeverity }` } showDismiss={ false } />;
-		}
 	},
 
 	handleClickExampleSuggestion: function() {
@@ -281,31 +270,8 @@ const RegisterDomainStep = React.createClass( {
 		return this.initialSuggestions();
 	},
 
-	searchForm: function() {
-		return (
-			<div className="register-domain-step__search">
-				<SearchCard
-					ref="searchCard"
-					additionalClasses={ this.state.clickedExampleSuggestion ? 'is-refocused' : undefined }
-					initialValue={ this.state.lastQuery }
-					onSearch={ this.onSearch }
-					onSearchChange={ this.onSearchChange }
-					onBlur={ this.save }
-					placeholder={ this.props.translate( 'Enter a domain or keyword', { textOnly: true } ) }
-					autoFocus={ true }
-					delaySearch={ true }
-					delayTimeout={ 1000 }
-					dir="ltr"
-					maxLength={ 60 }
-				/>
-			</div>
-		);
-	},
-
 	save: function() {
-		if ( this.props.onSave ) {
-			this.props.onSave( this.state );
-		}
+		this.props.onSave( this.state );
 	},
 
 	onSearchChange: function( searchQuery ) {
@@ -347,7 +313,7 @@ const RegisterDomainStep = React.createClass( {
 						return callback();
 					}
 
-					canRegister( domain, ( error, result ) => {
+					checkDomainAvailability( domain, ( error, result ) => {
 						const timeDiff = Date.now() - timestamp;
 						if ( error ) {
 							this.showValidationErrorMessage( domain, error );
@@ -431,7 +397,7 @@ const RegisterDomainStep = React.createClass( {
 			} );
 		} else {
 			// only display two suggestions initially
-			suggestions = this.props.defaultSuggestions ? this.props.defaultSuggestions.slice( 0, INITIAL_SUGGESTION_QUANTITY ) : [];
+			suggestions = ( this.props.defaultSuggestions || [] ).slice( 0, INITIAL_SUGGESTION_QUANTITY );
 
 			domainRegistrationSuggestions = suggestions.map( function( suggestion ) {
 				return (
@@ -466,18 +432,13 @@ const RegisterDomainStep = React.createClass( {
 
 	allSearchResults: function() {
 		const lastDomainSearched = this.state.lastDomainSearched,
-			isSearchedDomain = function( suggestion ) {
+			matchesSearchedDomain = function( suggestion ) {
 				return suggestion.domain_name === lastDomainSearched;
 			},
-			availableDomain = this.state.lastDomainError ? undefined : find( this.state.searchResults, isSearchedDomain );
-		let suggestions = reject( this.state.searchResults, isSearchedDomain ),
-			onAddMapping;
+			availableDomain = this.state.lastDomainError ? undefined : find( this.state.searchResults, matchesSearchedDomain ),
+			onAddMapping = ( domain ) => this.props.onAddMapping( domain, this.state );
 
-		if ( this.props.onAddMapping ) {
-			onAddMapping = ( domain ) => {
-				return this.props.onAddMapping( domain, this.state );
-			};
-		}
+		let suggestions = reject( this.state.searchResults, matchesSearchedDomain );
 
 		if ( suggestions.length === 0 && ! this.state.loadingResults ) {
 			// the search returned no results
@@ -540,127 +501,12 @@ const RegisterDomainStep = React.createClass( {
 
 	addRemoveDomainToCart: function( suggestion, event ) {
 		event.preventDefault();
-
-		if ( this.props.onAddDomain ) {
-			return this.props.onAddDomain( suggestion );
-		}
+		return this.props.onAddDomain( suggestion );
 	},
 
 	showValidationErrorMessage: function( domain, error ) {
-		let message,
-			severity = 'error';
-		const tld = getTld( domain ),
-			translate = this.props.translate;
-
-		switch ( error.code ) {
-			case 'available_but_not_registrable':
-				if ( tld ) {
-					message = translate(
-						'To use a domain ending with {{strong}}.%(tld)s{{/strong}} on your site, ' +
-						'you can register it elsewhere first and then add it here. {{a}}Learn more{{/a}}.',
-						{
-							args: { tld },
-							components: {
-								strong: <strong />,
-								a: <a target="_blank" rel="noopener noreferrer" href={ support.MAP_EXISTING_DOMAIN } />
-							}
-						}
-					);
-					severity = 'info';
-				}
-				break;
-			case 'tld_in_maintenance':
-				if ( tld ) {
-					message = translate(
-						'Domains ending with {{strong}}.%(tld)s{{/strong}} are undergoing maintenance. Please check back shortly.',
-						{
-							args: { tld },
-							components: {
-								strong: <strong />
-							}
-						}
-					);
-					severity = 'info';
-				}
-				break;
-			case 'not_available_but_mappable':
-			case 'domain_registration_unavailable':
-				// unavailable domains are displayed in the search results, not as a notice OR
-				// domain registrations are closed, in which case it is handled in parent
-				message = null;
-				break;
-
-			case 'not_mappable_blacklisted_domain':
-				if ( domain.toLowerCase().indexOf( 'wordpress' ) > -1 ) {
-					message = translate(
-						'Due to {{a1}}trademark policy{{/a1}}, ' +
-						'we are not able to allow domains containing {{strong}}WordPress{{/strong}} to be registered or mapped here. ' +
-						'Please {{a2}}contact support{{/a2}} if you have any questions.',
-						{
-							components: {
-								strong: <strong />,
-								a1: <a target="_blank" rel="noopener noreferrer" href="http://wordpressfoundation.org/trademark-policy/" />,
-								a2: <a href={ support.CALYPSO_CONTACT } />
-							}
-						}
-					);
-				} else {
-					message = translate( 'Domain cannot be mapped to a WordPress.com blog because of blacklisted term.' );
-				}
-				break;
-
-			case 'not_mappable_forbidden_subdomain':
-				message = translate( 'Subdomains starting with \'www.\' cannot be mapped to a WordPress.com blog' );
-				break;
-
-			case 'not_mappable_forbidden_domain':
-				message = translate( 'Only the owner of the domain can map it\'s subdomains.' );
-				break;
-
-			case 'not_mappable_invalid_tld':
-			case 'invalid_query':
-				message = translate( 'Sorry, %(domain)s does not appear to be a valid domain name.', {
-					args: { domain: domain }
-				} );
-				break;
-
-			case 'not_mappable_mapped_domain':
-				message = translate( 'This domain is already mapped to a WordPress.com site.' );
-				break;
-
-			case 'not_mappable_restricted_domain':
-				message = translate(
-					'You cannot map another WordPress.com subdomain - try creating a new site or one of the custom domains below.'
-				);
-				break;
-
-			case 'not_mappable_recently_mapped':
-				message = translate( 'This domain was recently in use by someone else and is not available to map yet. ' +
-					'Please try again later or contact support.' );
-				break;
-
-			// Generic error message when domain is not mappable without an explicit unmappability reason
-			case 'not_mappable':
-				message = translate( 'Sorry, this domain cannot be mapped.' );
-				break;
-
-			case 'empty_query':
-				message = translate( 'Please enter a domain name or keyword.' );
-				break;
-
-			case 'empty_results':
-				message = translate( "We couldn't find any available domains for: %(domain)s", {
-					args: { domain }
-				} );
-				break;
-
-			default:
-				message = translate( 'Sorry, there was a problem processing your request. Please try again in a few minutes.' );
-		}
-
-		if ( message ) {
-			this.setState( { notice: message, noticeSeverity: severity } );
-		}
+		const { message, severity } = getAvailabilityNotice( domain, error );
+		this.setState( { notice: message, noticeSeverity: severity } );
 	}
 } );
 

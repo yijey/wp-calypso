@@ -40,6 +40,7 @@ const SingleSiteThemeShowcaseWithOptions = ( props ) => {
 					'purchase',
 					'activate',
 					'tryandcustomize',
+					'deleteTheme',
 					'separator',
 					'info',
 					'support',
@@ -48,8 +49,8 @@ const SingleSiteThemeShowcaseWithOptions = ( props ) => {
 				defaultOption="activate"
 				secondaryOption="tryandcustomize"
 				source="showcase"
-				showUploadButton={ true }
-				uploadLabel={ translate( 'Custom themes' ) }
+				listLabel={ translate( 'Uploaded themes' ) }
+				placeholderCount={ 5 }
 			/>
 		);
 	}
@@ -72,8 +73,6 @@ const SingleSiteThemeShowcaseWithOptions = ( props ) => {
 			defaultOption="activate"
 			secondaryOption="tryandcustomize"
 			source="showcase"
-			showUploadButton={ true }
-			uploadLabel={ translate( 'WordPress.com themes' ) }
 		/>
 	);
 };

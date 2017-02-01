@@ -4,12 +4,12 @@
 import React from 'react';
 import classnames from 'classnames';
 import { noop } from 'lodash';
+import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
  */
-import SiteIcon from 'components/site-icon';
-import Gridicon from 'components/gridicon';
+import SiteIcon from 'blocks/site-icon';
 import SiteIndicator from 'my-sites/site-indicator';
 
 export default React.createClass( {
@@ -19,7 +19,6 @@ export default React.createClass( {
 		return {
 			// onSelect callback
 			onSelect: noop,
-			onClick: noop,
 			// mouse event callbacks
 			onMouseEnter: noop,
 			onMouseLeave: noop,
@@ -47,8 +46,7 @@ export default React.createClass( {
 		onMouseLeave: React.PropTypes.func,
 		isSelected: React.PropTypes.bool,
 		isHighlighted: React.PropTypes.bool,
-		site: React.PropTypes.object.isRequired,
-		onClick: React.PropTypes.func,
+		site: React.PropTypes.object,
 		homeLink: React.PropTypes.bool,
 		showHomeIcon: React.PropTypes.bool
 	},
@@ -98,8 +96,7 @@ export default React.createClass( {
 						? this.translate( 'View this site' )
 						: this.translate( 'Select this site' )
 					}
-					onTouchTap={ this.onSelect }
-					onClick={ this.props.onClick }
+					onClick={ this.onSelect }
 					onMouseEnter={ this.onMouseEnter }
 					onMouseLeave={ this.onMouseLeave }
 					aria-label={ this.props.homeLink && site.is_previewable

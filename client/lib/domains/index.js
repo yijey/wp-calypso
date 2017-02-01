@@ -31,7 +31,7 @@ function canAddGoogleApps( domainName ) {
 	return ! ( includes( GOOGLE_APPS_INVALID_TLDS, tld ) || includesBannedPhrase );
 }
 
-function canRegister( domainName, onComplete ) {
+function checkDomainAvailability( domainName, onComplete ) {
 	if ( ! domainName ) {
 		onComplete( new ValidationError( 'empty_query' ) );
 		return;
@@ -66,28 +66,6 @@ function canRegister( domainName, onComplete ) {
 			onComplete( new ValidationError( errorCode ) );
 		} else {
 			onComplete( null, data );
-		}
-	} );
-}
-
-function canMap( domainName, onComplete ) {
-	if ( ! domainName ) {
-		onComplete( new ValidationError( 'empty_query' ) );
-		return;
-	}
-
-	wpcom.undocumented().isDomainMappable( domainName, function( serverError, data ) {
-		let errorCode;
-		if ( serverError ) {
-			errorCode = serverError.error;
-		} else if ( ! data.is_mappable ) {
-			errorCode = 'not_mappable';
-		}
-
-		if ( errorCode ) {
-			onComplete( new ValidationError( errorCode ) );
-		} else {
-			onComplete( null );
 		}
 	} );
 }
@@ -187,9 +165,8 @@ function getTld( domainName ) {
 
 export {
 	canAddGoogleApps,
-	canMap,
 	canRedirect,
-	canRegister,
+	checkDomainAvailability,
 	getFixedDomainSearch,
 	getGoogleAppsSupportedDomains,
 	getPrimaryDomain,

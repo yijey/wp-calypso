@@ -7,10 +7,12 @@ import { createStore, applyMiddleware, combineReducers, compose } from 'redux';
 /**
  * Internal dependencies
  */
+import sitesSync from './sites/enhancer';
 import noticesMiddleware from './notices/middleware';
 import application from './application/reducer';
 import accountRecovery from './account-recovery/reducer';
 import automatedTransfer from './automated-transfer/reducer';
+import billingTransactions from './billing-transactions/reducer';
 import comments from './comments/reducer';
 import componentsUsageStats from './components-usage-stats/reducer';
 import consoleDispatcher from './console-dispatch';
@@ -22,7 +24,7 @@ import geo from './geo/reducer';
 import googleAppsUsers from './google-apps-users/reducer';
 import help from './help/reducer';
 import jetpackConnect from './jetpack-connect/reducer';
-import jetpackSettings from './jetpack-settings/reducer';
+import jetpack from './jetpack/reducer';
 import jetpackSync from './jetpack-sync/reducer';
 import happinessEngineers from './happiness-engineers/reducer';
 import happychat from './happychat/reducer';
@@ -55,6 +57,8 @@ import themes from './themes/reducer';
 import ui from './ui/reducer';
 import users from './users/reducer';
 import wordads from './wordads/reducer';
+import automatedTransferEnhancer from './automated-transfer/enhancer';
+import config from 'config';
 
 /**
  * Module variables
@@ -63,6 +67,7 @@ export const reducer = combineReducers( {
 	application,
 	accountRecovery,
 	automatedTransfer,
+	billingTransactions,
 	comments,
 	componentsUsageStats,
 	countryStates,
@@ -75,7 +80,7 @@ export const reducer = combineReducers( {
 	happychat,
 	help,
 	jetpackConnect,
-	jetpackSettings,
+	jetpack,
 	jetpackSync,
 	media,
 	notices,
@@ -108,30 +113,28 @@ export const reducer = combineReducers( {
 	wordads,
 } );
 
-const middleware = [ thunkMiddleware, noticesMiddleware ];
-
-if ( typeof window === 'object' ) {
-	// Browser-specific middlewares
-	middleware.push(
-		require( './analytics/middleware.js' ).analyticsMiddleware,
-		require( './data-layer/wpcom-api-middleware.js' ).middleware,
-	);
-}
-
-let createStoreWithMiddleware = applyMiddleware.apply( null, middleware );
+// TEMPORARY AT FLOW FIX, NOT INTENDED FOR PROD
+const isDevOrWPCalypso = [ 'development', 'wpcalypso' ].indexOf( config( 'env_id' ) ) > -1;
+const atEnabled = isDevOrWPCalypso && config.isEnabled( 'automated-transfer' );
 
 export function createReduxStore( initialState = {} ) {
-	if (
-		typeof window === 'object' &&
-		window.app &&
-		window.app.isDebug &&
-		window.devToolsExtension
-	) {
-		createStoreWithMiddleware = compose(
-			consoleDispatcher,
-			createStoreWithMiddleware,
-			window.devToolsExtension(),
-		);
-	}
-	return createStoreWithMiddleware( createStore )( reducer, initialState );
+	const isBrowser = typeof window === 'object';
+
+	const middlewares = [
+		thunkMiddleware,
+		noticesMiddleware,
+		isBrowser && require( './analytics/middleware.js' ).analyticsMiddleware,
+		isBrowser && require( './data-layer/wpcom-api-middleware.js' ).default,
+		isBrowser && atEnabled && require( './automated-transfer/middleware.js' ).default
+	].filter( Boolean );
+
+	const enhancers = [
+		isBrowser && window.app && window.app.isDebug && consoleDispatcher,
+		applyMiddleware( ...middlewares ),
+		isBrowser && sitesSync,
+		isBrowser && atEnabled && automatedTransferEnhancer,
+		isBrowser && window.devToolsExtension && window.devToolsExtension()
+	].filter( Boolean );
+
+	return compose( ...enhancers )( createStore )( reducer, initialState );
 }

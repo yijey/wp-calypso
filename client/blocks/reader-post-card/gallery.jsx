@@ -7,10 +7,12 @@ import { map, take, filter } from 'lodash';
 /**
  * Internal Dependencies
  */
+import AutoDirection from 'components/auto-direction';
 import { imageIsBigEnoughForGallery } from 'state/reader/posts/normalization-rules';
 import resizeImageUrl from 'lib/resize-image-url';
 import cssSafeUrl from 'lib/css-safe-url';
 import { isFeaturedImageInContent } from 'lib/post-normalizer/utils';
+import ReaderPostCardExcerpt from './excerpt';
 
 const GALLERY_ITEM_THUMBNAIL_WIDTH = 420;
 
@@ -26,7 +28,7 @@ function getGalleryWorthyImages( post ) {
 	return take( worthyImages, numberOfImagesToDisplay );
 }
 
-const PostGallery = ( { post } ) => {
+const PostGallery = ( { post, children, isDiscover } ) => {
 	const imagesToDisplay = getGalleryWorthyImages( post );
 	const listItems = map( imagesToDisplay, ( image, index ) => {
 		const imageUrl = resizeImageUrl( image.src, { w: GALLERY_ITEM_THUMBNAIL_WIDTH } );
@@ -44,14 +46,25 @@ const PostGallery = ( { post } ) => {
 		);
 	} );
 	return (
-		<ul className="reader-post-card__gallery">
-			{ listItems }
-		</ul>
-	);
+		<div className="reader-post-card__post" >
+			<ul className="reader-post-card__gallery">
+				{ listItems }
+			</ul>
+			<div className="reader-post-card__post-details">
+				<AutoDirection>
+					<h1 className="reader-post-card__title">
+						<a className="reader-post-card__title-link" href={ post.URL }>{ post.title }</a>
+					</h1>
+				</AutoDirection>
+				<ReaderPostCardExcerpt post={ post } isDiscover={ isDiscover } />
+				{ children }
+				</div>
+		</div> );
 };
 
 PostGallery.propTypes = {
-	post: React.PropTypes.object.isRequired
+	post: React.PropTypes.object.isRequired,
+	isDiscover: React.PropTypes.bool,
 };
 
 export default PostGallery;

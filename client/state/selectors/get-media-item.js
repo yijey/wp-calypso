@@ -1,9 +1,4 @@
 /**
- * External dependencies
- */
-import { get } from 'lodash';
-
-/**
  * Returns a media object by site ID, media ID, or null if not known
  *
  * @alias getMediaItem
@@ -14,5 +9,11 @@ import { get } from 'lodash';
  * @return {?Object}         Media object, if known
  */
 export default function getMediaItem( state, siteId, mediaId ) {
-	return get( state.media.items, [ siteId, mediaId ], null );
+	const queries = state.media.queries[ siteId ];
+
+	if ( ! queries ) {
+		return null;
+	}
+
+	return queries.getItem( mediaId ) || null;
 }

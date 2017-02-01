@@ -44,6 +44,12 @@ function getExternals() {
 	externals[ 'devdocs/components-usage-stats.json' ] = 'commonjs devdocs/components-usage-stats.json';
 	// Exclude server/bundler/assets, since the files it requires don't exist until the bundler has run
 	externals[ 'bundler/assets' ] = 'commonjs bundler/assets';
+	// Map React and redux to the minimized version in production
+	if ( config( 'env' ) === 'production' ) {
+		externals[ 'react-with-addons' ] = 'commonjs react/dist/react-with-addons.min';
+		externals.react = 'commonjs react/dist/react.min';
+		externals.redux = 'commonjs redux/dist/redux.min';
+	}
 
 	return externals;
 }
@@ -100,7 +106,6 @@ var webpackConfig = {
 		new webpack.NormalModuleReplacementPlugin( /^lib\/post-normalizer\/rule-create-better-excerpt$/, 'lodash/noop' ), // Depends on BOM
 		new webpack.NormalModuleReplacementPlugin( /^components\/seo\/preview-upgrade-nudge$/, 'components/empty-component' ), // Depends on page.js and should never be required server side
 		new webpack.NormalModuleReplacementPlugin( /^components\/popover$/, 'components/empty-component' ), // Depends on BOM and interactions don't work without JS
-		new webpack.NormalModuleReplacementPlugin( /^my-sites\/themes\/thanks-modal$/, 'components/empty-component' ), // Depends on BOM
 		new webpack.NormalModuleReplacementPlugin( /^my-sites\/themes\/themes-site-selector-modal$/, 'components/empty-component' ), // Depends on BOM
 		new webpack.NormalModuleReplacementPlugin( /^my-sites\/themes\/theme-upload$/, 'components/empty-component' ), // Depends on BOM
 		new webpack.NormalModuleReplacementPlugin( /^my-sites\/themes\/single-site$/, 'components/empty-component' ), // Depends on DOM

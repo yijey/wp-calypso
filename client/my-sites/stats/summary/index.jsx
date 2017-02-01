@@ -4,7 +4,7 @@
 import React from 'react';
 import page from 'page';
 import debugFactory from 'debug';
-import { find } from 'lodash';
+import { find, merge } from 'lodash';
 import { connect } from 'react-redux';
 import { localize } from 'i18n-calypso';
 
@@ -16,7 +16,7 @@ import HeaderCake from 'components/header-cake';
 import StatsModule from '../stats-module';
 import statsStringsFactory from '../stats-strings';
 import Countries from '../stats-countries';
-import SummaryChart from '../stats-summary-chart';
+import StatsVideoSummary from '../stats-video-summary';
 import VideoPlayDetails from '../stats-video-details';
 import Main from 'components/main';
 import StatsFirstView from '../stats-first-view';
@@ -64,7 +64,7 @@ const StatsSummary = React.createClass( {
 	},
 
 	render: function() {
-		const { site, translate } = this.props;
+		const { translate, statsQueryOptions } = this.props;
 		const summaryViews = [];
 		let title;
 		let summaryView;
@@ -72,6 +72,12 @@ const StatsSummary = React.createClass( {
 		let barChart;
 
 		debug( 'Rendering summary-top-posts.jsx', this.props );
+		const { period, endOf } = this.props.period;
+		const query = {
+			period: period,
+			date: endOf.format( 'YYYY-MM-DD' ),
+			max: 0
+		};
 
 		switch ( this.props.context.params.module ) {
 
@@ -79,63 +85,64 @@ const StatsSummary = React.createClass( {
 				title = translate( 'Referrers' );
 				summaryView = <StatsModule
 					key="referrers-summary"
-					path={ 'referrers' }
+					path="referrers"
 					moduleStrings={ StatsStrings.referrers }
-					site={ site }
-					dataList={ this.props.summaryList }
 					period={ this.props.period }
-					summary={ true } />;
+					query={ query }
+					statType="statsReferrers"
+					summary />;
 				break;
 
 			case 'clicks':
 				title = translate( 'Clicks' );
 				summaryView = <StatsModule
 					key="clicks-summary"
-					path={ 'clicks' }
+					path="clicks"
 					moduleStrings={ StatsStrings.clicks }
-					site={ site }
-					dataList={ this.props.summaryList }
 					period={ this.props.period }
-					summary={ true } />;
+					query={ query }
+					statType="statsClicks"
+					summary />;
 				break;
 
 			case 'countryviews':
 				title = translate( 'Countries' );
 				summaryView = <Countries
-					key="countries-summary"
-					path="countries-summary"
-					site={ site }
-					dataList={ this.props.summaryList }
-					period={ this.props.period }
-					summary={ true } />;
+						key="countries-summary"
+						path="countryviews"
+						period={ this.props.period }
+						query={ merge( {}, statsQueryOptions, query ) }
+						summary={ true } />;
 				break;
 
 			case 'posts':
 				title = translate( 'Posts & Pages' );
 				summaryView = <StatsModule
 					key="posts-summary"
-					path={ 'posts' }
+					path="posts"
 					moduleStrings={ StatsStrings.posts }
-					site={ site }
-					dataList={ this.props.summaryList }
 					period={ this.props.period }
-					summary={ true } />;
+					query={ merge( {}, statsQueryOptions, query ) }
+					statType="statsTopPosts"
+					summary />;
 				break;
 
 			case 'authors':
 				title = translate( 'Authors' );
 				// TODO: should be refactored so that className doesn't have to be passed in
 				/* eslint-disable wpcalypso/jsx-classname-namespace */
-				summaryView = <StatsModule
-					key="authors-summary"
-					path={ 'authors' }
-					moduleStrings={ StatsStrings.authors }
-					site={ site }
-					dataList={ this.props.summaryList }
-					period={ this.props.period }
-					followList={ this.props.followList }
-					className="stats__author-views"
-					summary={ true } />;
+				summaryView = (
+					<StatsModule
+						key="authors-summary"
+						path="authors"
+						moduleStrings={ StatsStrings.authors }
+						period={ this.props.period }
+						query={ query }
+						statType="statsTopAuthors"
+						className="stats__author-views"
+						summary={ true }
+					/>
+				);
 				/* eslint-enable wpcalypso/jsx-classname-namespace */
 				break;
 
@@ -143,26 +150,24 @@ const StatsSummary = React.createClass( {
 				title = translate( 'Videos' );
 				summaryView = <StatsModule
 					key="videoplays-summary"
-					path={ 'videoplays' }
+					path="videoplays"
 					moduleStrings={ StatsStrings.videoplays }
-					site={ site }
-					dataList={ this.props.summaryList }
 					period={ this.props.period }
-					followList={ this.props.followList }
-					summary={ true } />;
+					query={ query }
+					statType="statsVideoPlays"
+					summary />;
 				break;
 
 			case 'podcastdownloads':
 				title = translate( 'Podcasts' );
 				summaryView = <StatsModule
 					key="podcastdownloads-summary"
-					path={ 'podcastdownloads' }
+					path="podcastdownloads"
 					moduleStrings={ StatsStrings.podcastdownloads }
-					site={ site }
-					dataList={ this.props.summaryList }
 					period={ this.props.period }
-					followList={ this.props.followList }
-					summary={ true } />;
+					query={ query }
+					statType="statsPodcastDownloads"
+					summary />;
 				break;
 
 			case 'videodetails':
@@ -182,16 +187,7 @@ const StatsSummary = React.createClass( {
 				/* eslint-enable wpcalypso/jsx-classname-namespace */
 
 				summaryViews.push( chartTitle );
-
-				barChart = <SummaryChart
-					key="video-chart"
-					loading={ this.props.summaryList.isLoading() }
-					dataList={ this.props.summaryList }
-					activeKey="period"
-					dataKey="value"
-					labelKey="period"
-					labelClass="video"
-					tabLabel={ translate( 'Plays' ) } />;
+				barChart = <StatsVideoSummary key="video-chart" postId={ this.props.postId } />;
 
 				summaryViews.push( barChart );
 
@@ -204,12 +200,12 @@ const StatsSummary = React.createClass( {
 				title = translate( 'Search Terms' );
 				summaryView = <StatsModule
 					key="search-terms-summary"
-					path={ 'searchterms' }
+					path="searchterms"
 					moduleStrings={ StatsStrings.search }
-					site={ site }
-					dataList={ this.props.summaryList }
 					period={ this.props.period }
-					summary={ true } />;
+					query={ merge( {}, statsQueryOptions, query ) }
+					statType="statsSearchTerms"
+					summary />;
 				break;
 		}
 

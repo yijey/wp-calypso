@@ -118,7 +118,7 @@ describe( 'actions', () => {
 				} )
 				.get( '/rest/v1/sites/77203074/themes' )
 				.reply( 200, {
-					found: 2,
+					// The endpoint doesn't return `found` for Jetpack sites
 					themes: [
 						{ ID: 'twentyfifteen', name: 'Twenty Fifteen' },
 						{ ID: 'twentysixteen', name: 'Twenty Sixteen' }
@@ -127,7 +127,7 @@ describe( 'actions', () => {
 				.get( '/rest/v1/sites/77203074/themes' )
 				.query( { search: 'Sixteen' } )
 				.reply( 200, {
-					found: 1,
+					// The endpoint doesn't return `found` for Jetpack sites
 					themes: [ { ID: 'twentysixteen', name: 'Twenty Sixteen' } ]
 				} )
 				.get( '/rest/v1/sites/1916284/themes' )
@@ -192,6 +192,17 @@ describe( 'actions', () => {
 		} );
 
 		context( 'with a Jetpack site', () => {
+			const fakeGetState = () => ( {
+				sites: {
+					items: {
+						77203074: {
+							jetpack: true,
+							options: { jetpack_version: '4.4.2' }
+						}
+					}
+				}
+			} );
+
 			it( 'should dispatch fetch action when thunk triggered', () => {
 				requestThemes( 77203074 )( spy );
 
@@ -203,7 +214,7 @@ describe( 'actions', () => {
 			} );
 
 			it( 'should dispatch themes receive action when request completes', () => {
-				return requestThemes( 77203074 )( spy ).then( () => {
+				return requestThemes( 77203074 )( spy, fakeGetState ).then( () => {
 					expect( spy ).to.have.been.calledWith( {
 						type: THEMES_RECEIVE,
 						themes: [
@@ -216,7 +227,7 @@ describe( 'actions', () => {
 			} );
 
 			it( 'should dispatch themes request success action when request completes', () => {
-				return requestThemes( 77203074 )( spy ).then( () => {
+				return requestThemes( 77203074 )( spy, fakeGetState ).then( () => {
 					expect( spy ).to.have.been.calledWith( {
 						type: THEMES_REQUEST_SUCCESS,
 						siteId: 77203074,
@@ -231,7 +242,7 @@ describe( 'actions', () => {
 			} );
 
 			it( 'should dispatch themes request success action with query results', () => {
-				return requestThemes( 77203074, { search: 'Sixteen' } )( spy ).then( () => {
+				return requestThemes( 77203074, { search: 'Sixteen' } )( spy, fakeGetState ).then( () => {
 					expect( spy ).to.have.been.calledWith( {
 						type: THEMES_REQUEST_SUCCESS,
 						siteId: 77203074,
@@ -243,7 +254,6 @@ describe( 'actions', () => {
 					} );
 				} );
 			} );
-
 			it( 'should dispatch fail action when request fails', () => {
 				return requestThemes( 1916284 )( spy ).then( () => {
 					expect( spy ).to.have.been.calledWith( {
@@ -593,10 +603,22 @@ describe( 'actions', () => {
 			message: 'Unknown blog'
 		};
 
+		const fakeGetState = () => ( {
+			sites: {
+				items: {
+					77203074: {
+						jetpack: true
+					}
+				}
+			}
+		} );
+
 		useNock( ( nock ) => {
 			nock( 'https://public-api.wordpress.com:443' )
 				.persist()
 				.get( '/rest/v1.1/sites/2211667/themes/mine' )
+				.reply( 200, successResponse )
+				.get( '/rest/v1.1/sites/77203074/themes/mine' )
 				.reply( 200, successResponse )
 				.get( '/rest/v1.1/sites/666/themes/mine' )
 				.reply( 404, failureResponse );
@@ -611,24 +633,35 @@ describe( 'actions', () => {
 			} );
 		} );
 
-		it( 'should dispatch active theme request success action when request completes', () => {
-			return requestActiveTheme( 2211667 )( spy ).then( () => {
-				expect( spy ).to.have.been.calledWith( {
-					type: ACTIVE_THEME_REQUEST_SUCCESS,
-					siteId: 2211667,
-					themeId: 'rebalance',
-					themeName: 'Rebalance',
-					themeCost: {
-						currency: 'USD',
-						number: 0,
-						display: ''
-					}
+		context( 'when request completes successfully', () => {
+			context( 'for a WP.com site', () => {
+				it( 'should dispatch receiveTheme action', () => {
+					return requestActiveTheme( 2211667 )( spy, fakeGetState ).then( () => {
+						expect( spy ).to.have.been.calledWith( receiveTheme( successResponse, 'wpcom' ) );
+					} );
+				} );
+			} );
+			context( 'for a Jetpack site', () => {
+				it( 'should dispatch receiveTheme action', () => {
+					return requestActiveTheme( 77203074 )( spy, fakeGetState ).then( () => {
+						expect( spy ).to.have.been.calledWith( receiveTheme( successResponse, 77203074 ) );
+					} );
+				} );
+			} );
+
+			it( 'should dispatch active theme request success action', () => {
+				return requestActiveTheme( 2211667 )( spy, fakeGetState ).then( () => {
+					expect( spy ).to.have.been.calledWith( {
+						type: ACTIVE_THEME_REQUEST_SUCCESS,
+						siteId: 2211667,
+						theme: successResponse
+					} );
 				} );
 			} );
 		} );
 
 		it( 'should dispatch active theme request failure action when request completes', () => {
-			return requestActiveTheme( 666 )( spy ).then( () => {
+			return requestActiveTheme( 666 )( spy, fakeGetState ).then( () => {
 				expect( spy ).to.have.been.calledWith( {
 					type: ACTIVE_THEME_REQUEST_FAILURE,
 					siteId: 666,
@@ -849,7 +882,7 @@ describe( 'actions', () => {
 		useNock( ( nock ) => {
 			nock( 'https://public-api.wordpress.com:443' )
 				.post( '/rest/v1.1/sites/2211667/themes/karuna/delete' )
-				.reply( 200 )
+				.reply( 200, { id: 'karuna', name: 'Karuna' } )
 				.post( '/rest/v1.1/sites/2211667/themes/blahblah/delete' )
 				.reply( 404, { code: 'unknown_theme' } );
 		} );
@@ -860,6 +893,7 @@ describe( 'actions', () => {
 					type: THEME_DELETE_SUCCESS,
 					siteId: 2211667,
 					themeId: 'karuna',
+					themeName: 'Karuna',
 				} );
 			} );
 		} );

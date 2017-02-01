@@ -17,10 +17,13 @@ import {
 	ACCOUNT_RECOVERY_SETTINGS_DELETE_FAILED,
 	ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_SUCCESS,
 	ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_FAILED,
+	ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_SUCCESS,
+	ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_FAILED,
 	GRAVATAR_RECEIVE_IMAGE_FAILURE,
 	GRAVATAR_UPLOAD_REQUEST_FAILURE,
 	GRAVATAR_UPLOAD_REQUEST_SUCCESS,
 	GUIDED_TRANSFER_HOST_DETAILS_SAVE_SUCCESS,
+	KEYRING_CONNECTION_DELETE,
 	POST_DELETE_FAILURE,
 	POST_DELETE_SUCCESS,
 	POST_RESTORE_FAILURE,
@@ -35,6 +38,8 @@ import {
 	PUBLICIZE_CONNECTION_UPDATE,
 	PUBLICIZE_CONNECTION_UPDATE_FAILURE,
 	SITE_FRONT_PAGE_SET_FAILURE,
+	THEME_DELETE_FAILURE,
+	THEME_DELETE_SUCCESS,
 	THEME_TRY_AND_CUSTOMIZE_FAILURE,
 } from 'state/action-types';
 
@@ -48,6 +53,8 @@ import {
 	onAccountRecoverySettingsDeleteSuccess,
 	onResentAccountRecoveryEmailValidationSuccess,
 	onResentAccountRecoveryEmailValidationFailed,
+	onAccountRecoveryPhoneValidationSuccess,
+	onAccountRecoveryPhoneValidationFailed,
 } from './account-recovery';
 
 /**
@@ -150,6 +157,20 @@ export const onPublicizeConnectionUpdateFailure = ( dispatch, { error } ) => dis
 	} ) )
 );
 
+const onThemeDeleteSuccess = ( dispatch, { themeName } ) => dispatch(
+	successNotice( translate( 'Deleted theme %(themeName)s.', {
+		args: { themeName },
+		context: 'Themes: Theme delete confirmation',
+	} ), { duration: 5000 } )
+);
+
+const onThemeDeleteFailure = ( dispatch, { themeId } ) => dispatch(
+	errorNotice( translate( 'Problem deleting %(themeId)s. Check theme is not active.', {
+		args: { themeId },
+		context: 'Themes: Theme delete failure',
+	} ) )
+);
+
 /**
  * Handler action type mapping
  */
@@ -162,11 +183,14 @@ export const handlers = {
 	[ ACCOUNT_RECOVERY_SETTINGS_DELETE_FAILED ]: onAccountRecoverySettingsDeleteFailed,
 	[ ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_SUCCESS ]: onResentAccountRecoveryEmailValidationSuccess,
 	[ ACCOUNT_RECOVERY_SETTINGS_RESEND_VALIDATION_FAILED ]: onResentAccountRecoveryEmailValidationFailed,
+	[ ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_SUCCESS ]: onAccountRecoveryPhoneValidationSuccess,
+	[ ACCOUNT_RECOVERY_SETTINGS_VALIDATE_PHONE_FAILED ]: onAccountRecoveryPhoneValidationFailed,
 	[ GRAVATAR_RECEIVE_IMAGE_FAILURE ]: ( dispatch, action ) => {
 		dispatch( errorNotice( action.errorMessage ) );
 	},
 	[ GRAVATAR_UPLOAD_REQUEST_FAILURE ]: dispatchError( translate( 'New Gravatar was not saved.' ) ),
 	[ GRAVATAR_UPLOAD_REQUEST_SUCCESS ]: dispatchSuccess( translate( 'New Gravatar uploaded successfully!' ) ),
+	[ KEYRING_CONNECTION_DELETE ]: onPublicizeConnectionDelete,
 	[ POST_DELETE_FAILURE ]: onPostDeleteFailure,
 	[ POST_DELETE_SUCCESS ]: dispatchSuccess( translate( 'Post successfully deleted' ) ),
 	[ POST_RESTORE_FAILURE ]: onPostRestoreFailure,
@@ -182,6 +206,8 @@ export const handlers = {
 	[ PUBLICIZE_CONNECTION_UPDATE_FAILURE ]: onPublicizeConnectionUpdateFailure,
 	[ GUIDED_TRANSFER_HOST_DETAILS_SAVE_SUCCESS ]: dispatchSuccess( translate( 'Thanks for confirming those details!' ) ),
 	[ SITE_FRONT_PAGE_SET_FAILURE ]: dispatchError( translate( 'An error occurred while setting the homepage' ) ),
+	[ THEME_DELETE_FAILURE ]: onThemeDeleteFailure,
+	[ THEME_DELETE_SUCCESS ]: onThemeDeleteSuccess,
 	[ THEME_TRY_AND_CUSTOMIZE_FAILURE ]: dispatchError( translate( 'Customize error, please retry or contact support' ) ),
 };
 

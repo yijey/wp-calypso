@@ -13,13 +13,13 @@ import FormSettingExplanation from 'components/forms/form-setting-explanation';
 import {
 	activateModule,
 	deactivateModule
-} from 'state/jetpack-settings/modules/actions';
+} from 'state/jetpack/modules/actions';
 import {
-	isModuleActive,
-	isActivatingModule,
-	isDeactivatingModule,
-	getModule
-} from 'state/jetpack-settings/modules/selectors';
+	getJetpackModule,
+	isActivatingJetpackModule,
+	isDeactivatingJetpackModule,
+	isJetpackModuleActive,
+} from 'state/selectors';
 import { isJetpackSite } from 'state/sites/selectors';
 
 class JetpackModuleToggle extends Component {
@@ -54,15 +54,16 @@ class JetpackModuleToggle extends Component {
 		if ( ! this.props.isJetpackSite ) {
 			return null;
 		}
+
 		return (
 			<span className="jetpack-module-toggle">
 				<CompactFormToggle
 					id={ `${ this.props.siteId }-${ this.props.moduleSlug }-toggle` }
-					checked={ this.props.checked }
+					checked={ this.props.checked || false }
 					toggling={ this.props.toggling }
 					onChange={ this.handleChange }
 					disabled={ this.props.disabled || this.props.toggleDisabled } >
-					<span>{ this.props.label }</span>
+					<span className="site-settings__toggle-label">{ this.props.label }</span>
 					{
 						this.props.description && (
 							<FormSettingExplanation isIndented>
@@ -77,10 +78,10 @@ class JetpackModuleToggle extends Component {
 }
 
 export default connect( ( state, ownProps ) => {
-	const active = isModuleActive( state, ownProps.siteId, ownProps.moduleSlug );
-	const activating = isActivatingModule( state, ownProps.siteId, ownProps.moduleSlug );
-	const moduleDetails = getModule( state, ownProps.siteId, ownProps.moduleSlug );
-	const deactivating = isDeactivatingModule( state, ownProps.siteId, ownProps.moduleSlug );
+	const active = isJetpackModuleActive( state, ownProps.siteId, ownProps.moduleSlug );
+	const activating = isActivatingJetpackModule( state, ownProps.siteId, ownProps.moduleSlug );
+	const moduleDetails = getJetpackModule( state, ownProps.siteId, ownProps.moduleSlug );
+	const deactivating = isDeactivatingJetpackModule( state, ownProps.siteId, ownProps.moduleSlug );
 	const moduleDetailsNotLoaded = moduleDetails === null;
 	const toggling = activating || deactivating;
 	return {

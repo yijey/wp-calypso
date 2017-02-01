@@ -14,10 +14,10 @@ import { bindActionCreators } from 'redux';
  */
 var updatePostStatus = require( 'lib/mixins/update-post-status' ),
 	CompactCard = require( 'components/card/compact' ),
-	Gridicon = require( 'components/gridicon' ),
+	Gridicon = require( 'gridicons' ),
 	PopoverMenu = require( 'components/popover/menu' ),
 	PopoverMenuItem = require( 'components/popover/menu-item' ),
-	SiteIcon = require( 'components/site-icon' ),
+	SiteIcon = require( 'blocks/site-icon' ),
 	helpers = require( './helpers' ),
 	analytics = require( 'lib/analytics' ),
 	utils = require( 'lib/posts/utils' ),
@@ -265,6 +265,19 @@ const Page = React.createClass( {
 		}
 	},
 
+	getCopyItem: function() {
+		const { page: post, site } = this.props;
+		if ( ( 'publish' !== post.status && 'private' !== post.status ) || ! utils.userCan( 'edit_post', post ) ) {
+			return null;
+		}
+		return (
+			<PopoverMenuItem onClick={ this.copyPage } href={ `/page/${ site.slug }?copy=${ post.ID }` }>
+				<Gridicon icon="clipboard" size={ 18 } />
+				{ this.translate( 'Copy' ) }
+			</PopoverMenuItem>
+		);
+	},
+
 	getRestoreItem: function() {
 		if ( this.props.page.status !== 'trash' || ! utils.userCan( 'delete_post', this.props.page ) ) {
 			return null;
@@ -327,6 +340,7 @@ const Page = React.createClass( {
 		const editItem = this.getEditItem();
 		const restoreItem = this.getRestoreItem();
 		const sendToTrashItem = this.getSendToTrashItem();
+		const copyItem = this.getCopyItem();
 		const moreInfoItem = this.popoverMoreInfo();
 		const hasSeparatedItems = (
 			viewItem || publishItem || editItem ||
@@ -346,6 +360,7 @@ const Page = React.createClass( {
 				{ viewItem }
 				{ publishItem }
 				{ editItem }
+				{ copyItem }
 				{ restoreItem }
 				{ sendToTrashItem }
 				{ moreInfoItem }
@@ -413,7 +428,11 @@ const Page = React.createClass( {
 		this.setState( { showPageActions: false } );
 		this.updatePostStatus( 'delete' );
 		recordEvent( 'Clicked Delete Page' );
-	}
+	},
+
+	copyPage: function() {
+		recordEvent( 'Clicked Copy Page' );
+	},
 } );
 
 export default connect(

@@ -177,6 +177,25 @@ sections = [
 		module: 'my-sites/plans',
 		secondary: true,
 		group: 'sites'
+	},
+	{
+		name: 'accept-invite',
+		paths: [ '/accept-invite' ],
+		module: 'my-sites/invites',
+		enableLoggedOut: true
+	},
+	{
+		name: 'ads',
+		paths: [ '/ads' ],
+		module: 'my-sites/ads',
+		secondary: true,
+		group: 'sites'
+	},
+	{
+		name: 'mailing-lists',
+		paths: [ '/mailing-lists' ],
+		module: 'mailing-lists',
+		enableLoggedOut: true
 	}
 ];
 
@@ -200,16 +219,6 @@ if ( config.isEnabled( 'account-recovery' ) ) {
 		module: 'account-recovery',
 		secondary: false,
 		enableLoggedOut: true,
-	} );
-}
-
-if ( config.isEnabled( 'manage/ads' ) ) {
-	sections.push( {
-		name: 'ads',
-		paths: [ '/ads' ],
-		module: 'my-sites/ads',
-		secondary: true,
-		group: 'sites'
 	} );
 }
 
@@ -335,30 +344,12 @@ if ( config.isEnabled( 'help' ) ) {
 	} );
 }
 
-if ( config.isEnabled( 'accept-invite' ) ) {
-	sections.push( {
-		name: 'accept-invite',
-		paths: [ '/accept-invite' ],
-		module: 'my-sites/invites',
-		enableLoggedOut: true
-	} );
-}
-
 if ( config.isEnabled( 'oauth' ) ) {
 	sections.push( {
 		name: 'auth',
 		paths: [ '/login', '/authorize', '/api/oauth/token' ],
 		module: 'auth',
 		secondary: false,
-		enableLoggedOut: true
-	} );
-}
-
-if ( config.isEnabled( 'mailing-lists/unsubscribe' ) ) {
-	sections.push( {
-		name: 'mailing-lists',
-		paths: [ '/mailing-lists' ],
-		module: 'mailing-lists',
 		enableLoggedOut: true
 	} );
 }

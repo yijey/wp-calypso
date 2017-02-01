@@ -3,11 +3,7 @@
  */
 import React from 'react';
 import noop from 'lodash/noop';
-
-/**
- * Internal dependencies
- */
-import Gridicon from 'components/gridicon';
+import Gridicon from 'gridicons';
 
 const CommentButton = React.createClass( {
 
@@ -26,14 +22,6 @@ const CommentButton = React.createClass( {
 			commentCount: 0,
 			showLabel: true
 		};
-	},
-
-	onClick( event ) {
-		event.preventDefault();
-	},
-
-	onTap() {
-		this.props.onClick();
 	},
 
 	render() {
@@ -70,8 +58,7 @@ const CommentButton = React.createClass( {
 		return React.createElement(
 			containerTag, {
 				className: 'comment-button',
-				onTouchTap: this.onTap,
-				onClick: this.onClick
+				onClick: this.props.onClick
 			},
 			<Gridicon icon="comment" size={ this.props.size } className="comment-button__icon" />, labelElement
 		);

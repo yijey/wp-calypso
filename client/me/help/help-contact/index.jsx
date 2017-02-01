@@ -126,13 +126,16 @@ const HelpContact = React.createClass( {
 
 	startHappychat: function( contactForm ) {
 		this.props.openHappychat();
-		const { message, siteSlug } = contactForm;
-		const site = sites.getSite( siteSlug );
+		const { message, siteId } = contactForm;
+		const site = sites.getSite( siteId );
 
-		const messages = [
-			`Site I need help with: ${ site ? site.URL : 'N/A' }`,
+		let messages = [
 			message
 		];
+
+		if ( site ) {
+			messages = [ `Site I need help with: ${ site.URL }` ].concat( messages );
+		}
 
 		messages.forEach( this.props.sendHappychatMessage );
 
@@ -501,9 +504,18 @@ const HelpContact = React.createClass( {
 		}
 	},
 
-	getContactFormCommonProps: function() {
+	getContactFormCommonProps: function( variationSlug ) {
 		const { olark, isSubmitting } = this.state;
-		const showHelpLanguagePrompt = ( olark.locale !== i18n.getLocaleSlug() );
+
+		// Let the user know we only offer support in English.
+		// We only need to show the message if:
+		// 1. The user's locale doesn't match the live chat locale (usually English)
+		// 2. The support request isn't sent to the forums. Because forum support
+		//    requests are sent to the language specific forums (for popular languages)
+		//    we don't tell the user that support is only offered in English.
+		const showHelpLanguagePrompt =
+			( olark.locale !== i18n.getLocaleSlug() ) &&
+			SUPPORT_FORUM !== variationSlug;
 
 		return {
 			disabled: isSubmitting,
@@ -568,7 +580,7 @@ const HelpContact = React.createClass( {
 		const supportVariation = this.getSupportVariation();
 
 		const contactFormProps = Object.assign(
-			this.getContactFormCommonProps(),
+			this.getContactFormCommonProps( supportVariation ),
 			this.getContactFormPropsVariation( supportVariation ),
 		);
 

@@ -9,6 +9,7 @@ import { connect } from 'react-redux';
 import i18n from 'i18n-calypso';
 import titlecase from 'to-title-case';
 import { isArray } from 'lodash';
+import Gridicon from 'gridicons';
 
 /**
  * Internal dependencies
@@ -24,7 +25,6 @@ import SectionNav from 'components/section-nav';
 import NavTabs from 'components/section-nav/tabs';
 import NavItem from 'components/section-nav/item';
 import Card from 'components/card';
-import Gridicon from 'components/gridicon';
 import { getSelectedSite } from 'state/ui/selectors';
 import { getSiteSlug, isJetpackSite } from 'state/sites/selectors';
 import { getCurrentUserId } from 'state/current-user/selectors';
@@ -41,7 +41,8 @@ import {
 	isThemePremium,
 	isThemePurchased,
 	getThemeRequestErrors,
-	getThemeForumUrl
+	getThemeForumUrl,
+	isWpcomTheme as isThemeWpcom,
 } from 'state/themes/selectors';
 import { getBackPath } from 'state/themes/themes-ui/selectors';
 import EmptyContentComponent from 'components/empty-content';
@@ -53,6 +54,7 @@ import { getTheme } from 'state/themes/selectors';
 import { isValidTerm } from 'my-sites/themes/theme-filters';
 import { hasFeature } from 'state/sites/plans/selectors';
 import { FEATURE_UNLIMITED_PREMIUM_THEMES } from 'lib/plans/constants';
+import { recordTracksEvent } from 'state/analytics/actions';
 
 const ThemeSheet = React.createClass( {
 	displayName: 'ThemeSheet',
@@ -77,6 +79,7 @@ const ThemeSheet = React.createClass( {
 		selectedSite: React.PropTypes.object,
 		siteSlug: React.PropTypes.string,
 		backPath: React.PropTypes.string,
+		isWpcomTheme: React.PropTypes.bool,
 		defaultOption: React.PropTypes.shape( {
 			label: React.PropTypes.string,
 			action: React.PropTypes.func,
@@ -112,8 +115,8 @@ const ThemeSheet = React.createClass( {
 		// We need to make sure the theme object has been loaded including full details
 		// (and not just without, as would've been stored by the `<QueryThemes />` (plural!)
 		// component used by the theme showcase's list view). However, these extra details
-		// aren't present for a Jetpack site.
-		if ( this.props.isJetpack ) {
+		// aren't present for non-wpcom themes.
+		if ( ! this.props.isWpcomTheme ) {
 			return !! this.props.name;
 		}
 		return !! this.props.screenshots;
@@ -142,6 +145,25 @@ const ThemeSheet = React.createClass( {
 			return this.getValidSections()[ 0 ];
 		}
 		return section;
+	},
+
+	trackButtonClick( context ) {
+		this.props.recordTracksEvent( 'calypso_theme_sheet_button_click', {
+			theme_name: this.props.id,
+			button_context: context
+		} );
+	},
+
+	trackContactUsClick() {
+		this.trackButtonClick( 'help' );
+	},
+
+	trackThemeForumClick() {
+		this.trackButtonClick( 'theme_forum' );
+	},
+
+	trackCssClick() {
+		this.trackButtonClick( 'css_forum' );
 	},
 
 	togglePreview() {
@@ -181,7 +203,7 @@ const ThemeSheet = React.createClass( {
 
 	renderScreenshot() {
 		let screenshot;
-		if ( this.props.isJetpack ) {
+		if ( ! this.props.isWpcomTheme ) {
 			screenshot = this.props.screenshot;
 		} else {
 			screenshot = this.getFullLengthScreenshot();
@@ -250,7 +272,7 @@ const ThemeSheet = React.createClass( {
 				</Card>
 				{ this.renderFeaturesCard() }
 				{ this.renderDownload() }
-				{ ! this.props.isJetpack && this.renderRelatedThemes() }
+				{ this.props.isWpcomTheme && this.renderRelatedThemes() }
 			</div>
 		);
 	},
@@ -273,7 +295,12 @@ const ThemeSheet = React.createClass( {
 					{ i18n.translate( 'Need extra help?' ) }
 					<small>{ i18n.translate( 'Get in touch with our support team' ) }</small>
 				</div>
-				<Button primary={ isPrimary } href={ '/help/contact/' }>Contact us</Button>
+				<Button
+					primary={ isPrimary }
+					href={ '/help/contact/' }
+					onClick={ this.trackContactUsClick }>
+					{ i18n.translate( 'Contact us' ) }
+				</Button>
 			</Card>
 		);
 	},
@@ -294,7 +321,12 @@ const ThemeSheet = React.createClass( {
 					{ i18n.translate( 'Have a question about this theme?' ) }
 					<small>{ description }</small>
 				</div>
-				<Button primary={ isPrimary } href={ this.props.forumUrl }>Visit forum</Button>
+				<Button
+					primary={ isPrimary }
+					href={ this.props.forumUrl }
+					onClick={ this.trackThemeForumClick }>
+					{ i18n.translate( 'Visit forum' ) }
+				</Button>
 			</Card>
 		);
 	},
@@ -307,7 +339,11 @@ const ThemeSheet = React.createClass( {
 					{ i18n.translate( 'Need CSS help? ' ) }
 					<small>{ i18n.translate( 'Get help from the experts in our CSS forum' ) }</small>
 				</div>
-				<Button href="//en.forums.wordpress.com/forum/css-customization">Visit forum</Button>
+				<Button
+					href="//en.forums.wordpress.com/forum/css-customization"
+					onClick={ this.trackCssClick }>
+					{ i18n.translate( 'Visit forum' ) }
+				</Button>
 			</Card>
 		);
 	},
@@ -332,7 +368,7 @@ const ThemeSheet = React.createClass( {
 	},
 
 	renderFeaturesCard() {
-		const { isJetpack, siteSlug, taxonomies } = this.props;
+		const { isWpcomTheme, siteSlug, taxonomies } = this.props;
 		if ( ! taxonomies || ! isArray( taxonomies.theme_feature ) ) {
 			return null;
 		}
@@ -341,7 +377,7 @@ const ThemeSheet = React.createClass( {
 			const term = isValidTerm( item.slug ) ? item.slug : `feature:${ item.slug }`;
 			return (
 				<li key={ 'theme-features-item-' + item.slug }>
-					{ isJetpack
+					{ ! isWpcomTheme
 						? <a>{ item.name }</a>
 						: <a href={ `/design/filter/${ term }/${ siteSlug || '' }` }>{ item.name }</a>
 					}
@@ -364,11 +400,11 @@ const ThemeSheet = React.createClass( {
 	renderDownload() {
 		// Don't render download button:
 		// * If it's a premium theme
-		// * If it's on a Jetpack site, and the theme object doesn't have a 'download' attr
+		// * If it's a non-wpcom theme, and the theme object doesn't have a 'download' attr
 		//   Note that not having a 'download' attr would be permissible for a theme on WPCOM
 		//   since we don't provide any for some themes found on WordPress.org (notably the 'Twenties').
 		//   The <ThemeDownloadCard /> component can handle that case.
-		if ( this.props.isPremium || ( this.props.isJetpack && ! this.props.download ) ) {
+		if ( this.props.isPremium || ( ! this.props.isWpcomTheme && ! this.props.download ) ) {
 			return null;
 		}
 		return <ThemeDownloadCard theme={ this.props.id } href={ this.props.download } />;
@@ -545,7 +581,15 @@ const ConnectedThemeSheet = connectOptions(
 );
 
 const ThemeSheetWithOptions = ( props ) => {
-	const { selectedSite: site, isActive, isLoggedIn, isPremium, isPurchased } = props;
+	const {
+		selectedSite: site,
+		isActive,
+		isLoggedIn,
+		isPremium,
+		isPurchased,
+		isJetpack,
+		isWpcomTheme,
+	} = props;
 	const siteId = site ? site.ID : null;
 
 	let defaultOption;
@@ -554,6 +598,8 @@ const ThemeSheetWithOptions = ( props ) => {
 		defaultOption = 'signup';
 	} else if ( isActive ) {
 		defaultOption = 'customize';
+	} else if ( isJetpack && isWpcomTheme ) {
+		defaultOption = 'activateOnJetpack';
 	} else if ( isPremium && ! isPurchased ) {
 		defaultOption = 'purchase';
 	} else {
@@ -569,10 +615,12 @@ const ThemeSheetWithOptions = ( props ) => {
 				'customize',
 				'tryandcustomize',
 				'purchase',
-				'activate'
+				'activate',
+				'activateOnJetpack',
+				'tryAndCustomizeOnJetpack',
 			] }
 			defaultOption={ defaultOption }
-			secondaryOption="tryandcustomize"
+			secondaryOption={ ( isJetpack && isWpcomTheme ) ? 'tryAndCustomizeOnJetpack' : 'tryandcustomize' }
 			source="showcase-sheet" />
 	);
 };
@@ -605,7 +653,8 @@ export default connect(
 		const selectedSite = getSelectedSite( state );
 		const siteSlug = selectedSite ? getSiteSlug( state, selectedSite.ID ) : '';
 		const isJetpack = selectedSite && isJetpackSite( state, selectedSite.ID );
-		const siteIdOrWpcom = isJetpack ? selectedSite.ID : 'wpcom';
+		const isWpcomTheme = isThemeWpcom( state, id );
+		const siteIdOrWpcom = ( isJetpack && ! isWpcomTheme ) ? selectedSite.ID : 'wpcom';
 		const backPath = getBackPath( state );
 		const currentUserId = getCurrentUserId( state );
 		const isCurrentUserPaid = isUserPaid( state, currentUserId );
@@ -623,6 +672,7 @@ export default connect(
 			backPath,
 			currentUserId,
 			isCurrentUserPaid,
+			isWpcomTheme,
 			isLoggedIn: !! currentUserId,
 			isActive: selectedSite && isThemeActive( state, id, selectedSite.ID ),
 			isPremium: isThemePremium( state, id ),
@@ -630,7 +680,10 @@ export default connect(
 				isThemePurchased( state, id, selectedSite.ID ) ||
 				hasFeature( state, selectedSite.ID, FEATURE_UNLIMITED_PREMIUM_THEMES )
 			),
-			forumUrl: selectedSite && getThemeForumUrl( state, id, selectedSite.ID )
+			forumUrl: selectedSite && getThemeForumUrl( state, id, selectedSite.ID ),
 		};
+	},
+	{
+		recordTracksEvent,
 	}
 )( ThemeSheetWithOptions );

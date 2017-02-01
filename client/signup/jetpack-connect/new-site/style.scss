@@ -15,6 +15,10 @@ $green-jetpack:     #8cc258; // RGB 140, 194, 88
 
 .jetpack-new-site__header {
 	margin-bottom: 2em;
+
+	@include breakpoint( "<660px" ) {
+		margin: 0 2em 2em;
+	}
 }
 
 .jetpack-new-site__header-title {
@@ -56,6 +60,10 @@ $green-jetpack:     #8cc258; // RGB 140, 194, 88
 		.jetpack-new-site__jetpack-logo {
 			transform: scale(0.9);
 		}
+	}
+
+	@include breakpoint( "<660px" ) {
+		display: none;
 	}
 }
 
@@ -103,7 +111,8 @@ $green-jetpack:     #8cc258; // RGB 140, 194, 88
 	}
 }
 
-.jetpack-new-site__jetpack-site {
+.jetpack-new-site__jetpack-site,
+.jetpack-new-site__mobile-jetpack-site {
 
 	.jetpack-connect__connect-button-card {
 		background: transparent;
@@ -162,5 +171,58 @@ $green-jetpack:     #8cc258; // RGB 140, 194, 88
 			border-color: tint( $green-jetpack, 35% );
 			color: $white;
 		}
+	}
+}
+
+.jetpack-new-site__mobile {
+	display: none;
+	width: 100%;
+	padding: 36px;
+
+	@include breakpoint( "<660px" ) {
+		display: block;
+	}
+}
+
+.jetpack-new-site__mobile-wpcom-site {
+	.button {
+		width: 100%;
+	}
+}
+
+.jetpack-new-site__mobile-jetpack-site {
+	.jetpack-connect__connect-button-card {
+		margin: 16px 0 0;
+		padding: 0;
+		border: none;
+	}
+}
+
+.jetpack-new-site__divider {
+	display: none;
+	position: relative;
+	margin: 32px 0;
+
+	&:after {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 0;
+		z-index: 1;
+		width: 100%;
+		height: 1px;
+		background: transparentize( lighten( $gray, 20% ), .5 );
+	}
+
+	span {
+		position: relative;
+		z-index: 2;
+		padding: 8px;
+		color: $gray;
+		background: $white;
+	}
+
+	@include breakpoint( "<660px" ) {
+		display: block;
 	}
 }

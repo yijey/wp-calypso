@@ -74,6 +74,20 @@ const JetpackNewSite = React.createClass( {
 							onTosClick={ this.handleOnClickTos }
 							onClick={ this.onURLEnter } />
 					</Card>
+					<Card className="jetpack-new-site__mobile">
+						<div className="jetpack-new-site__mobile-wpcom-site">
+							<Button className="button is-primary" href={ this.getNewWpcomSiteUrl() }>{ this.translate( 'Create a New WordPress.com Site Now' ) }</Button>
+						</div>
+						<div className="jetpack-new-site__divider">
+							<span>or</span>
+						</div>
+						<div className="jetpack-new-site__mobile-jetpack-site">
+							<p>Add an existing WordPress site with Jetpack by entering the address:</p>
+							<SiteURLInput ref="siteUrlInputRef"
+								onTosClick={ this.handleOnClickTos }
+								onClick={ this.onURLEnter } />
+						</div>
+					</Card>
 				</div>
 			</div>
 		);

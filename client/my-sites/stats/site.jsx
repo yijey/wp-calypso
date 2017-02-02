@@ -158,8 +158,7 @@ module.exports = React.createClass( {
 					<StatsPeriodNavigation
 						date={ this.props.date }
 						period={ this.props.period.period }
-						url={ `/stats/${ this.props.period.period }/${ site.slug }` }
-					>
+						url={ `/stats/${ this.props.period.period }/${ site.slug }` }>
 						<DatePicker
 							period={ this.props.period.period }
 							date={ this.props.date } />
@@ -175,13 +174,14 @@ module.exports = React.createClass( {
 								statType="statsTopPosts"
 								showSummaryLink />
 							<StatsModule
-								path="referrers"
-								moduleStrings={ moduleStrings.referrers }
+								path="searchterms"
+								moduleStrings={ moduleStrings.search }
 								period={ this.props.period }
-								query={ query }
 								date={ queryDate }
-								statType="statsReferrers"
+								query={ query }
+								statType="statsSearchTerms"
 								showSummaryLink />
+							{ videoList }
 						</div>
 						<div className="stats__module-column">
 							<Countries
@@ -190,15 +190,23 @@ module.exports = React.createClass( {
 								query={ query }
 								summary={ false } />
 							<StatsModule
-								path="searchterms"
-								moduleStrings={ moduleStrings.search }
+								path="clicks"
+								moduleStrings={ moduleStrings.clicks }
 								period={ this.props.period }
-								date={ queryDate }
 								query={ query }
-								statType="statsSearchTerms"
+								date={ queryDate }
+								statType="statsClicks"
 								showSummaryLink />
 						</div>
 						<div className="stats__module-column">
+							<StatsModule
+								path="referrers"
+								moduleStrings={ moduleStrings.referrers }
+								period={ this.props.period }
+								query={ query }
+								date={ queryDate }
+								statType="statsReferrers"
+								showSummaryLink />
 							<StatsModule
 								path="authors"
 								moduleStrings={ moduleStrings.authors }
@@ -208,15 +216,6 @@ module.exports = React.createClass( {
 								statType="statsTopAuthors"
 								className="stats__author-views"
 								showSummaryLink />
-							<StatsModule
-								path="clicks"
-								moduleStrings={ moduleStrings.clicks }
-								period={ this.props.period }
-								query={ query }
-								date={ queryDate }
-								statType="statsClicks"
-								showSummaryLink />
-							{ videoList }
 							{ podcastList }
 						</div>
 					</div>

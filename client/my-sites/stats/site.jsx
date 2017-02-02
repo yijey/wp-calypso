@@ -182,23 +182,6 @@ module.exports = React.createClass( {
 								date={ queryDate }
 								statType="statsReferrers"
 								showSummaryLink />
-							<StatsModule
-								path="clicks"
-								moduleStrings={ moduleStrings.clicks }
-								period={ this.props.period }
-								query={ query }
-								date={ queryDate }
-								statType="statsClicks"
-								showSummaryLink />
-							<StatsModule
-								path="authors"
-								moduleStrings={ moduleStrings.authors }
-								period={ this.props.period }
-								date={ queryDate }
-								query={ query }
-								statType="statsTopAuthors"
-								className="stats__author-views"
-								showSummaryLink />
 						</div>
 						<div className="stats__module-column">
 							<Countries
@@ -213,6 +196,25 @@ module.exports = React.createClass( {
 								date={ queryDate }
 								query={ query }
 								statType="statsSearchTerms"
+								showSummaryLink />
+						</div>
+						<div className="stats__module-column">
+							<StatsModule
+								path="authors"
+								moduleStrings={ moduleStrings.authors }
+								period={ this.props.period }
+								date={ queryDate }
+								query={ query }
+								statType="statsTopAuthors"
+								className="stats__author-views"
+								showSummaryLink />
+							<StatsModule
+								path="clicks"
+								moduleStrings={ moduleStrings.clicks }
+								period={ this.props.period }
+								query={ query }
+								date={ queryDate }
+								statType="statsClicks"
 								showSummaryLink />
 							{ videoList }
 							{ podcastList }

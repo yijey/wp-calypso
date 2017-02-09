@@ -17,6 +17,7 @@ import { abtest } from 'lib/abtest';
 import i18nUtils from 'lib/i18n-utils';
 import { suggestions } from 'reader/search-stream/suggestions';
 import Suggestion from 'reader/search-stream/suggestion';
+import FollowingIntro from './intro';
 
 function handleSearch( query ) {
 	recordTrack( 'calypso_reader_search_from_following', {
@@ -38,6 +39,7 @@ const FollowingStream = ( props ) => {
 	}
 	return (
 		<Stream { ...props }>
+			<FollowingIntro />
 			{ shouldShowSearchOnFollowing &&
 				<CompactCard className="following__search">
 					<SearchInput

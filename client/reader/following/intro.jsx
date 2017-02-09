@@ -12,13 +12,13 @@ import Gridicon from 'gridicons';
 import { hasGraduatedRecommendations } from 'state/reader/start/selectors';
 import { requestGraduate } from 'state/reader/start/actions';
 
-const FollowingIntro = ( { isNewReader, requestGraduate, translate } ) => {
-	if ( ! isNewReader ) {
+const FollowingIntro = ( props ) => {
+	if ( ! props.isNewReader ) {
 		//return null;
 	}
 
 	const handleIntroClose = () => {
-		requestGraduate();
+		props.requestGraduate();
 	};
 
 	return (
@@ -26,9 +26,9 @@ const FollowingIntro = ( { isNewReader, requestGraduate, translate } ) => {
 			<div className="following__intro-close" onClick={ handleIntroClose }>
 				<Gridicon icon="cross" className="following__intro-close-icon" />
 			</div>
-			<h1 className="following__intro-title">{ translate( 'This is Reader' ) }</h1>
+			<h1 className="following__intro-title">{ props.translate( 'This is Reader' ) }</h1>
 			<p className="following__intro-description">
-				{ translate( 'Reader is a customizable magazine of stories from WordPress.com and across the web. Follow a site and their latest posts will appear here.' ) }
+				{ props.translate( 'Reader is a customizable magazine of stories from WordPress.com and across the web. Follow a site and their latest posts will appear here.' ) }
 			</p>
 		</header>
 	);

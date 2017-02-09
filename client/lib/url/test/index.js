@@ -106,6 +106,14 @@ describe( 'isExternal', () => {
 
 			expect( actual ).to.be.true;
 		} );
+
+		it( 'should return true for subdomains', () => {
+			const source = '//ns1.example.com';
+
+			const actual = isExternal( source );
+
+			expect( actual ).to.be.true;
+		} );
 	} );
 
 	describe( 'without global.window (test against config hostname)', () => {

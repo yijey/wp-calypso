@@ -167,7 +167,8 @@ const HelpContact = React.createClass( {
 
 	submitDirectlyQuestion: function( contactForm ) {
 		// TODO: open Directly form here
-		return contactForm;
+
+		return contactForm; // TODO: Remove this line once functionality is implemented
 	},
 
 	submitKayakoTicket: function( contactForm ) {

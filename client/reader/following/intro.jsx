@@ -3,16 +3,16 @@
  */
 import React from 'react';
 import { localize } from 'i18n-calypso';
+import { connect } from 'react-redux';
 
 /**
  * Internal dependencies
  */
+import { hasGraduatedRecommendations } from 'state/reader/start/selectors';
 
-const FollowingIntro = ( { translate } ) => {
-	const isNewReader = true;
-
+const FollowingIntro = ( { isNewReader, translate } ) => {
 	if ( ! isNewReader ) {
-		return null;
+		//return null;
 	}
 
 	return (
@@ -25,4 +25,8 @@ const FollowingIntro = ( { translate } ) => {
 	);
 };
 
-export default localize( FollowingIntro );
+export default connect( ( state ) => {
+	return {
+		isNewReader: ! hasGraduatedRecommendations( state )
+	};
+} )( localize( FollowingIntro ) );

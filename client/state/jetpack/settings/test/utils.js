@@ -162,6 +162,9 @@ describe( 'utils', () => {
 				'custom-content-types': true,
 				jetpack_testimonial: true,
 				jetpack_portfolio: false,
+				carousel: true,
+				carousel_background_color: 'black',
+				carousel_display_exif: true
 			};
 
 			expect( filterSettingsByActiveModules( settings ) ).to.eql( {
@@ -193,6 +196,8 @@ describe( 'utils', () => {
 				ignored_phrases: true,
 				jetpack_testimonial: true,
 				jetpack_portfolio: false,
+				carousel_background_color: 'black',
+				carousel_display_exif: true
 			} );
 		} );
 
@@ -233,6 +238,9 @@ describe( 'utils', () => {
 				'custom-content-types': false,
 				jetpack_testimonial: true,
 				jetpack_portfolio: false,
+				carousel: false,
+				carousel_background_color: 'black',
+				carousel_display_exif: true
 			};
 
 			expect( filterSettingsByActiveModules( settings ) ).to.eql( {
@@ -270,6 +278,8 @@ describe( 'utils', () => {
 				ignored_phrases: true,
 				jetpack_testimonial: true,
 				jetpack_portfolio: false,
+				carousel_background_color: 'black',
+				carousel_display_exif: true
 			};
 
 			expect( filterSettingsByActiveModules( settings ) ).to.eql( {

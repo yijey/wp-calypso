@@ -54,12 +54,12 @@ describe( '#requestResetOptions', () => {
 		} );
 	} );
 
-	const errorResponse = {
-		status: 400,
-		message: 'Something wrong!',
-	};
-
 	describe( 'failure', () => {
+		const errorResponse = {
+			status: 400,
+			message: 'Something wrong!',
+		};
+
 		useNock( nock => (
 			nock( apiBaseUrl )
 				.get( endpoint )
@@ -72,6 +72,31 @@ describe( '#requestResetOptions', () => {
 					assert.isTrue( dispatch.calledWithMatch( {
 						type: ACCOUNT_RECOVERY_RESET_OPTIONS_ERROR,
 						error: errorResponse,
+					} ) )
+				);
+		} );
+	} );
+
+	describe( 'failure because of the malformed response body', () => {
+		const malformedResposne = {
+			primary_email: 123,
+			malformed: true,
+		};
+
+		useNock( nock => (
+			nock( apiBaseUrl )
+				.get( endpoint )
+				.reply( 200, malformedResposne )
+		) );
+
+		it( 'should dispatch ERROR action on parsing error', () => {
+			return requestResetOptions( { dispatch }, { userData } )
+				.then( () =>
+					assert.isTrue( dispatch.calledWithMatch( {
+						type: ACCOUNT_RECOVERY_RESET_OPTIONS_ERROR,
+						error: {
+							data: malformedResposne,
+						},
 					} ) )
 				);
 		} );

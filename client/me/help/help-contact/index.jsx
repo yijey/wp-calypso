@@ -428,7 +428,7 @@ const HelpContact = React.createClass( {
 	},
 
 	shouldUseDirectly: function() {
-		const isEn = i18n.getLocaleSlug() === 'en';
+		const isEn = this.props.currentUserLocale === 'en';
 		return config.isEnabled( 'help/directly' ) && isEn;
 	},
 

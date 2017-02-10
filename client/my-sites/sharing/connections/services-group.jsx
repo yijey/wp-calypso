@@ -8,7 +8,7 @@ import { times } from 'lodash';
 /**
  * Internal dependencies
  */
-import { getEligibleKeyringServices } from 'state/sharing/services/selectors';
+import { getEligibleKeyringServices, isKeyringServicesFetching } from 'state/sharing/services/selectors';
 import { getSelectedSiteId } from 'state/ui/selectors';
 import SectionHeader from 'components/section-header';
 import Service from './service';
@@ -20,23 +20,29 @@ import ServicePlaceholder from './service-placeholder';
  */
 const NUMBER_OF_PLACEHOLDERS = 4;
 
-const SharingServicesGroup = ( { services, title } ) => (
-	<div className="sharing-services-group">
-		<SectionHeader label={ title } />
-		<ul className="sharing-services-group__services">
-			{ services.length
-				? services.map( ( service ) => {
-					const Component = Components.hasOwnProperty( service.ID ) ? Components[ service.ID ] : Service;
+const SharingServicesGroup = ( { isFetching, services, title } ) => {
+	if ( services.length || isFetching ) {
+		return (
+			<div className="sharing-services-group">
+				<SectionHeader label={ title } />
+				<ul className="sharing-services-group__services">
+					{ services.length
+						? services.map( ( service ) => {
+						const Component = Components.hasOwnProperty( service.ID ) ? Components[ service.ID ] : Service;
 
-					return <Component key={ service.ID } service={ service } />;
-				} )
-				: times( NUMBER_OF_PLACEHOLDERS, ( index ) => (
-					<ServicePlaceholder key={ 'service-placeholder-' + index } />
-				) )
-			}
-		</ul>
-	</div>
-);
+						return <Component key={ service.ID } service={ service } />;
+					} )
+						: times( NUMBER_OF_PLACEHOLDERS, ( index ) => (
+						<ServicePlaceholder key={ 'service-placeholder-' + index } />
+					) )
+					}
+				</ul>
+			</div>
+		);
+	}
+
+	return null;
+};
 
 SharingServicesGroup.propTypes = {
 	services: PropTypes.array,
@@ -50,6 +56,7 @@ SharingServicesGroup.defaultProps = {
 
 export default connect(
 	( state, { type } ) => ( {
-		services: getEligibleKeyringServices( state, getSelectedSiteId( state ), type )
+		isFetching: isKeyringServicesFetching( state ),
+		services: getEligibleKeyringServices( state, getSelectedSiteId( state ), type ),
 	} ),
 )( SharingServicesGroup );

@@ -9,30 +9,27 @@
 	z-index: z-index( 'root', '.reader-following-search' );
 }
 
-.following__intro-title {
-	color: darken( $gray, 30% );
-	font-size: 30px;
-	font-weight: 300;
-	line-height: 1.2;
-	margin-bottom: 8px;
-
-	@include breakpoint( "<960px" ) {
-		padding: 0 15px;
-	}
-
-	@include breakpoint( "<660px" ) {
-		margin-top: 20px;
-	}
+.following__intro {
+	background: url(/calypso/images/reader/reader-intro-background.jpg);
+	background-position: bottom right;
+	min-height: 200px;
+	background-repeat: no-repeat;
+	background-size: cover;
 }
 
 .following__intro-description {
-	color: darken( $gray, 10% );
-	font-size: 16px;
-	font-weight: 100;
-	line-height: 1.5;
-	margin-bottom: 15px;
+	margin-left: 10px;
+	max-width: 50%;
+	padding-top: 60px;
+}
 
-	@include breakpoint( "<960px" ) {
-		padding: 0 15px;
+.following__intro-close {
+	float: right;
+	color: #fff;
+	margin-top: 10px;
+	margin-right: 10px;
+
+	&:hover {
+		cursor: pointer;
 	}
 }

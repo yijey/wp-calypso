@@ -23,12 +23,18 @@ const FollowingIntro = ( props ) => {
 
 	return (
 		<header className="following__intro">
-			<div className="following__intro-close" onClick={ handleIntroClose }>
+			<div className="following__intro-close" onClick={ handleIntroClose } title={ props.translate( 'Close' ) }>
 				<Gridicon icon="cross" className="following__intro-close-icon" />
 			</div>
-			<h1 className="following__intro-title">{ props.translate( 'This is Reader' ) }</h1>
 			<p className="following__intro-description">
-				{ props.translate( 'Reader is a customizable magazine of stories from WordPress.com and across the web. Follow a site and their latest posts will appear here.' ) }
+				{ props.translate(
+					'Welcome! Reader is a custom magazine. {{link}}Follow your favorite sites{{/link}} and their latest posts will appear here.',
+					{
+						components: {
+							link: <a href="/following/edit" />
+						}
+					}
+				) }
 			</p>
 		</header>
 	);

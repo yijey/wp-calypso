@@ -121,7 +121,6 @@ export function createReduxStore( initialState = {} ) {
 		noticesMiddleware,
 		isBrowser && require( './analytics/middleware.js' ).analyticsMiddleware,
 		isBrowser && require( './data-layer/wpcom-api-middleware.js' ).default,
-		isBrowser && require( './directly/middleware.js' ).default,
 	].filter( Boolean );
 
 	const enhancers = [

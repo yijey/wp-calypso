@@ -17,26 +17,6 @@ import { errorNotice } from 'state/notices/actions';
 
 let isSyncingFollows = false;
 
-// export function handleFollowsRequest( store, action, next ) {
-// 	wpcom.req.get( '/read/following/mine', { apiVersion: '1.2' } )
-// 		.then(
-// 			payload => {
-// 				store.dispatch( {
-// 					type: READER_FOLLOWS_RECEIVE,
-// 					payload,
-// 				} );
-// 			},
-// 			error => {
-// 				store.dispatch( {
-// 					type: READER_FOLLOWS_RECEIVE,
-// 					payload: error,
-// 					error: true,
-// 				} );
-// 			}
-// 		);
-// 	next( action );
-// }
-
 function syncReaderFollows( store ) {
 	if ( isSyncingFollows ) {
 		return;
@@ -50,8 +30,8 @@ function syncReaderFollows( store ) {
 	} );
 }
 
-function requestPage( store, action ) {
-	store.dispatch( http( {
+export function requestPage( { dispatch }, action ) {
+	dispatch( http( {
 		method: 'GET',
 		path: '/read/following/mine',
 		apiVersion: 'v1.2',

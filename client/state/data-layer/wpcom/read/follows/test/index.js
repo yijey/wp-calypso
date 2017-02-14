@@ -1,59 +1,83 @@
 /**
- * External dependencies
+ * External Dependencies
  */
 import { expect } from 'chai';
-import sinon from 'sinon';
-import deepFreeze from 'deep-freeze';
+import { spy } from 'sinon';
+import deepfreeze from 'deep-freeze';
 
 /**
- * Internal dependencies
+ * Internal Dependencies
  */
-import useNock from 'test/helpers/use-nock';
-import { handleFollowsRequest } from '../';
-import { requestFollows } from 'state/reader/follows/actions';
-import { READER_FOLLOWS_RECEIVE } from 'state/action-types';
+import { http } from 'state/data-layer/wpcom-http/actions';
+import {
+	// syncReaderFollows,
+	requestPage,
+	// handleSyncPage,
+	// handleSyncError,
+} from '../';
+import {
+	requestFollows
+} from 'state/reader/follows/actions';
+// import {
+// 	errorNotice
+// } from 'state/notices/actions';
 
-const successfulResponse = require( './sample-success-response.json' );
+describe( 'follows', () => {
+	const action = deepfreeze( requestFollows() ); // @todo change to syncFollows and pass { page: 1 }
 
-describe( 'wpcom-api', () => {
-	const nextSpy = sinon.spy();
+	describe( 'requestPage', () => {
+		let dispatch;
 
-	describe( 'follows request', () => {
-		useNock( nock => (
-			nock( 'https://public-api.wordpress.com:443' )
-				.get( '/rest/v1.2/read/following/mine' )
-				.reply( 200, deepFreeze( successfulResponse ) )
-				.get( '/rest/v1.2/read/following/mine' )
-				.reply( 500, new Error() )
-		) );
-
-		it( 'should dispatch RECEIVE action when request completes', ( done ) => {
-			const dispatch = sinon.spy( action => {
-				if ( action.type === READER_FOLLOWS_RECEIVE ) {
-					expect( dispatch ).to.have.been.calledWith( {
-						type: READER_FOLLOWS_RECEIVE,
-						payload: successfulResponse,
-					} );
-					done();
-				}
-			} );
-
-			handleFollowsRequest( { dispatch }, requestFollows(), nextSpy, );
+		beforeEach( () => {
+			dispatch = spy();
+			requestPage( { dispatch }, action );
 		} );
 
-		it( 'should dispatch RECEIVE action with error when request errors', ( done ) => {
-			const dispatch = sinon.spy( action => {
-				if ( action.type === READER_FOLLOWS_RECEIVE ) {
-					expect( dispatch ).to.have.been.calledWith( {
-						type: READER_FOLLOWS_RECEIVE,
-						payload: sinon.match.any,
-						error: true,
-					} );
-					done();
-				}
-			} );
-
-			handleFollowsRequest( { dispatch }, requestFollows(), nextSpy, );
+		it( 'should dispatch an http request', () => {
+			expect( dispatch ).to.have.been.calledWith( http( {
+				method: 'GET',
+				path: '/read/following/mine',
+				apiVersion: '1.2',
+				query: { page: action.page },
+				onSuccess: action,
+				onFailure: action,
+			} ) );
 		} );
 	} );
+
+	// describe( 'handlePage', () => {
+	// 	const next = spy();
+	// 	const dispatch = spy();
+	// 	const data = deepfreeze( {
+	// 		posts: []
+	// 	} );
+
+	// 	before( () => {
+	// 		handlePage( { dispatch }, action, next, data );
+	// 	} );
+
+	// 	it( 'should dispatch receivePage', () => {
+	// 		expect( dispatch ).to.have.been.calledWith( receivePage( action.streamId, action.query, data.posts ) );
+	// 	} );
+
+	// 	it( 'should swallow the original action', () => {
+	// 		expect( next ).to.not.have.been.called;
+	// 	} );
+	// } );
+
+	// describe( 'handleError', () => {
+	// 	const next = spy();
+	// 	const dispatch = spy();
+	// 	const error = { error: true };
+
+	// 	before( () => {
+	// 		handleError( { dispatch }, action, next, error );
+	// 	} );
+
+	// 	it( 'should dispatch a notice about the error', () => {
+	// 		const notice = errorNotice( 'Could not fetch the next page of results' );
+	// 		delete notice.notice.noticeId;
+	// 		expect( dispatch ).to.have.been.calledWithMatch( notice );
+	// 	} );
+	// } );
 } );

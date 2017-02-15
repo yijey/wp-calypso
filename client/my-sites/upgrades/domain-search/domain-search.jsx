@@ -1,82 +1,66 @@
 /**
  * External dependencies
  */
-var connect = require( 'react-redux' ).connect,
-	page = require( 'page' ),
-	React = require( 'react' ),
-	classnames = require( 'classnames' );
+import { connect } from 'react-redux';
+import page from 'page';
+import React from 'react';
+import classnames from 'classnames';
 
 /**
  * Internal dependencies
  */
-var observe = require( 'lib/mixins/data-observe' ),
-	EmptyContent = require( 'components/empty-content' ),
-	fetchSitePlans = require( 'state/sites/plans/actions' ).fetchSitePlans,
-	FreeTrialNotice = require( './free-trial-notice' ),
-	{ DOMAINS_WITH_PLANS_ONLY } = require( 'state/current-user/constants' ),
-	SidebarNavigation = require( 'my-sites/sidebar-navigation' ),
-	RegisterDomainStep = require( 'components/domains/register-domain-step' ),
-	UpgradesNavigation = require( 'my-sites/upgrades/navigation' ),
-	Main = require( 'components/main' ),
-	upgradesActions = require( 'lib/upgrades/actions' ),
-	cartItems = require( 'lib/cart-values/cart-items' ),
-	analyticsMixin = require( 'lib/mixins/analytics' ),
-	shouldFetchSitePlans = require( 'lib/plans' ).shouldFetchSitePlans;
+import EmptyContent from 'components/empty-content';
+import FreeTrialNotice from './free-trial-notice';
+import { DOMAINS_WITH_PLANS_ONLY } from 'state/current-user/constants';
+import SidebarNavigation from 'my-sites/sidebar-navigation';
+import RegisterDomainStep from 'components/domains/register-domain-step';
+import UpgradesNavigation from 'my-sites/upgrades/navigation';
+import Main from 'components/main';
+import upgradesActions from 'lib/upgrades/actions';
+import cartItems from 'lib/cart-values/cart-items';
+import analyticsMixin from 'lib/mixins/analytics';
 import { getPlansBySite } from 'state/sites/plans/selectors';
 import { currentUserHasFlag } from 'state/current-user/selectors';
 import { isSiteUpgradeable } from 'state/sites/selectors';
+import { getSelectedSite, getSelectedSiteId } from 'state/ui/selectors';
+import QuerySitePlans from 'components/data/query-site-plans';
+import QueryProductsList from 'components/data/query-products-list';
 
-var DomainSearch = React.createClass( {
-	mixins: [ observe( 'productsList', 'sites' ), analyticsMixin( 'registerDomain' ) ],
+const DomainSearch = React.createClass( {
+	mixins: [ analyticsMixin( 'registerDomain' ) ],
 
 	propTypes: {
-		sites: React.PropTypes.object.isRequired,
+		selectedSite: React.PropTypes.object.isRequired,
+		sitePlans: React.PropTypes.object.isRequired,
 		productsList: React.PropTypes.object.isRequired,
 		basePath: React.PropTypes.string.isRequired,
 		context: React.PropTypes.object.isRequired,
 		domainsWithPlansOnly: React.PropTypes.bool.isRequired
 	},
 
-	getInitialState: function() {
+	getInitialState() {
 		return { domainRegistrationAvailable: true };
 	},
 
-	componentWillMount: function() {
+	componentDidMount() {
 		this.checkSiteIsUpgradeable();
 	},
 
-	componentDidMount: function() {
-		this.props.sites.on( 'change', this.checkSiteIsUpgradeable );
-		this.props.fetchSitePlans( this.props.sitePlans, this.props.sites.getSelectedSite() );
-
-		this.previousSelectedSite = this.props.sites.getSelectedSite();
+	componentWillReceiveProps() {
+		this.checkSiteIsUpgradeable();
 	},
 
-	componentWillReceiveProps: function() {
-		var selectedSite = this.props.sites.getSelectedSite();
-		if ( this.previousSelectedSite !== selectedSite ) {
-			this.props.fetchSitePlans( this.props.sitePlans, selectedSite );
-			this.previousSelectedSite = selectedSite;
-		}
-	},
-
-	componentWillUnmount: function() {
-		this.props.sites.off( 'change', this.checkSiteIsUpgradeable );
-	},
-
-	checkSiteIsUpgradeable: function() {
-		var selectedSite = this.props.sites.getSelectedSite();
-
-		if ( selectedSite && ! this.props.isSiteUpgradeable ) {
+	checkSiteIsUpgradeable() {
+		if ( this.props.selectedSite && ! this.props.isSiteUpgradeable ) {
 			page.redirect( '/domains/add' );
 		}
 	},
 
-	handleDomainsAvailabilityChange: function( isAvailable ) {
+	handleDomainsAvailabilityChange( isAvailable ) {
 		this.setState( { domainRegistrationAvailable: isAvailable } );
 	},
 
-	handleAddRemoveDomain: function( suggestion ) {
+	handleAddRemoveDomain( suggestion ) {
 		if ( ! cartItems.hasDomainInCart( this.props.cart, suggestion.domain_name ) ) {
 			this.addDomain( suggestion );
 		} else {
@@ -86,7 +70,7 @@ var DomainSearch = React.createClass( {
 
 	handleAddMapping( suggestion ) {
 		upgradesActions.addItem( cartItems.domainMapping( { domain: suggestion.domain_name } ) );
-		page( '/checkout/' + this.props.sites.getSelectedSite().slug );
+		page( '/checkout/' + this.props.selectedSite.slug );
 	},
 
 	addDomain( suggestion ) {
@@ -110,12 +94,13 @@ var DomainSearch = React.createClass( {
 		upgradesActions.removeDomainFromCart( suggestion );
 	},
 
-	render: function() {
-		var selectedSite = this.props.sites.getSelectedSite(),
+	render() {
+		var { selectedSite } = this.props,
 			classes = classnames( 'main-column', {
 				'domain-search-page-wrapper': this.state.domainRegistrationAvailable
 			} ),
 			content;
+
 
 		if ( ! this.state.domainRegistrationAvailable ) {
 			content = (
@@ -149,7 +134,7 @@ var DomainSearch = React.createClass( {
 							selectedSite={ selectedSite }
 							offerMappingOption
 							basePath={ this.props.basePath }
-							products={ this.props.productsList.get() } />
+							products={ this.props.productsList } />
 					</div>
 				</span>
 			);
@@ -159,28 +144,19 @@ var DomainSearch = React.createClass( {
 			<Main className={ classes }>
 				<SidebarNavigation />
 				{ content }
+				<QueryProductsList />
+				<QuerySitePlans siteId={ selectedSite.ID } />
 			</Main>
 		);
 	}
 } );
 
 module.exports = connect(
-	function( state, props ) {
-		const selectedSite = props.sites.getSelectedSite();
-
-		return {
-			sitePlans: getPlansBySite( state, selectedSite ),
-			domainsWithPlansOnly: currentUserHasFlag( state, DOMAINS_WITH_PLANS_ONLY ),
-			isSiteUpgradeable: isSiteUpgradeable( state, selectedSite && selectedSite.ID )
-		};
-	},
-	function( dispatch ) {
-		return {
-			fetchSitePlans( sitePlans, site ) {
-				if ( shouldFetchSitePlans( sitePlans, site ) ) {
-					dispatch( fetchSitePlans( site.ID ) );
-				}
-			}
-		};
-	}
+	( state ) => ( {
+		selectedSite: getSelectedSite( state ),
+		sitePlans: getPlansBySite( state, getSelectedSite( state ) ),
+		domainsWithPlansOnly: currentUserHasFlag( state, DOMAINS_WITH_PLANS_ONLY ),
+		isSiteUpgradeable: isSiteUpgradeable( state, getSelectedSiteId( state ) ),
+		productsList: state.productsList.items,
+	} )
 )( DomainSearch );

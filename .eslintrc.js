@@ -16,7 +16,6 @@ module.exports = {
 	// as outstanding issues are resolved.
 	rules: {
 		'array-bracket-spacing': [ 1, 'always' ],
-		'brace-style': [ 1, '1tbs' ],
 		// REST API objects include underscores
 		camelcase: 0,
 		'comma-spacing': 1,

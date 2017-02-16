@@ -684,7 +684,7 @@ function wpview( editor ) {
 			} else if ( cursorAfter ) {
 				handleEnter( view );
 			} else if ( cursorBefore ) {
-				handleEnter( view , true, key );
+				handleEnter( view, true, key );
 			}
 
 			if ( key === VK.ENTER ) {

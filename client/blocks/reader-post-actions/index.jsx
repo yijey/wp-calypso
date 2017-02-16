@@ -17,12 +17,10 @@ import { shouldShowLikes } from 'reader/like-helper';
 import { shouldShowShare } from 'reader/share/helper';
 import { userCan } from 'lib/posts/utils';
 import * as stats from 'reader/stats';
-import { localize } from 'i18n-calypso';
-import ExternalLink from 'components/external-link';
+import ReaderPostActionsVisitLink from './visit';
 
 const ReaderPostActions = ( props ) => {
 	const {
-		translate,
 		post,
 		site,
 		onCommentClick,
@@ -48,19 +46,14 @@ const ReaderPostActions = ( props ) => {
 
 	const listClassnames = classnames( 'reader-post-actions', className );
 
+	const visitLinkUrl = visitUrl || post.URL;
+
 	/* eslint-disable react/jsx-no-target-blank */
 	return (
 		<ul className={ listClassnames }>
 			{ showVisit &&
 				<li className="reader-post-actions__item reader-post-actions__visit">
-					<ExternalLink href={ visitUrl || post.URL }
-						target="_blank"
-						icon={ true }
-						showIconFirst={ true }
-						iconSize={ iconSize }
-						onClick={ onPermalinkVisit }>
-						<span className="reader-post-actions__visit-label">{ translate( 'Visit' ) }</span>
-					</ExternalLink>
+					<ReaderPostActionsVisitLink visitUrl={ visitLinkUrl } onClick={ onPermalinkVisit } iconSize={ iconSize } />
 				</li>
 			}
 			{ showEdit && site && userCan( 'edit_post', post ) &&
@@ -128,4 +121,4 @@ ReaderPostActions.defaultProps = {
 	showMenuFollow: true
 };
 
-export default localize( ReaderPostActions );
+export default ReaderPostActions;

@@ -21,7 +21,6 @@ module.exports = {
 		camelcase: 0,
 		'comma-spacing': 1,
 		curly: 1,
-		'computed-property-spacing': [ 1, 'always' ],
 		'func-call-spacing': 1,
 		indent: [ 1, 'tab', { SwitchCase: 1 } ],
 		'jsx-quotes': [ 1, 'prefer-double' ],

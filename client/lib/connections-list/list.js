@@ -214,7 +214,7 @@ ConnectionsList.prototype.create = function( service, siteId, keyringConnectionI
 			if ( siteId && keyringConnections.length ) {
 				// Remove the original connection data where this Keyring
 				// connectino was being used, if one existed
-				this.siteData = reject( this.siteData, { ID: keyringConnections[0].ID } );
+				this.siteData = reject( this.siteData, { ID: keyringConnections[ 0 ].ID } );
 			}
 
 			this.add( connections, siteId );
@@ -225,7 +225,7 @@ ConnectionsList.prototype.create = function( service, siteId, keyringConnectionI
 			// If a Keyring connection is already in use by another connection,
 			// we should trigger an update. There should only be one connection,
 			// so we're correct in using the connection ID from the first
-			wpcom.undocumented().updateConnection( siteId, keyringConnections[0].ID, { external_user_ID: externalUserId || false }, onConnectionUpdated );
+			wpcom.undocumented().updateConnection( siteId, keyringConnections[ 0 ].ID, { external_user_ID: externalUserId || false }, onConnectionUpdated );
 		} else {
 			wpcom.undocumented().createConnection( keyringConnectionId, siteId, externalUserId, { shared: false }, onConnectionUpdated );
 		}

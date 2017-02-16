@@ -182,7 +182,7 @@ describe( 'FeedPostList', function() {
 		} );
 
 		it( 'should be able to select a gap', function() {
-			fakePosts[1].isGap = true;
+			fakePosts[ 1 ].isGap = true;
 			feedPostStoreStub
 				.onCall( 0 ).returns( { _state: 'error'} )
 				.onCall( 1 ).returns( {} )

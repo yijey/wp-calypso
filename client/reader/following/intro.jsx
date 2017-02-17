@@ -23,19 +23,36 @@ const FollowingIntro = ( props ) => {
 
 	return (
 		<header className="following__intro">
-			<div className="following__intro-close" onClick={ handleIntroClose } title={ props.translate( 'Close' ) }>
-				<Gridicon icon="cross" className="following__intro-close-icon" />
+
+			<div className="following__intro-header">
+
+				<div className="following__intro-copy">
+
+					<p className="following__intro-description">
+						{ props.translate(
+							'Welcome! Reader is a custom magazine. {{link}}Follow your favorite sites{{/link}} and their latest posts will appear here.',
+							{
+								components: {
+									link: <a href="/following/edit" />
+								}
+							}
+						) }
+					</p>
+
+					<p className="following__intro-description additional">
+						{ props.translate(
+							'Read, like, and comment in a distraction-free environment.'
+						) }
+					</p>
+
+				</div>
+
+				<div className="following__intro-close" onClick={ handleIntroClose } title={ props.translate( 'Close' ) }>
+					<Gridicon icon="cross" className="following__intro-close-icon" />
+				</div>
+
 			</div>
-			<p className="following__intro-description">
-				{ props.translate(
-					'Welcome! Reader is a custom magazine. {{link}}Follow your favorite sites{{/link}} and their latest posts will appear here.',
-					{
-						components: {
-							link: <a href="/following/edit" />
-						}
-					}
-				) }
-			</p>
+
 		</header>
 	);
 };

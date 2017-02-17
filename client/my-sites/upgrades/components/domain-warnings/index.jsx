@@ -98,6 +98,10 @@ export default React.createClass( {
 	wrongNSMappedDomains() {
 		debug( 'Rendering wrongNSMappedDomains' );
 
+		if ( this.props.selectedSite && this.props.selectedSite.jetpack && ! this.props.selectedSite.is_automated_transfer ) {
+			return null;
+		}
+
 		const wrongMappedDomains = this.getDomains().filter( domain =>
 			domain.type === domainTypes.MAPPED && ! domain.pointsToWpcom );
 

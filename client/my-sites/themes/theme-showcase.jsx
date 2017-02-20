@@ -117,7 +117,7 @@ const ThemeShowcase = React.createClass( {
 	},
 
 	render() {
-		const { site, options, getScreenshotOption, search, filter, translate } = this.props;
+		const { site, options, search, filter, translate } = this.props;
 		const tier = config.isEnabled( 'upgrades/premium-themes' ) ? this.props.tier : 'free';
 
 		const metas = [
@@ -158,21 +158,7 @@ const ThemeShowcase = React.createClass( {
 					defaultOption={ this.props.defaultOption }
 					secondaryOption={ this.props.secondaryOption }
 					placeholderCount={ this.props.placeholderCount }
-					getScreenshotUrl={ function( theme ) {
-						if ( ! getScreenshotOption( theme ).getUrl ) {
-							return null;
-						}
-						return getScreenshotOption( theme ).getUrl( theme );
-					} }
-					onScreenshotClick={ function( theme ) {
-						if ( ! getScreenshotOption( theme ).action ) {
-							return;
-						}
-						getScreenshotOption( theme ).action( theme );
-					} }
-					getActionLabel={ function( theme ) {
-						return getScreenshotOption( theme ).label;
-					} }
+					getScreenshotOption={ this.props.getScreenshotOption }
 					getOptions={ function( theme ) {
 						return pickBy(
 							addTracking( options ),
